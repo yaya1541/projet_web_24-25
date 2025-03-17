@@ -75,7 +75,7 @@ const back = "https://localhost:3000/"
 const SPEED = 0.3
 
 const diff = new THREE.TextureLoader().load( "src/textures/429.png" );
-const disp = new THREE.TextureLoader().load( "src/textures/peeling_painted_wall_disp_1k.png" );
+const _disp = new THREE.TextureLoader().load( "src/textures/peeling_painted_wall_disp_1k.png" );
 diff.wrapS = THREE.RepeatWrapping;
 diff.wrapT = THREE.RepeatWrapping;
 diff.repeat.set( 1/5, 1/15 );
@@ -85,7 +85,7 @@ ceilTexture.wrapS = THREE.RepeatWrapping;
 ceilTexture.wrapT = THREE.RepeatWrapping;
 ceilTexture.repeat.set( 64, 64 );
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(75, globalThis.innerWidth / globalThis.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer();
 
 let moving = false;
@@ -94,7 +94,7 @@ let isLocked = false;
 async function init() {
     const scene = new THREE.Scene();
     const loader = new THREE.ObjectLoader();
-    const data = await fetch(back + 'api/map-data')
+    const _data = await fetch(back + 'api/map-data')
         .then(response => response.json())
         .then(data => {
             console.log(data);
@@ -121,17 +121,17 @@ async function init() {
     //camera.position.z = 5;
     camera.position.y = 3;
     
-    const CAMERADEBUG = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const CAMERADEBUG = new THREE.PerspectiveCamera(75, globalThis.innerWidth / globalThis.innerHeight, 0.1, 1000);
     CAMERADEBUG.rotateX(-Math.PI / 2);
     CAMERADEBUG.position.y = 60;
 
     
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
     document.body.appendChild(renderer.domElement);
 
     const labelRenderer = new CSS2DRenderer();
-    labelRenderer.setSize( window.innerWidth, window.innerHeight );
+    labelRenderer.setSize( globalThis.innerWidth, globalThis.innerHeight );
     labelRenderer.domElement.style.position = 'absolute';
     labelRenderer.domElement.style.top = '0px';
 
@@ -166,11 +166,11 @@ const socket = new WebSocket("https://localhost:3000/game");
 //ws.onerror((ctx)=>console.log("no ws"));
 socket.onopen = ()=>{
     init();
-    document.addEventListener('keyup',(event)=>{
+    document.addEventListener('keyup',()=>{
         socket.send("not moving");
         moving = false;
     })
-    document.addEventListener('keydown',(event)=>{
+    document.addEventListener('keydown',()=>{
         if (isLocked && !moving){
             socket.send("moving");
             //moving = true;
@@ -209,7 +209,7 @@ socket.onmessage = (event)=>{
 
 const ui = document.getElementById("ui");
 const resume = ui.children[0];
-resume.addEventListener("click",async (event)=>{
+resume.addEventListener("click", ()=>{
     //document.body.requestFullscreen();
     //renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.requestPointerLock();
