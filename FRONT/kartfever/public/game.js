@@ -1,6 +1,30 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 import { CSS2DRenderer } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/renderers/CSS2DRenderer.js';
 
+
+export const gameObj = {
+    "box":new THREE.Mesh(
+        new THREE.BoxGeometry(2, 0.1, 2),
+        new THREE.MeshBasicMaterial({color:0x00ff00})
+    ),
+    'cylinder1':new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25,0.25,0.1),
+        new THREE.MeshBasicMaterial({color:0x0000ff})
+    ),
+    'cylinder2':new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25,0.25,0.1),
+        new THREE.MeshBasicMaterial({color:0x0000ff})
+    ),
+    'cylinder3':new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25,0.25,0.1),
+        new THREE.MeshBasicMaterial({color:0x0000ff})
+    ),
+    'cylinder4':new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25,0.25,0.1),
+        new THREE.MeshBasicMaterial({color:0x0000ff})
+    )
+}
+
 export class Game{
     constructor(player){
         this.player = player;
@@ -30,12 +54,23 @@ export class Game{
 
         this.camera.position.set(0, 2, 5);
         this.camera.rotation.x = -Math.PI/32;
+
+
+        this.loadScene(gameObj);
+
         this.animate = this.animate.bind(this);
         this.animate();
     }
 
     gameLoop(){
         this.player.update();
+    }
+
+    loadScene(objs){
+        for (const [key, value] of Object.entries(objs)) {
+            console.log(value);
+            this.scene.add(value);
+        }
     }
 
     animate() {
