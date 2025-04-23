@@ -16,12 +16,17 @@ export class Car{
         // Max steer, engine force values
         this.maxSteerVal = 0.5;
         this.maxForce = 1000;
-        this.brakeForce = 500;
+        this.brakeForce = 15;
+
+        // Improved deceleration and steering
+        this.decelerationRate = 1000; // Higher value = faster deceleration
+        this.steeringSmoothing = 0.1; // Lower value = smoother steering (0-1)
+        this.currentSteering = 0.0;
 
         // Drift properties
         this.isDrifting = false;
-        this.driftFactor = 0.3; // Lower value = more sideways sliding
-        this.normalFrictionSlip = 4;
+        this.driftFactor = 0.25; // Lower value = more sideways sliding
+        this.normalFrictionSlip = 5;
         this.driftFrictionSlip = 1.5; // Lower friction when drifting
         this.driftRecoveryRate = 0.5;
         this.driftTimer = 0;
@@ -62,6 +67,7 @@ export class Car{
                         positionOffset.z
                     );
                     child.geometry.rotateY(-Math.PI/2);
+                    child.material.side = THREE.DoubleSide;
                 }
             });
 
@@ -107,7 +113,7 @@ export class Car{
         this.carBody.material = this.carMaterial;
 
         // Create car body visual
-        
+
 
         this.carMesh = new THREE.Mesh(carGeometry, this.carMaterial);
         this.carMesh.castShadow = true;
@@ -128,7 +134,6 @@ export class Car{
         });
         
         const wheelOptions = {
-            radius: 0.5,
             directionLocal: new CANNON.Vec3(0, -1, 0),
             suspensionStiffness: 30,
             suspensionRestLength: 0.3,
@@ -143,28 +148,42 @@ export class Car{
             customSlidingRotationalSpeed: -30,
             useCustomSlidingRotationalSpeed: true
         };
+
+        const frontWheelOptions = {
+            radius: 0.3,
+            ...wheelOptions
+        };
+        const backWheelOptions = {
+            radius: 0.5,
+            ...wheelOptions
+        }
         
         // Front left wheel
-        wheelOptions.chassisConnectionPointLocal.set(-1, 0, 1.5);
-        this.vehicle.addWheel(wheelOptions);
+        wheelOptions.chassisConnectionPointLocal.set(-1.2, -.3, 1.1);
+        this.vehicle.addWheel(frontWheelOptions);
         
         // Front right wheel
-        wheelOptions.chassisConnectionPointLocal.set(1, 0, 1.5);
-        this.vehicle.addWheel(wheelOptions);
+        wheelOptions.chassisConnectionPointLocal.set(1.2, -.3, 1.1);
+        this.vehicle.addWheel(frontWheelOptions);
         
         // Rear left wheel
-        wheelOptions.chassisConnectionPointLocal.set(-1, 0, -1.5);
-        this.vehicle.addWheel(wheelOptions);
+        wheelOptions.chassisConnectionPointLocal.set(-1.1, -0.1, -1.2);
+        this.vehicle.addWheel(backWheelOptions);
         
         // Rear right wheel
-        wheelOptions.chassisConnectionPointLocal.set(1, 0, -1.5);
-        this.vehicle.addWheel(wheelOptions);
+        wheelOptions.chassisConnectionPointLocal.set(1.1, -0.1, -1.2);
+        this.vehicle.addWheel(backWheelOptions);
         
         this.vehicle.addToWorld(this.world);
+
+        console.log(this.vehicle);
+        
         
         // Create wheel visuals
-        this.wheelGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 32);
-        this.wheelGeometry.rotateZ(Math.PI / 2);
+        this.frontWheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.3, 32);
+        this.backWheelGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.5, 32);
+        this.frontWheelGeometry.rotateZ(Math.PI / 2);
+        this.backWheelGeometry.rotateZ(Math.PI / 2);
         this.wheelMesh = new THREE.MeshStandardMaterial({ 
             color: 0x333333, 
             roughness: 0.7, 
@@ -172,8 +191,14 @@ export class Car{
         });
         this.wheelMeshes = [];
         
-        for (let i = 0; i < 4; i++) {
-            const cylinderMesh = new THREE.Mesh(this.wheelGeometry, this.wheelMesh);
+        for (let i = 0; i < 2; i++) {
+            const cylinderMesh = new THREE.Mesh(this.frontWheelGeometry, this.wheelMesh);
+            cylinderMesh.castShadow = true;
+            this.scene.add(cylinderMesh);
+            this.wheelMeshes.push(cylinderMesh);
+        }
+        for (let i = 0; i < 2; i++) {
+            const cylinderMesh = new THREE.Mesh(this.backWheelGeometry, this.wheelMesh);
             cylinderMesh.castShadow = true;
             this.scene.add(cylinderMesh);
             this.wheelMeshes.push(cylinderMesh);
@@ -287,7 +312,57 @@ export class Car{
         // This would be implemented if you added the visual particles
     }
 
+    // Apply natural deceleration to the car
+    applyNaturalDeceleration(deltaTime) {
+        // Get current velocity
+        const velocity = this.carBody.velocity.clone();
+        const speed = velocity.length()*3.6;
+        
+        // If the car is moving, apply deceleration
+        if (speed > 0.1) {
+            // Calculate deceleration force
+            const decelForce = this.decelerationRate * deltaTime * 100;
+            
+            // Create normalized direction vector
+            const direction = velocity.clone();
+            direction.normalize();
+            
+            // Scale direction by deceleration force
+            direction.scale(-Math.max(decelForce, speed), direction);
+            //console.log(decelForce,speed);
+            
+            
+            // Apply force to slow down the car
+            this.carBody.applyLocalForce(direction, new CANNON.Vec3(0, 0, 0));
+        }
+    }
+
+    // Apply smooth steering
+    applySmoothSteering(targetSteeringValue, deltaTime) {
+        // Interpolate between current and target steering value
+        const steeringDiff = targetSteeringValue - this.currentSteering;
+        this.currentSteering += steeringDiff * this.steeringSmoothing / deltaTime / 100;
+        //sssssssssssssssssssssssssssssdddconsole.log(steeringDiff,targetSteeringValue,this.currentSteering,deltaTime);
+        
+        // Apply the smooth steering value to both front wheels
+        this.vehicle.setSteeringValue(this.currentSteering, 0);
+        this.vehicle.setSteeringValue(this.currentSteering, 1);
+    }
+
     control(keysPressed, deltaTime = 1/60) {
+        // Calculate target steering value
+        deltaTime = deltaTime != 0 ? deltaTime : 0.01;
+        let targetSteering = 0;
+        if (keysPressed['q'] || keysPressed['arrowleft']) {
+            targetSteering = this.maxSteerVal;
+        } else if (keysPressed['d'] || keysPressed['arrowright']) {
+            targetSteering = -this.maxSteerVal;
+        }
+        //console.log(targetSteering);
+        
+        // Apply smooth steering
+        this.applySmoothSteering(targetSteering, deltaTime);
+        
         // Apply engine force on rear wheels
         if (keysPressed['z'] || keysPressed['arrowup']) {
             this.vehicle.applyEngineForce(-this.maxForce, 2);
@@ -296,20 +371,10 @@ export class Car{
             this.vehicle.applyEngineForce(this.maxForce, 2);
             this.vehicle.applyEngineForce(this.maxForce, 3);
         } else {
+            // No key pressed, apply natural deceleration
             this.vehicle.applyEngineForce(0, 2);
             this.vehicle.applyEngineForce(0, 3);
-        }
-        
-        // Apply steering on front wheels
-        if (keysPressed['q'] || keysPressed['arrowleft']) {
-            this.vehicle.setSteeringValue(this.maxSteerVal, 0);
-            this.vehicle.setSteeringValue(this.maxSteerVal, 1);
-        } else if (keysPressed['d'] || keysPressed['arrowright']) {
-            this.vehicle.setSteeringValue(-this.maxSteerVal, 0);
-            this.vehicle.setSteeringValue(-this.maxSteerVal, 1);
-        } else {
-            this.vehicle.setSteeringValue(0, 0);
-            this.vehicle.setSteeringValue(0, 1);
+            this.applyNaturalDeceleration(deltaTime);
         }
         
         // Apply brake
@@ -326,7 +391,7 @@ export class Car{
         }
         
         // Drift control - trigger with SHIFT key while turning
-        const isTurning = keysPressed['q'] || keysPressed['arrowleft'] || keysPressed['d'] || keysPressed['arrowright'];
+        const isTurning = Math.abs(targetSteering) > 0.1;
         const speed = this.speed();
         
         if (keysPressed['shift'] && isTurning && speed > 30) {
@@ -344,6 +409,9 @@ export class Car{
         this.carMesh.position.copy(this.carBody.position);
         this.carMesh.quaternion.copy(this.carBody.quaternion);
         
+        //console.log(this.currentSteering);
+        
+
         // Update wheel meshes
         for (let i = 0; i < 4; i++) {
             this.vehicle.updateWheelTransform(i);
