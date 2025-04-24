@@ -1,32 +1,40 @@
 import CANNON from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm'
 import { connections } from './back.ts';
+import { Circuit } from './lib/circuit.js';
 
-// Cannon.js world setup
+// Set up physics world
 export const world = new CANNON.World();
-world.gravity.set(0, -9.82, 10); // Set gravity
-world.broadphase = new CANNON.NaiveBroadphase(); // Broadphase algorithm
-world.solver.iterations = 10; // Solver iterations
+world.gravity.set(0, -9.82, 0);
+world.broadphase = new CANNON.NaiveBroadphase();
+world.solver.iterations = 10;
+
+// Create materials
+const carMaterial = new CANNON.Material('car');
+const roadMaterial = new CANNON.Material('road');
+
+// Create contact material (interaction between the two)
+const carRoadContactMaterial = new CANNON.ContactMaterial(
+  carMaterial, 
+  roadMaterial, 
+  {
+    friction: 0.5,
+    restitution: 0.3,
+    contactEquationStiffness: 1e8,
+    contactEquationRelaxation: 3
+  }
+);
+
+// Add to world
+world.addContactMaterial(carRoadContactMaterial);
+
+console.log("Initiated server world");
+
+export const circuit = new Circuit(null,world);
+
 
 export const bodies = {}; // Store the Cannon.js bodies
-
-function createBox(id, x, y, z, width, height, depth, mass) {
-    const shape = new CANNON.Box(new CANNON.Vec3(width / 2, height / 2, depth / 2));
-    const body = new CANNON.Body({ mass: mass, position: new CANNON.Vec3(x, y, z), shape: shape });
-    console.log(body);
-    
-    world.addBody(body);
-    bodies[id] = body;
-}
-
-function createCylinder(id, x, y, z, radius, height, mass) {
-    const shape = new CANNON.Cylinder(radius, radius, height, 16);
-    const body = new CANNON.Body({ mass: mass, position: new CANNON.Vec3(x, y, z), shape: shape, quaternion: new CANNON.Quaternion(.707,0,0,-.707)});
-    world.addBody(body);
-    bodies[id] = body;
-}
-
-
 export var stateL = {};
+const inputs = {};
 
 const EPSILON = 0.00005;
 
