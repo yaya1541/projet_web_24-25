@@ -1,6 +1,6 @@
 import CANNON from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
-import { GLTFLoader } from '../lib/GLTFLoader.js';
+import { GLTFLoader } from './GLTFLoader.js';
 
 export class Car{
     constructor(world, scene, options = {}){
@@ -30,11 +30,17 @@ export class Car{
         this.driftFrictionSlip = 1.5; // Lower friction when drifting
         this.driftRecoveryRate = 0.5;
         this.driftTimer = 0;
-        this.driftParticles = [];
 
-        this.createBody(); 
-        this.loadModel();
-        this.createWheels();
+        if (world){
+            this.createPhysicBody();
+            this.createPhysicWheels();
+        }
+        if (scene){
+            this.createBody(); 
+            this.createWheels();
+            this.loadModel();
+        }
+        
     }
 
     loadModel(){
@@ -44,7 +50,7 @@ export class Car{
             z:0
         }
         const loader = new GLTFLoader();
-        loader.load('./kartfever/funtionnal/Kart/Kart.glb',(obj)=>{
+        loader.load('../src/Kart/Kart.glb',(obj)=>{
             if (this.carMesh){
                 this.scene.remove(this.carMesh);
             }
@@ -91,16 +97,12 @@ export class Car{
         })
     }
 
-    createBody(){
-        // Create car body
-        const carGeometry = new THREE.BoxGeometry(2, 1, 4);
+    createPhysicBody(){
         const carBodyShape = new CANNON.Box(new CANNON.Vec3(1, 0.5, 2));
         this.carBody = new CANNON.Body({ mass: 500 });
         this.carBody.addShape(carBodyShape);
         this.carBody.position.set(0, 1, 0);
         this.carBody.angularDamping = 0.3;
-        this.world.addBody(this.carBody);
-
         this.carBody.ccdSpeedThreshold = 1; // Set this lower than your car's top speed
         
         // For the car body
@@ -112,15 +114,19 @@ export class Car{
         this.carMaterial = new CANNON.Material('car');
         this.carBody.material = this.carMaterial;
 
+        this.world.addBody(this.carBody);
+    }
+    
+    createBody(){
+        // Create car body
+        const carGeometry = new THREE.BoxGeometry(2, 1, 4);
         // Create car body visual
-
-
         this.carMesh = new THREE.Mesh(carGeometry, this.carMaterial);
         this.carMesh.castShadow = true;
         this.scene.add(this.carMesh);
     }
 
-    createWheels(){
+    createPhysicWheels(){
         // Create wheels
         this.wheelShape = new CANNON.Sphere(0.5);
         this.wheelMaterial = new CANNON.Material("wheel");
@@ -175,10 +181,9 @@ export class Car{
         this.vehicle.addWheel(backWheelOptions);
         
         this.vehicle.addToWorld(this.world);
+    }
 
-        console.log(this.vehicle);
-        
-        
+    createWheels(){
         // Create wheel visuals
         this.frontWheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.3, 32);
         this.backWheelGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.5, 32);
@@ -203,44 +208,6 @@ export class Car{
             this.scene.add(cylinderMesh);
             this.wheelMeshes.push(cylinderMesh);
         }
-    }
-
-    initDriftParticles() {
-        // Optional: Create drift smoke particles
-        const particleGeometry = new THREE.BufferGeometry();
-        const particleCount = 200;
-        
-        const positions = new Float32Array(particleCount * 3);
-        const sizes = new Float32Array(particleCount);
-        
-        for (let i = 0; i < particleCount; i++) {
-            positions[i * 3] = 0;
-            positions[i * 3 + 1] = 0;
-            positions[i * 3 + 2] = 0;
-            sizes[i] = 0;
-        }
-        
-        particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-        
-        const particleMaterial = new THREE.PointsMaterial({
-            color: 0xffffff,
-            size: 0.1,
-            transparent: true,
-            opacity: 0.6
-        });
-        
-        const particles = new THREE.Points(particleGeometry, particleMaterial);
-        this.scene.add(particles);
-        
-        return {
-            mesh: particles,
-            positions: positions,
-            sizes: sizes,
-            count: particleCount,
-            active: new Array(particleCount).fill(false),
-            lifetime: new Array(particleCount).fill(0)
-        };
     }
 
     startDrift() {
@@ -295,21 +262,11 @@ export class Car{
             // Calculate drift angle for visualization or gameplay effects
             const driftAngle = Math.atan2(sideVel.length(), forwardVel.length());
             
-            // Update drift particles if they exist
-            if (this.driftParticles.length > 0) {
-                this.updateDriftParticles(deltaTime, driftAngle);
-            }
-            
             // Gradually reduce drift effect over time if needed
             if (this.driftTimer > 5) { // Maximum drift time in seconds
                 this.endDrift();
             }
         }
-    }
-
-    updateDriftParticles(deltaTime, driftAngle) {
-        // Optional: Update drift smoke particles
-        // This would be implemented if you added the visual particles
     }
 
     // Apply natural deceleration to the car
@@ -364,7 +321,7 @@ export class Car{
         this.applySmoothSteering(targetSteering, deltaTime);
         
         // Apply engine force on rear wheels
-        if (keysPressed['z'] || keysPressed['arrowup']) {
+        if (keysPressed['z'] || keysPressed['arrowup'] && this.speed()<130) {
             this.vehicle.applyEngineForce(-this.maxForce, 2);
             this.vehicle.applyEngineForce(-this.maxForce, 3);
         } else if (keysPressed['s'] || keysPressed['arrowdown']) {
