@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://localhost:8080/login/style.css">
+    <script type="module" src="https://localhost:8080/templates.js" defer></script>
+</head>
+<body>
+    <header-component></header-component>
+    <div class="container main">
+        <style>
+            * {
+                .error-box{
+                    background: var(--dark-overlay);
+                    border-radius: 15px;
+                    box-shadow: 0 0 30px var(--accent-shadow);
+                    padding: 40px;
+                    width: 100%;
+                    text-align: center;
+                    backdrop-filter: blur(10px);
+                    border: 1px solid var(--light-overlay);
+                    position: relative;
+                    z-index: 5;
+                }
+            }
+
+            h1{
+                color: var(--neutral);;
+            }
+        </style>
+        <div class="error-box">
+            <h1>404 Error - Not Found</h1>
+        </div>
+    </div>
+    <footer-component id="footer"></footer-component>
+</body>
+</html>
