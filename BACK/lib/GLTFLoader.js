@@ -874,11 +874,23 @@ class GLTFBinaryExtension {
 
         while ( chunkIndex < chunkContentsLength ) {
 
+            if (chunkIndex + 8 > chunkView.byteLength) {
+                console.error('Chunk index out of bounds:', chunkIndex);
+                throw new Error('THREE.GLTFLoader: Chunk index out of bounds.');
+            }
+
             const chunkLength = chunkView.getUint32( chunkIndex, true );
             chunkIndex += 4;
             const chunkType = chunkView.getUint32( chunkIndex, true );
             chunkIndex += 4;
 
+            console.log('Chunk:', { chunkLength, chunkType });
+            
+            if (chunkLength > chunkView.byteLength - chunkIndex) {
+                console.error('Chunk length exceeds remaining data length:', chunkLength);
+                throw new Error('THREE.GLTFLoader: Chunk length exceeds remaining data length.');
+            }
+    
             if ( chunkType === BINARY_EXTENSION_CHUNK_TYPES.JSON ) {
 
                 const contentArray = new Uint8Array( data, BINARY_EXTENSION_HEADER_LENGTH + chunkIndex, chunkLength );
