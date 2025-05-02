@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karting Rush - Connexion</title>
+    <link rel="stylesheet" type="text/css" href="login/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" src="templates.js" defer></script>
+</head>
+<body style="visibility: hidden;">
+    <script>0</script>
+    
+    <div class="background-overlay"></div>
+    
+    <header-component></header-component>
+    
+    <div class="container">
+      <div class="login-box">
+        <div class="logo-container">
+          <div class="logo-badge">
+            <h1>KARTING<span>FEVER</span></h1>
+          </div>
+        </div>
+        
+        <h2>Connexion</h2>
+        
+        <div class="input-container">
+          <div class="form-group">
+            <label for="username">Nom d'utilisateur</label>
+            <input type="text" name="username" id="username" placeholder="Entrez votre nom d'utilisateur">
+          </div>
+          
+          <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input type="password" name="password" id="password" placeholder="Entrez votre mot de passe">
+          </div>
+          
+          <button id="login-btn" class="primary-btn">Se connecter</button>
+        </div>
+        
+        <div class="links">
+          <a href="#">Mot de passe oublié?</a>
+          <a href="#">Créer un compte</a>
+        </div>
+      </div>
+    </div>
+    
+    <footer-component></footer-component>
+    
+    <script type="module">
+      //fetch("https://localhost:3000/api/startsession",{method : 'POST',credentials :"include"})
+      import { oauth } from "../utils.js";
+      if (await oauth == 200){
+        console.log("Already Logged in !");
+        setInterval(()=>document.location.pathname ="/home",500);
+      }
+      
+      const username = document.getElementById("username");
+      const password = document.getElementById("password");
+      const loginBtn = document.getElementById("login-btn");
+      
+      const handleLogin = async () => {
+        await fetch('https://localhost:3000/api/login', {
+          method: 'POST',
+          credentials: "include",
+          body: JSON.stringify({
+            user: username.value,
+            pass: password.value
+          })
+        }).then((res) => {
+          console.log(res.status);
+          switch (res.status) {
+            case 200:
+              // TODO : Remove timeout from location change.
+              localStorage.setItem("CurrentUser", username.value);
+              setInterval(() => document.location.replace("https://localhost:8080/home"), 500);
+              break;
+            default:
+              showError("Identifiants incorrects. Veuillez réessayer.");
+              break;
+          }
+        });
+      };
+      
+      function showError(message) {
+        const errorElement = document.createElement('div');
+        errorElement.className = 'error-message';
+        errorElement.textContent = message;
+        
+        const existingError = document.querySelector('.error-message');
+        if (existingError) existingError.remove();
+        
+        document.querySelector('.input-container').appendChild(errorElement);
+        setTimeout(() => {
+          errorElement.classList.add('fade-out');
+          setTimeout(() => {errorElement.remove()}, 500);
+          return;
+        }, 3000);
+      }
+      
+      password.addEventListener('keyup', async (event) => {
+        if (event.key == 'Enter') {
+          handleLogin();
+        }
+      });
+      
+      loginBtn.addEventListener('click', handleLogin);
+      //console.log(document.cookie);
+    </script>
+    
+    <script>
+      let domReady = (cb) => {
+        document.readyState === 'interactive' || document.readyState === 'complete'
+          ? cb()
+          : document.addEventListener('DOMContentLoaded', cb);
+      };
+      
+      domReady(() => {
+        // Display body when DOM is loaded
+        document.body.style.visibility = 'visible';
+      });
+    </script>
+</body>
+</html>
