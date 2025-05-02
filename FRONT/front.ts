@@ -14,11 +14,13 @@ app.use(async (ctx) => {
     console.log("fetched data on server...")
     await ctx.send({
       root: `${Deno.cwd()}/`,
-      index: "index.html",
+      index: "index.html"
     });
   } catch {
+    console.log(Deno.cwd());
+    
     ctx.response.status = 404;
-    ctx.response.body = "404 File not found";
+    ctx.response.body = await Deno.readFileSync(`${Deno.cwd()}/404.html`);
   }
 });
 
