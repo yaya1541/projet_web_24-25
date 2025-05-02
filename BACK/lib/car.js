@@ -3,9 +3,10 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.m
 import { GLTFLoader } from './GLTFLoader.js';
 
 export class Car{
-    constructor(world, scene, options = {}){
+    constructor(world, scene, id, options = {}){
         this.world = world;
         this.scene = scene;
+        this.id = id;
         this.options = {
             position : new CANNON.Vec3(0,1,0),
             dimensions : {width : 2, height : 1, length : 4},
@@ -36,6 +37,10 @@ export class Car{
             this.createPhysicWheels();
         }
         if (scene){
+            this.carBody = {
+                position:new CANNON.Vec3(0,1,0),
+                quaternion:new CANNON.Quaternion(0,0,0)
+            }
             this.createBody(); 
             this.createWheels();
             this.loadModel();
@@ -50,11 +55,13 @@ export class Car{
             z:0
         }
         const loader = new GLTFLoader();
-        loader.load('../src/Kart/Kart.glb',(obj)=>{
+        // Configure le gestionnaire de requêtes
+        loader.withCredentials = true;
+        loader.load('https://localhost:3000/src/Kart.glb',(obj)=>{
             if (this.carMesh){
                 this.scene.remove(this.carMesh);
             }
-            let object = obj.scene;
+            const object = obj.scene;
             this.carMesh = object;
 
             const box = new THREE.Box3().setFromObject(object);
@@ -80,20 +87,24 @@ export class Car{
             object.rotation.y = -Math.PI/2;
             object.castShadow = true;
             object.updateMatrix();
-
+            
             object.position.copy(this.carBody.position);
             object.quaternion.copy(this.carBody.quaternion);
+            
             this.scene.add(object);
             console.log(object);
             
         },
         // called while loading is progressing
-        function ( xhr ) {
-            console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+        (xhr) => {
+            console.log(`${xhr.loaded} sur ${xhr.total} octets chargés (${(xhr.loaded / xhr.total * 100).toFixed(2)}%)`);
+            // Vérifiez si ces valeurs semblent correctes par rapport à la taille de votre fichier
         },
         // called when loading has errors
         function ( error ) {
             console.log( 'An error happened' );
+            console.log(error);
+            
         })
     }
 
@@ -367,7 +378,7 @@ export class Car{
         this.carMesh.quaternion.copy(this.carBody.quaternion);
         
         //console.log(this.currentSteering);
-        
+        this.checkWrongPosition();
 
         // Update wheel meshes
         for (let i = 0; i < 4; i++) {
@@ -380,6 +391,12 @@ export class Car{
         // Update drift effects
         if (this.isDrifting) {
             this.updateDrift(deltaTime);
+        }
+    }
+
+    checkWrongPosition(){
+        if (this.carBody.position.y < 5){
+            this.carBody.position.y = 1;
         }
     }
 
