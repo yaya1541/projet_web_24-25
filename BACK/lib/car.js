@@ -21,7 +21,7 @@ export class Car{
 
         // Improved deceleration and steering
         this.decelerationRate = 1000; // Higher value = faster deceleration
-        this.steeringSmoothing = 0.1; // Lower value = smoother steering (0-1)
+        this.steeringSmoothing = 0.05; // Lower value = smoother steering (0-1)
         this.currentSteering = 0.0;
 
         // Drift properties
@@ -42,7 +42,7 @@ export class Car{
                 quaternion:new CANNON.Quaternion(0,0,0)
             }
             this.createBody(); 
-            this.createWheels();
+            //this.createWheels();
             this.loadModel();
         }
         
@@ -57,33 +57,46 @@ export class Car{
         const loader = new GLTFLoader();
         // Configure le gestionnaire de requêtes
         loader.withCredentials = true;
-        loader.load('https://localhost:3000/src/Kart.glb',(obj)=>{
+        loader.load('https://localhost:3000/src/Kart-3.glb',(obj)=>{
             if (this.carMesh){
                 this.scene.remove(this.carMesh);
             }
-            const object = obj.scene;
+            
+            const object = obj.scene.children[0];
+            //this.loadedWheelMeshes = [];
+            this.wheelMeshes = [];
+            console.log("Scene",obj.scene);
+            console.log("Wheels ?",obj.scene.children[1].children);
+            
+            for (let index = 0; index < obj.scene.children[1].children.length; index++) {
+                this.wheelMeshes.push(obj.scene.children[1].children[index]);
+                this.scene.add(obj.scene.children[1].children[index]);
+                console.log("added wheel");
+                
+            }
             this.carMesh = object;
 
             const box = new THREE.Box3().setFromObject(object);
             const center = box.getCenter(new THREE.Vector3());
             
             object.position.set(0, 0, 0);
+            
             object.traverse(child => {
                 if (child instanceof THREE.Mesh) {
                     // Apply the original centering
-                    child.geometry.translate(-center.x, -center.y, -center.z);
+                    //child.geometry.translate(-center.x, -center.y, -center.z);
                     
                     // Then apply additional position offset
-                    child.geometry.translate(
+                    /*child.geometry.translate(
                         positionOffset.x, 
                         positionOffset.y, 
                         positionOffset.z
-                    );
+                    );*/
                     child.geometry.rotateY(-Math.PI/2);
                     child.material.side = THREE.DoubleSide;
                 }
             });
-
+            
             object.rotation.y = -Math.PI/2;
             object.castShadow = true;
             object.updateMatrix();
