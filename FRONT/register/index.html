@@ -1,113 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="login/style.css">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        <link rel="stylesheet" href="login/style.css">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    >
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        >
 
-    <script type="module" src="templates.js" defer></script>
-  </head>
-  <body>
-    <style>
-      body {
-        background: transparent;
-      }
-    </style>
-    <div class="login-box">
-      <div class="logo-container">
-        <div class="logo-badge">
-          <h1>KARTING<span>FEVER</span></h1>
+        <script type="module" src="templates.js" defer></script>
+    </head>
+    <body>
+        <style>
+            body {
+                background: transparent;
+            }
+        </style>
+        <div class="login-box">
+            <div class="logo-container">
+                <div class="logo-badge">
+                    <h1>KARTING<span>FEVER</span></h1>
+                </div>
+            </div>
+
+            <h2>Créer un compte</h2>
+
+            <div class="input-container">
+                <div class="form-group">
+                    <label for="username">Nom d'utilisateur</label>
+                    <input
+                        type="text"
+                        name="username"
+                        id="username"
+                        placeholder="Entrez votre nom d'utilisateur"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        placeholder="Entrez votre mot de passe"
+                    >
+                </div>
+
+                <button id="register-btn" class="primary-btn">
+                    S'enregister
+                </button>
+            </div>
         </div>
-      </div>
+        <script>
+            //fetch("https://localhost:3000/api/startsession",{method : 'POST',credentials :"include"})
+            const username = document.getElementById(
+                "username",
+            );
+            const password = document.getElementById(
+                "password",
+            );
+            const registerBtn = document.getElementById(
+                "register-btn",
+            );
 
-      <h2>Créer un compte</h2>
+            const handleregister = async () => {
+                await fetch(
+                    "https://localhost:3000/api/register",
+                    {
+                        method: "POST",
+                        credentials: "include",
+                        body: JSON.stringify({
+                            user: username.value,
+                            pass: password.value,
+                        }),
+                    },
+                ).then((res) => {
+                    switch (res.status) {
+                        case 201:
+                            showError(
+                                "Registered successfully !",
+                            );
+                            document.location.pathname =
+                                "/home";
+                            break;
+                        case 200:
+                            showError(
+                                "Username already in use please change.",
+                            );
+                            break;
+                        case 500:
+                            showError("Error with server !");
+                        default:
+                            break;
+                    }
+                });
+            };
+            function showError(message) {
+                const errorElement = document.createElement(
+                    "div",
+                );
+                errorElement.className = "error-message";
+                errorElement.textContent = message;
 
-      <div class="input-container">
-        <div class="form-group">
-          <label for="username">Nom d'utilisateur</label>
-          <input
-            type="text"
-            name="username"
-            id="username"
-            placeholder="Entrez votre nom d'utilisateur"
-          >
-        </div>
+                const existingError = document.querySelector(
+                    ".error-message",
+                );
+                if (existingError) existingError.remove();
 
-        <div class="form-group">
-          <label for="password">Mot de passe</label>
-          <input
-            type="password"
-            name="password"
-            id="password"
-            placeholder="Entrez votre mot de passe"
-          >
-        </div>
+                document.querySelector(".input-container")
+                    .appendChild(
+                        errorElement,
+                    );
+                setTimeout(() => {
+                    errorElement.classList.add("fade-out");
+                    setTimeout(
+                        () => errorElement.remove(),
+                        500,
+                    );
+                }, 3000);
+            }
 
-        <button id="register-btn" class="primary-btn">S'enregister</button>
-      </div>
-    </div>
-    <script>
-      //fetch("https://localhost:3000/api/startsession",{method : 'POST',credentials :"include"})
-      const username = document.getElementById("username");
-      const password = document.getElementById("password");
-      const registerBtn = document.getElementById("register-btn");
+            password.addEventListener(
+                "keyup",
+                async (event) => {
+                    if (event.key == "Enter") {
+                        handleregister();
+                    }
+                },
+            );
 
-      const handleregister = async () => {
-        await fetch("https://localhost:3000/api/register", {
-          method: "POST",
-          credentials: "include",
-          body: JSON.stringify({
-            user: username.value,
-            pass: password.value,
-          }),
-        }).then((res) => {
-          switch (res.status) {
-            case 201:
-              showError("Registered successfully !");
-              document.location.pathname = "/home";
-              break;
-            case 200:
-              showError("Username already in use please change.");
-              break;
-            case 500:
-              showError("Error with server !");
-            default:
-              break;
-          }
-        });
-      };
-      function showError(message) {
-        const errorElement = document.createElement("div");
-        errorElement.className = "error-message";
-        errorElement.textContent = message;
-
-        const existingError = document.querySelector(".error-message");
-        if (existingError) existingError.remove();
-
-        document.querySelector(".input-container").appendChild(
-          errorElement,
-        );
-        setTimeout(() => {
-          errorElement.classList.add("fade-out");
-          setTimeout(() => errorElement.remove(), 500);
-        }, 3000);
-      }
-
-      password.addEventListener("keyup", async (event) => {
-        if (event.key == "Enter") {
-          handleregister();
-        }
-      });
-
-      registerBtn.addEventListener("click", handleregister);
-    </script>
-  </body>
+            registerBtn.addEventListener(
+                "click",
+                handleregister,
+            );
+        </script>
+    </body>
 </html>

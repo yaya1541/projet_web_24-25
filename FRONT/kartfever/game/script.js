@@ -8,10 +8,10 @@ const ws = new WebSocket("wss://localhost:3000/game/kartfever");
 // Basic Driveable Car using Cannon.js and Three.js
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
-  75,
-  globalThis.innerWidth / globalThis.innerHeight,
-  0.1,
-  1000,
+    75,
+    globalThis.innerWidth / globalThis.innerHeight,
+    0.1,
+    1000,
 );
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
@@ -38,11 +38,11 @@ scene.add(directionalLight);
 
 const keysPressed = {};
 document.addEventListener("keydown", (event) => {
-  keysPressed[event.key.toLowerCase()] = true;
+    keysPressed[event.key.toLowerCase()] = true;
 });
 
 document.addEventListener("keyup", (event) => {
-  keysPressed[event.key.toLowerCase()] = false;
+    keysPressed[event.key.toLowerCase()] = false;
 });
 
 camera.position.y = 50;
@@ -54,49 +54,51 @@ const cars = {};
 // Animation loop
 let lastTime;
 function animate(time) {
-  const _dt = lastTime ? (time - lastTime) / 1000 : 0;
-  lastTime = time;
+    const _dt = lastTime ? (time - lastTime) / 1000 : 0;
+    lastTime = time;
 
-  requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
 
-  const cameraOffset = new THREE.Vector3();
-  cameraOffset.set(0, 5, -10);
-  if (username) {
-    if (cars[username]) {
-      //cameraOffset.applyQuaternion(car.carMesh.quaternion);
+    const cameraOffset = new THREE.Vector3();
+    cameraOffset.set(0, 5, -10);
+    if (username) {
+        if (cars[username]) {
+            //cameraOffset.applyQuaternion(car.carMesh.quaternion);
 
-      //camera.position.copy(car.carPosition()).add(cameraOffset);
-      //camera.lookAt(car.carPosition());
+            //camera.position.copy(car.carPosition()).add(cameraOffset);
+            //camera.lookAt(car.carPosition());
 
-      cameraOffset.applyQuaternion(cars[username].carMesh.quaternion);
+            cameraOffset.applyQuaternion(cars[username].carMesh.quaternion);
 
-      camera.position.copy(cars[username].carPosition()).add(cameraOffset);
-      camera.lookAt(cars[username].carPosition());
+            camera.position.copy(cars[username].carPosition()).add(
+                cameraOffset,
+            );
+            camera.lookAt(cars[username].carPosition());
+        }
     }
-  }
-  renderer.render(scene, camera);
+    renderer.render(scene, camera);
 }
 
 // Handle window resize
 globalThis.addEventListener("resize", () => {
-  camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
+    camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
 });
 
 let username = await fetch(`https://localhost:3000/api/user/getdata`, {
-  method: "GET",
-  credentials: "include",
+    method: "GET",
+    credentials: "include",
 }).then(async (res) => {
-  return await res.json();
+    return await res.json();
 }).then((data) => {
-  console.log(data);
-  data.others.forEach((elt) => {
-    if (!cars[elt]) {
-      cars[elt] = new Car(null, scene, elt);
-    }
-  });
-  return data.user;
+    console.log(data);
+    data.others.forEach((elt) => {
+        if (!cars[elt]) {
+            cars[elt] = new Car(null, scene, elt);
+        }
+    });
+    return data.user;
 });
 console.log(username);
 
@@ -104,122 +106,124 @@ console.log(username);
 animate();
 
 ws.onopen = async (_ctx) => {
-  username = await fetch(`https://localhost:3000/api/user/getdata`, {
-    method: "GET",
-    credentials: "include",
-  }).then(async (res) => {
-    return await res.json();
-  }).then((data) => {
-    console.log(data);
-    return data.user;
-  });
+    username = await fetch(`https://localhost:3000/api/user/getdata`, {
+        method: "GET",
+        credentials: "include",
+    }).then(async (res) => {
+        return await res.json();
+    }).then((data) => {
+        console.log(data);
+        return data.user;
+    });
 };
 
 let circuit;
 
 ws.onmessage = (ctx) => {
-  const data = JSON.parse(ctx.data);
-  switch (data.type) {
-    case 0: {
-      console.log("Received data:", data); // Add this line for logging
-      circuit = new Circuit(scene, null, { roadWidth: data.CircuitWitdh });
-      data.CircuitPoints.forEach((element) => {
-        const obj = new THREE.Mesh(
-          new THREE.BoxGeometry(2, 2, 2),
-          new THREE.MeshBasicMaterial({ color: 0x00FF00 }),
-        );
-        obj.position.set(
-          element.x,
-          0,
-          element.y,
-        );
-        scene.add(obj);
-      });
-      circuit.pathNodes = data.CircuitNodes;
-      circuit.pathPoints = data.CircuitPoints;
-      circuit.makePath();
-      circuit.makeRoad();
+    const data = JSON.parse(ctx.data);
+    switch (data.type) {
+        case 0: {
+            console.log("Received data:", data); // Add this line for logging
+            circuit = new Circuit(scene, null, {
+                roadWidth: data.CircuitWitdh,
+            });
+            data.CircuitPoints.forEach((element) => {
+                const obj = new THREE.Mesh(
+                    new THREE.BoxGeometry(2, 2, 2),
+                    new THREE.MeshBasicMaterial({ color: 0x00FF00 }),
+                );
+                obj.position.set(
+                    element.x,
+                    0,
+                    element.y,
+                );
+                scene.add(obj);
+            });
+            circuit.pathNodes = data.CircuitNodes;
+            circuit.pathPoints = data.CircuitPoints;
+            circuit.makePath();
+            circuit.makeRoad();
 
-      console.log(data.CircuitPoints[2], circuit.pathPoints[2]);
-      console.log(document.cookie);
+            console.log(data.CircuitPoints[2], circuit.pathPoints[2]);
+            console.log(document.cookie);
 
-      //car = new Car(null,scene,username);
-      if (username != undefined) {
-        cars[username] = new Car(null, scene, username);
-        partyStatus = true;
-      }
-      break;
-    }
-    case 1: {
-      //console.log("Recieved positions",data);
-      //console.log(username);
-      /*
+            //car = new Car(null,scene,username);
+            if (username != undefined) {
+                cars[username] = new Car(null, scene, username);
+                partyStatus = true;
+            }
+            break;
+        }
+        case 1: {
+            //console.log("Recieved positions",data);
+            //console.log(username);
+            /*
             if (data.user == username) {
                 car.carMesh.position.copy(data.user[username].position);
                 car.carMesh.quaternion.copy(data.user[username].quaternion);
             }
             */
-      console.log(data);
+            console.log(data);
 
-      for (const id in data.user) {
-        if (cars[id]) {
-          console.log(id, cars);
-          cars[id].carMesh.position.copy(data.user[id].position);
-          cars[id].carMesh.quaternion.copy(data.user[id].quaternion);
+            for (const id in data.user) {
+                if (cars[id]) {
+                    console.log(id, cars);
+                    cars[id].carMesh.position.copy(data.user[id].position);
+                    cars[id].carMesh.quaternion.copy(data.user[id].quaternion);
+                }
+            }
+            break;
         }
-      }
-      break;
-    }
-    case 4: {
-      /*new player connection;*/
-      console.log("New player connected", data);
-      data.users.forEach((elt) => {
-        if (!cars[elt]) {
-          cars[elt] = new Car(null, scene, elt);
-        }
-      });
+        case 4: {
+            /*new player connection;*/
+            console.log("New player connected", data);
+            data.users.forEach((elt) => {
+                if (!cars[elt]) {
+                    cars[elt] = new Car(null, scene, elt);
+                }
+            });
 
-      break;
+            break;
+        }
+        default:
+            break;
     }
-    default:
-      break;
-  }
 };
 
 ws.onerror = (ctx) => {
-  switch (ctx.status) {
-    case 401:
-      document.location.replace("https://localhost:8080/login");
-      break;
-    default:
-      break;
-  }
+    switch (ctx.status) {
+        case 401:
+            document.location.replace("https://localhost:8080/login");
+            break;
+        default:
+            break;
+    }
 };
 
 const inputs = {};
 
 document.addEventListener("keydown", (event) => {
-  if (!inputs[event.key]) {
-    ws.send(JSON.stringify({
-      type: 2,
-      user: username,
-      value: event.key,
-    }));
-  }
-  inputs[event.key] = true;
+    if (!inputs[event.key]) {
+        ws.send(JSON.stringify({
+            type: 2,
+            user: username,
+            value: event.key,
+        }));
+    }
+    inputs[event.key] = true;
 });
 
 document.addEventListener("keyup", (event) => {
-  ws.send(JSON.stringify({
-    type: 3,
-    user: username,
-    value: event.key,
-  }));
-  inputs[event.key] = false;
+    ws.send(JSON.stringify({
+        type: 3,
+        user: username,
+        value: event.key,
+    }));
+    inputs[event.key] = false;
 });
 
 globalThis.onbeforeunload = (_ev) => {
-  alert("window unloading");
+    alert("window unloading");
 };
 /*
 window.addEventListener("gamepadconnected", (e) => {

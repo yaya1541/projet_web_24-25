@@ -10,26 +10,26 @@ const app = new Application();
 
 // Middleware to serve the `index.html` file from the root directory
 app.use(async (ctx) => {
-  try {
-    console.log("fetched data on server...");
-    ctx.response.headers.append("X-Frame-Options", "SAMEORIGIN"); // deny iframe from other origins
-    await ctx.send({
-      root: `${Deno.cwd()}/`,
-      index: "index.html",
-    });
-  } catch {
-    console.log(Deno.cwd());
+    try {
+        console.log("fetched data on server...");
+        ctx.response.headers.append("X-Frame-Options", "SAMEORIGIN"); // deny iframe from other origins
+        await ctx.send({
+            root: `${Deno.cwd()}/`,
+            index: "index.html",
+        });
+    } catch {
+        console.log(Deno.cwd());
 
-    ctx.response.status = 404;
-    ctx.response.body = await Deno.readFileSync(`${Deno.cwd()}/404.html`);
-  }
+        ctx.response.status = 404;
+        ctx.response.body = await Deno.readFileSync(`${Deno.cwd()}/404.html`);
+    }
 });
 
 // Define the options for TLS (SSL certificates)
 const options = {
-  port: 8080,
-  cert: await Deno.readTextFile(certPath),
-  key: await Deno.readTextFile(keyPath),
+    port: 8080,
+    cert: await Deno.readTextFile(certPath),
+    key: await Deno.readTextFile(keyPath),
 };
 
 // Start the HTTPS server using serveTls
