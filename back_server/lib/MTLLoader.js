@@ -1,4 +1,4 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 
 /**
  * Loads a Wavefront .mtl file specifying materials
@@ -24,7 +24,7 @@ class MTLLoader extends THREE.Loader {
 
     load(url, onLoad, onProgress, onError) {
         const scope = this;
-        const path = this.path === ""
+        const path = this.path === ''
             ? THREE.LoaderUtils.extractUrlBase(url)
             : this.path;
         const loader = new THREE.FileLoader(this.manager);
@@ -68,7 +68,7 @@ class MTLLoader extends THREE.Loader {
      */
 
     parse(text, path) {
-        const lines = text.split("\n");
+        const lines = text.split('\n');
         let info = {};
         const delimiter_pattern = /\s+/;
         const materialsInfo = {};
@@ -77,18 +77,18 @@ class MTLLoader extends THREE.Loader {
             let line = lines[i];
             line = line.trim();
 
-            if (line.length === 0 || line.charAt(0) === "#") {
+            if (line.length === 0 || line.charAt(0) === '#') {
                 // Blank line or comment ignore
                 continue;
             }
 
-            const pos = line.indexOf(" ");
+            const pos = line.indexOf(' ');
             let key = pos >= 0 ? line.substring(0, pos) : line;
             key = key.toLowerCase();
-            let value = pos >= 0 ? line.substring(pos + 1) : "";
+            let value = pos >= 0 ? line.substring(pos + 1) : '';
             value = value.trim();
 
-            if (key === "newmtl") {
+            if (key === 'newmtl') {
                 // New material
                 info = {
                     name: value,
@@ -96,7 +96,7 @@ class MTLLoader extends THREE.Loader {
                 materialsInfo[value] = info;
             } else {
                 if (
-                    key === "ka" || key === "kd" || key === "ks" || key === "ke"
+                    key === 'ka' || key === 'kd' || key === 'ks' || key === 'ke'
                 ) {
                     const ss = value.split(delimiter_pattern, 3);
                     info[key] = [
@@ -136,14 +136,14 @@ class MTLLoader extends THREE.Loader {
  */
 
 class MaterialCreator {
-    constructor(baseUrl = "", options = {}) {
+    constructor(baseUrl = '', options = {}) {
         this.baseUrl = baseUrl;
         this.options = options;
         this.materialsInfo = {};
         this.materials = {};
         this.materialsArray = [];
         this.nameLookup = {};
-        this.crossOrigin = "anonymous";
+        this.crossOrigin = 'anonymous';
         this.side = this.options.side !== undefined
             ? this.options.side
             : THREE.FrontSide;
@@ -184,9 +184,9 @@ class MaterialCreator {
                 const lprop = prop.toLowerCase();
 
                 switch (lprop) {
-                    case "kd":
-                    case "ka":
-                    case "ks":
+                    case 'kd':
+                    case 'ka':
+                    case 'ks':
                         // Diffuse color (color under white light) using RGB values
                         if (this.options && this.options.normalizeRGB) {
                             value = [
@@ -261,7 +261,7 @@ class MaterialCreator {
         };
 
         function resolveURL(baseUrl, url) {
-            if (typeof url !== "string" || url === "") return ""; // Absolute URL
+            if (typeof url !== 'string' || url === '') return ''; // Absolute URL
 
             if (/^https?:\/\//i.test(url)) return url;
             return baseUrl + url;
@@ -284,63 +284,63 @@ class MaterialCreator {
         for (const prop in mat) {
             const value = mat[prop];
             let n;
-            if (value === "") continue;
+            if (value === '') continue;
 
             switch (prop.toLowerCase()) {
                 // Ns is material specular exponent
-                case "kd":
+                case 'kd':
                     // Diffuse color (color under white light) using RGB values
                     params.color = new THREE.Color().fromArray(value);
                     break;
 
-                case "ks":
+                case 'ks':
                     // Specular color (color when light is reflected from shiny surface) using RGB values
                     params.specular = new THREE.Color().fromArray(value);
                     break;
 
-                case "ke":
+                case 'ke':
                     // Emissive using RGB values
                     params.emissive = new THREE.Color().fromArray(value);
                     break;
 
-                case "map_kd":
+                case 'map_kd':
                     // Diffuse texture map
-                    setMapForType("map", value);
+                    setMapForType('map', value);
                     break;
 
-                case "map_ks":
+                case 'map_ks':
                     // Specular map
-                    setMapForType("specularMap", value);
+                    setMapForType('specularMap', value);
                     break;
 
-                case "map_ke":
+                case 'map_ke':
                     // Emissive map
-                    setMapForType("emissiveMap", value);
+                    setMapForType('emissiveMap', value);
                     break;
 
-                case "norm":
-                    setMapForType("normalMap", value);
+                case 'norm':
+                    setMapForType('normalMap', value);
                     break;
 
-                case "map_bump":
-                case "bump":
+                case 'map_bump':
+                case 'bump':
                     // Bump texture map
-                    setMapForType("bumpMap", value);
+                    setMapForType('bumpMap', value);
                     break;
 
-                case "map_d":
+                case 'map_d':
                     // Alpha map
-                    setMapForType("alphaMap", value);
+                    setMapForType('alphaMap', value);
                     params.transparent = true;
                     break;
 
-                case "ns":
+                case 'ns':
                     // The specular exponent (defines the focus of the specular highlight)
                     // A high exponent results in a tight, concentrated highlight. Ns values normally range from 0 to 1000.
                     params.shininess = parseFloat(value);
                     break;
 
-                case "d":
+                case 'd':
                     n = parseFloat(value);
 
                     if (n < 1) {
@@ -350,7 +350,7 @@ class MaterialCreator {
 
                     break;
 
-                case "tr":
+                case 'tr':
                     n = parseFloat(value);
                     if (this.options && this.options.invertTrProperty) {
                         n = 1 - n;
@@ -379,14 +379,14 @@ class MaterialCreator {
         };
         const items = value.split(/\s+/);
         let pos;
-        pos = items.indexOf("-bm");
+        pos = items.indexOf('-bm');
 
         if (pos >= 0) {
             matParams.bumpScale = parseFloat(items[pos + 1]);
             items.splice(pos, 2);
         }
 
-        pos = items.indexOf("-s");
+        pos = items.indexOf('-s');
 
         if (pos >= 0) {
             texParams.scale.set(
@@ -396,7 +396,7 @@ class MaterialCreator {
             items.splice(pos, 4); // we expect 3 parameters here!
         }
 
-        pos = items.indexOf("-o");
+        pos = items.indexOf('-o');
 
         if (pos >= 0) {
             texParams.offset.set(
@@ -406,7 +406,7 @@ class MaterialCreator {
             items.splice(pos, 4); // we expect 3 parameters here!
         }
 
-        texParams.url = items.join(" ").trim();
+        texParams.url = items.join(' ').trim();
         return texParams;
     }
 

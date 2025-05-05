@@ -1,6 +1,6 @@
-import CANNON from "https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm";
-import { connections } from "./back.ts";
-import { Circuit } from "./lib/circuit.js";
+import CANNON from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
+import { connections } from './back.ts';
+import { Circuit } from './lib/circuit.js';
 
 // Set up physics world
 export const world = new CANNON.World();
@@ -9,8 +9,8 @@ world.broadphase = new CANNON.NaiveBroadphase();
 world.solver.iterations = 10;
 
 // Create materials
-const carMaterial = new CANNON.Material("car");
-const roadMaterial = new CANNON.Material("road");
+const carMaterial = new CANNON.Material('car');
+const roadMaterial = new CANNON.Material('road');
 
 // Create contact material (interaction between the two)
 const carRoadContactMaterial = new CANNON.ContactMaterial(
@@ -27,7 +27,7 @@ const carRoadContactMaterial = new CANNON.ContactMaterial(
 // Add to world
 world.addContactMaterial(carRoadContactMaterial);
 
-console.log("Initiated server world");
+console.log('Initiated server world');
 
 export const circuit = new Circuit(null, world, {
     turnNumber: 25,

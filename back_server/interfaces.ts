@@ -1,5 +1,5 @@
-import { JWTPayload } from "npm:jose@5.9.6";
-import { Car } from "./lib/car.js";
+import { JWTPayload } from 'npm:jose@5.9.6';
+import { Car } from './lib/car.js';
 
 export interface Bodies {
     [key: string]: Car;

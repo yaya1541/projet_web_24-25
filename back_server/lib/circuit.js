@@ -1,5 +1,5 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
-import CANNON from "https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm";
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
+import CANNON from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
 
 export class Circuit {
     constructor(scene, world, options = {}) {
@@ -150,7 +150,7 @@ export class Circuit {
 
             // Only process if we have enough points
             if (vec3Points.length < 2) {
-                console.error("Not enough points to create a curve");
+                console.error('Not enough points to create a curve');
                 // Return a simple line as fallback
                 return new THREE.CatmullRomCurve3([
                     new THREE.Vector3(-10, 0, 0),
@@ -163,7 +163,7 @@ export class Circuit {
             //const lastPoint = vec3Points[vec3Points.length - 1];
 
             // Don't create the curve as closed to avoid issues
-            return new THREE.CatmullRomCurve3(vec3Points, false, "catmullrom");
+            return new THREE.CatmullRomCurve3(vec3Points, false, 'catmullrom');
         };
 
         const cmrc3 = path_to_catmullrom3(this.path);
@@ -183,7 +183,7 @@ export class Circuit {
     createVisualRoad(curve) {
         // Check if the curve has valid points
         if (!curve || curve.points.length < 2) {
-            console.error("Invalid curve for extrusion");
+            console.error('Invalid curve for extrusion');
             return;
         }
 
@@ -194,7 +194,7 @@ export class Circuit {
         };
 
         // Define a simpler rectangle shape for the road cross-section
-        console.log("roadWidth", this.options.roadWidth / 2);
+        console.log('roadWidth', this.options.roadWidth / 2);
 
         const halfWidth = this.options.roadWidth / 2 || 10; // Default if undefined
         const shape = new THREE.Shape();
@@ -218,7 +218,7 @@ export class Circuit {
                     }
                 }
                 if (hasNaN) {
-                    console.warn("Fixed NaN values in geometry positions");
+                    console.warn('Fixed NaN values in geometry positions');
                     geometry.attributes.position.needsUpdate = true;
                 }
             }
@@ -243,7 +243,7 @@ export class Circuit {
                 this.scene.add(mesh);
             }
         } catch (error) {
-            console.error("Error creating road geometry:", error);
+            console.error('Error creating road geometry:', error);
         }
     }
 
@@ -275,7 +275,7 @@ export class Circuit {
                 mass: 0, // Static body
                 position: new CANNON.Vec3(midpoint.x, 0, midpoint.z),
                 shape: roadShape,
-                material: new CANNON.Material("road"),
+                material: new CANNON.Material('road'),
             });
 
             // For the road

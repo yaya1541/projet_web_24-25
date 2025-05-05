@@ -1,12 +1,12 @@
-import CANNON from "https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm";
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
-import { GLTFLoader } from "./GLTFLoader.js";
+import CANNON from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
+import { GLTFLoader } from './GLTFLoader.js';
 
 // Simple function to replace ALL materials in your model
 // Add this to your existing code
 
 function replaceAllMaterials(scene) {
-    console.log("Replacing all materials with compatible ones");
+    console.log('Replacing all materials with compatible ones');
 
     scene.traverse((object) => {
         if (object.isMesh) {
@@ -35,7 +35,7 @@ function replaceAllMaterials(scene) {
         }
     });
 
-    console.log("All materials replaced successfully");
+    console.log('All materials replaced successfully');
 }
 
 // Helper function to create a compatible material
@@ -68,8 +68,8 @@ function createSimpleMaterial(originalMaterial) {
 
     // Copy name for debugging
     newMaterial.name = originalMaterial.name
-        ? originalMaterial.name + "_fixed"
-        : "fixed_material";
+        ? originalMaterial.name + '_fixed'
+        : 'fixed_material';
 
     return newMaterial;
 }
@@ -134,7 +134,7 @@ export class Car {
         // Configure le gestionnaire de requêtes
         loader.withCredentials = true;
         loader.load(
-            "https://localhost:3000/src/racing_kart.glb",
+            'https://localhost:3000/src/racing_kart.glb',
             (obj) => {
                 if (this.carMesh) {
                     this.scene.remove(this.carMesh);
@@ -143,7 +143,7 @@ export class Car {
                 const object = obj.scene;
                 //this.loadedWheelMeshes = [];
                 this.wheelMeshes = [];
-                console.log("Scene", obj.scene);
+                console.log('Scene', obj.scene);
                 this.carMesh = object;
                 replaceAllMaterials(object);
 
@@ -170,7 +170,7 @@ export class Car {
                 // Vérifiez si ces valeurs semblent correctes par rapport à la taille de votre fichier
             }, // called when loading has errors
             function (error) {
-                console.log("An error happened");
+                console.log('An error happened');
                 console.log(error);
             },
         );
@@ -190,7 +190,7 @@ export class Car {
             shape.collisionFilterMask = 2; // Road group
         });
 
-        this.carMaterial = new CANNON.Material("car");
+        this.carMaterial = new CANNON.Material('car');
         this.carBody.material = this.carMaterial;
 
         this.world.addBody(this.carBody);
@@ -208,7 +208,7 @@ export class Car {
     createPhysicWheels() {
         // Create wheels
         this.wheelShape = new CANNON.Sphere(0.5);
-        this.wheelMaterial = new CANNON.Material("wheel");
+        this.wheelMaterial = new CANNON.Material('wheel');
 
         // Vehicle properties
         this.vehicle = new CANNON.RaycastVehicle({
@@ -415,9 +415,9 @@ export class Car {
         // Calculate target steering value
         deltaTime = deltaTime != 0 ? deltaTime : 0.01;
         let targetSteering = 0;
-        if (keysPressed["q"] || keysPressed["arrowleft"]) {
+        if (keysPressed['q'] || keysPressed['arrowleft']) {
             targetSteering = this.maxSteerVal;
-        } else if (keysPressed["d"] || keysPressed["arrowright"]) {
+        } else if (keysPressed['d'] || keysPressed['arrowright']) {
             targetSteering = -this.maxSteerVal;
         }
         //console.log(targetSteering);
@@ -426,10 +426,10 @@ export class Car {
         this.applySmoothSteering(targetSteering, deltaTime);
 
         // Apply engine force on rear wheels
-        if (keysPressed["z"] || keysPressed["arrowup"] && this.speed() < 130) {
+        if (keysPressed['z'] || keysPressed['arrowup'] && this.speed() < 130) {
             this.vehicle.applyEngineForce(-this.maxForce, 2);
             this.vehicle.applyEngineForce(-this.maxForce, 3);
-        } else if (keysPressed["s"] || keysPressed["arrowdown"]) {
+        } else if (keysPressed['s'] || keysPressed['arrowdown']) {
             this.vehicle.applyEngineForce(this.maxForce, 2);
             this.vehicle.applyEngineForce(this.maxForce, 3);
         } else {
@@ -440,7 +440,7 @@ export class Car {
         }
 
         // Apply brake
-        if (keysPressed[" "]) { // Spacebar
+        if (keysPressed[' ']) { // Spacebar
             this.vehicle.setBrake(this.brakeForce, 0);
             this.vehicle.setBrake(this.brakeForce, 1);
             this.vehicle.setBrake(this.brakeForce, 2);
@@ -456,9 +456,9 @@ export class Car {
         const isTurning = Math.abs(targetSteering) > 0.1;
         const speed = this.speed();
 
-        if (keysPressed["shift"] && isTurning && speed > 30) {
+        if (keysPressed['shift'] && isTurning && speed > 30) {
             this.startDrift();
-        } else if (!keysPressed["shift"] || !isTurning || speed < 15) {
+        } else if (!keysPressed['shift'] || !isTurning || speed < 15) {
             this.endDrift();
         }
 

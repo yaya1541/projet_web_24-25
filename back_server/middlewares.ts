@@ -1,6 +1,6 @@
-import { Context, Status } from "https://deno.land/x/oak@v17.1.4/mod.ts";
-import { createJWT, verifyJWT } from "./jwt_func.ts";
-import { Token } from "./interfaces.ts";
+import { Context, Status } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
+import { createJWT, verifyJWT } from './jwt_func.ts';
+import { Token } from './interfaces.ts';
 
 // Authorization middleware
 async function authorizationMiddleware(
@@ -9,12 +9,12 @@ async function authorizationMiddleware(
 ) {
     try {
         // Get access token and refresh token from cookies
-        const token = await ctx.cookies.get("accessToken");
-        const refreshToken = await ctx.cookies.get("refreshToken");
+        const token = await ctx.cookies.get('accessToken');
+        const refreshToken = await ctx.cookies.get('refreshToken');
 
         if (!token) {
             ctx.response.status = Status.Unauthorized;
-            ctx.response.body = { data: "Unauthorized: No token provided" };
+            ctx.response.body = { data: 'Unauthorized: No token provided' };
             return;
         }
 
@@ -34,7 +34,7 @@ async function authorizationMiddleware(
         if (!refreshToken) {
             ctx.response.status = Status.Unauthorized;
             ctx.response.body = {
-                data: "Unauthorized: No refresh token provided",
+                data: 'Unauthorized: No refresh token provided',
             };
             return;
         }
@@ -44,33 +44,33 @@ async function authorizationMiddleware(
         const refreshPayload = await verifyJWT(refreshToken);
         if (!refreshPayload) {
             ctx.response.status = Status.Unauthorized;
-            ctx.response.body = { data: "Unauthorized: Invalid refresh token" };
+            ctx.response.body = { data: 'Unauthorized: Invalid refresh token' };
             return;
         }
 
         // Generate new access token directly
         const newAccessToken = await generateAccessToken(
-            "10s",
+            '10s',
             (refreshPayload as Token).username,
         );
         const expiresIn = 3600; // 1 hour in seconds (adjust as needed)
 
         // Set new access token in cookies
-        await ctx.cookies.set("accessToken", newAccessToken, {
+        await ctx.cookies.set('accessToken', newAccessToken, {
             httpOnly: true,
-            secure: Deno.env.get("ENV") === "production",
-            sameSite: "lax",
+            secure: Deno.env.get('ENV') === 'production',
+            sameSite: 'lax',
             expires: new Date(Date.now() + expiresIn * 1000),
-            path: "/",
+            path: '/',
         });
 
         // Set user data
         ctx.state.user = { username: refreshPayload.username };
         await next();
     } catch (error) {
-        console.error("Authorization middleware error:", error);
+        console.error('Authorization middleware error:', error);
         ctx.response.status = Status.InternalServerError;
-        ctx.response.body = { data: "Internal server error" };
+        ctx.response.body = { data: 'Internal server error' };
     }
 }
 

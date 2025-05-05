@@ -1,17 +1,17 @@
-import { Client } from "https://deno.land/x/mysql@v2.12.1/mod.ts";
+import { Client } from 'https://deno.land/x/mysql@v2.12.1/mod.ts';
 
 const dbClient = await new Client().connect({
-    hostname: "127.0.0.1", // Try using IP instead of "localhost"
-    username: "netUser",
-    db: "projetWeb2425",
-    password: `${Deno.env.get("NET_DATABASE_PASS")}`,
+    hostname: '127.0.0.1', // Try using IP instead of "localhost"
+    username: 'netUser',
+    db: 'projetWeb2425',
+    password: `${Deno.env.get('NET_DATABASE_PASS')}`,
     port: 3306, // Explicitly set the port
 });
 
 //user in db
 export const UserExist = async (user: string) => {
     console.log(
-        "userExist : ",
+        'userExist : ',
         (await dbClient.execute(
             `SELECT count(*) as N FROM User WHERE name = ?`,
             [

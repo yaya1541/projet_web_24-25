@@ -1,4 +1,4 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 
 const _object_pattern = /^[og]\s*(.+)?/; // mtllib file_reference
 
@@ -38,16 +38,16 @@ function ParserState() {
             }
 
             const previousMaterial =
-                this.object && typeof this.object.currentMaterial === "function"
+                this.object && typeof this.object.currentMaterial === 'function'
                     ? this.object.currentMaterial()
                     : undefined;
 
-            if (this.object && typeof this.object._finalize === "function") {
+            if (this.object && typeof this.object._finalize === 'function') {
                 this.object._finalize(true);
             }
 
             this.object = {
-                name: name || "",
+                name: name || '',
                 fromDeclaration: fromDeclaration !== false,
                 geometry: {
                     vertices: [],
@@ -71,10 +71,10 @@ function ParserState() {
 
                     const material = {
                         index: this.materials.length,
-                        name: name || "",
+                        name: name || '',
                         mtllib: Array.isArray(libraries) && libraries.length > 0
                             ? libraries[libraries.length - 1]
-                            : "",
+                            : '',
                         smooth: previous !== undefined
                             ? previous.smooth
                             : this.smooth,
@@ -86,7 +86,7 @@ function ParserState() {
                         inherited: false,
                         clone: function (index) {
                             const cloned = {
-                                index: typeof index === "number"
+                                index: typeof index === 'number'
                                     ? index
                                     : this.index,
                                 name: this.name,
@@ -139,7 +139,7 @@ function ParserState() {
 
                     if (end && this.materials.length === 0) {
                         this.materials.push({
-                            name: "",
+                            name: '',
                             smooth: this.smooth,
                         });
                     }
@@ -154,7 +154,7 @@ function ParserState() {
 
             if (
                 previousMaterial && previousMaterial.name &&
-                typeof previousMaterial.clone === "function"
+                typeof previousMaterial.clone === 'function'
             ) {
                 const declared = previousMaterial.clone(0);
                 declared.inherited = true;
@@ -164,7 +164,7 @@ function ParserState() {
             this.objects.push(this.object);
         },
         finalize: function () {
-            if (this.object && typeof this.object._finalize === "function") {
+            if (this.object && typeof this.object._finalize === 'function') {
                 this.object._finalize(true);
             }
         },
@@ -265,7 +265,7 @@ function ParserState() {
             this.addVertex(ia, ib, ic);
             this.addColor(ia, ib, ic); // normals
 
-            if (na !== undefined && na !== "") {
+            if (na !== undefined && na !== '') {
                 const nLen = this.normals.length;
                 ia = this.parseNormalIndex(na, nLen);
                 ib = this.parseNormalIndex(nb, nLen);
@@ -275,7 +275,7 @@ function ParserState() {
                 this.addFaceNormal(ia, ib, ic);
             } // uvs
 
-            if (ua !== undefined && ua !== "") {
+            if (ua !== undefined && ua !== '') {
                 const uvLen = this.uvs.length;
                 ia = this.parseUVIndex(ua, uvLen);
                 ib = this.parseUVIndex(ub, uvLen);
@@ -288,7 +288,7 @@ function ParserState() {
             }
         },
         addPointGeometry: function (vertices) {
-            this.object.geometry.type = "Points";
+            this.object.geometry.type = 'Points';
             const vLen = this.vertices.length;
 
             for (let vi = 0, l = vertices.length; vi < l; vi++) {
@@ -298,7 +298,7 @@ function ParserState() {
             }
         },
         addLineGeometry: function (vertices, uvs) {
-            this.object.geometry.type = "Line";
+            this.object.geometry.type = 'Line';
             const vLen = this.vertices.length;
             const uvLen = this.uvs.length;
 
@@ -311,7 +311,7 @@ function ParserState() {
             }
         },
     };
-    state.startObject("", false);
+    state.startObject('', false);
     return state;
 } //
 
@@ -355,23 +355,23 @@ class OBJLoader extends THREE.Loader {
     parse(text) {
         const state = new ParserState();
 
-        if (text.indexOf("\r\n") !== -1) {
+        if (text.indexOf('\r\n') !== -1) {
             // This is faster than String.split with regex that splits on both
-            text = text.replace(/\r\n/g, "\n");
+            text = text.replace(/\r\n/g, '\n');
         }
 
-        if (text.indexOf("\\\n") !== -1) {
+        if (text.indexOf('\\\n') !== -1) {
             // join lines separated by a line continuation character (\)
-            text = text.replace(/\\\n/g, "");
+            text = text.replace(/\\\n/g, '');
         }
 
-        const lines = text.split("\n");
-        let line = "",
-            lineFirstChar = "";
+        const lines = text.split('\n');
+        let line = '',
+            lineFirstChar = '';
         let lineLength = 0;
         let result = []; // Faster to just trim left side of the line. Use if available.
 
-        const trimLeft = typeof "".trimLeft === "function";
+        const trimLeft = typeof ''.trimLeft === 'function';
 
         for (let i = 0, l = lines.length; i < l; i++) {
             line = lines[i];
@@ -380,13 +380,13 @@ class OBJLoader extends THREE.Loader {
             if (lineLength === 0) continue;
             lineFirstChar = line.charAt(0); // @todo invoke passed in handler if any
 
-            if (lineFirstChar === "#") continue;
+            if (lineFirstChar === '#') continue;
 
-            if (lineFirstChar === "v") {
+            if (lineFirstChar === 'v') {
                 const data = line.split(/\s+/);
 
                 switch (data[0]) {
-                    case "v":
+                    case 'v':
                         state.vertices.push(
                             parseFloat(data[1]),
                             parseFloat(data[2]),
@@ -406,7 +406,7 @@ class OBJLoader extends THREE.Loader {
 
                         break;
 
-                    case "vn":
+                    case 'vn':
                         state.normals.push(
                             parseFloat(data[1]),
                             parseFloat(data[2]),
@@ -414,14 +414,14 @@ class OBJLoader extends THREE.Loader {
                         );
                         break;
 
-                    case "vt":
+                    case 'vt':
                         state.uvs.push(
                             parseFloat(data[1]),
                             parseFloat(data[2]),
                         );
                         break;
                 }
-            } else if (lineFirstChar === "f") {
+            } else if (lineFirstChar === 'f') {
                 const lineData = line.substr(1).trim();
                 const vertexData = lineData.split(/\s+/);
                 const faceVertices = []; // Parse the face vertex data into an easy to work with format
@@ -430,7 +430,7 @@ class OBJLoader extends THREE.Loader {
                     const vertex = vertexData[j];
 
                     if (vertex.length > 0) {
-                        const vertexParts = vertex.split("/");
+                        const vertexParts = vertex.split('/');
                         faceVertices.push(vertexParts);
                     }
                 } // Draw an edge between the first vertex and all subsequent vertices to form an n-gon
@@ -452,25 +452,25 @@ class OBJLoader extends THREE.Loader {
                         v3[2],
                     );
                 }
-            } else if (lineFirstChar === "l") {
-                const lineParts = line.substring(1).trim().split(" ");
+            } else if (lineFirstChar === 'l') {
+                const lineParts = line.substring(1).trim().split(' ');
                 let lineVertices = [];
                 const lineUVs = [];
 
-                if (line.indexOf("/") === -1) {
+                if (line.indexOf('/') === -1) {
                     lineVertices = lineParts;
                 } else {
                     for (let li = 0, llen = lineParts.length; li < llen; li++) {
-                        const parts = lineParts[li].split("/");
-                        if (parts[0] !== "") lineVertices.push(parts[0]);
-                        if (parts[1] !== "") lineUVs.push(parts[1]);
+                        const parts = lineParts[li].split('/');
+                        if (parts[0] !== '') lineVertices.push(parts[0]);
+                        if (parts[1] !== '') lineUVs.push(parts[1]);
                     }
                 }
 
                 state.addLineGeometry(lineVertices, lineUVs);
-            } else if (lineFirstChar === "p") {
+            } else if (lineFirstChar === 'p') {
                 const lineData = line.substr(1).trim();
-                const pointData = lineData.split(" ");
+                const pointData = lineData.split(' ');
                 state.addPointGeometry(pointData);
             } else if ((result = _object_pattern.exec(line)) !== null) {
                 // o object_name
@@ -478,7 +478,7 @@ class OBJLoader extends THREE.Loader {
                 // g group_name
                 // WORKAROUND: https://bugs.chromium.org/p/v8/issues/detail?id=2869
                 // let name = result[ 0 ].substr( 1 ).trim();
-                const name = (" " + result[0].substr(1).trim()).substr(1);
+                const name = (' ' + result[0].substr(1).trim()).substr(1);
                 state.startObject(name);
             } else if (_material_use_pattern.test(line)) {
                 // material
@@ -495,8 +495,8 @@ class OBJLoader extends THREE.Loader {
                 console.warn(
                     'THREE.OBJLoader: Rendering identifier "usemap" not supported. Textures must be defined in MTL files.',
                 );
-            } else if (lineFirstChar === "s") {
-                result = line.split(" "); // smooth shading
+            } else if (lineFirstChar === 's') {
+                result = line.split(' '); // smooth shading
                 // @todo Handle files that have varying smooth values for a set of faces inside one geometry,
                 // but does not define a usemtl for each face set.
                 // This should be detected and a dummy material created (later MultiMaterial and geometry groups).
@@ -518,7 +518,7 @@ class OBJLoader extends THREE.Loader {
 
                 if (result.length > 1) {
                     const value = result[1].trim().toLowerCase();
-                    state.object.smooth = value !== "0" && value !== "off";
+                    state.object.smooth = value !== '0' && value !== 'off';
                 } else {
                     // ZBrush can produce "s" lines #11707
                     state.object.smooth = true;
@@ -528,7 +528,7 @@ class OBJLoader extends THREE.Loader {
                 if (material) material.smooth = state.object.smooth;
             } else {
                 // Handle null terminated files without exception
-                if (line === "\0") continue;
+                if (line === '\0') continue;
                 console.warn(
                     'THREE.OBJLoader: Unexpected line: "' + line + '"',
                 );
@@ -546,20 +546,20 @@ class OBJLoader extends THREE.Loader {
                 const object = state.objects[i];
                 const geometry = object.geometry;
                 const materials = object.materials;
-                const isLine = geometry.type === "Line";
-                const isPoints = geometry.type === "Points";
+                const isLine = geometry.type === 'Line';
+                const isPoints = geometry.type === 'Points';
                 let hasVertexColors = false; // Skip o/g line declarations that did not follow with any faces
 
                 if (geometry.vertices.length === 0) continue;
                 const buffergeometry = new THREE.BufferGeometry();
                 buffergeometry.setAttribute(
-                    "position",
+                    'position',
                     new THREE.Float32BufferAttribute(geometry.vertices, 3),
                 );
 
                 if (geometry.normals.length > 0) {
                     buffergeometry.setAttribute(
-                        "normal",
+                        'normal',
                         new THREE.Float32BufferAttribute(geometry.normals, 3),
                     );
                 }
@@ -567,14 +567,14 @@ class OBJLoader extends THREE.Loader {
                 if (geometry.colors.length > 0) {
                     hasVertexColors = true;
                     buffergeometry.setAttribute(
-                        "color",
+                        'color',
                         new THREE.Float32BufferAttribute(geometry.colors, 3),
                     );
                 }
 
                 if (geometry.hasUVIndices === true) {
                     buffergeometry.setAttribute(
-                        "uv",
+                        'uv',
                         new THREE.Float32BufferAttribute(geometry.uvs, 2),
                     );
                 } // Create materials
@@ -583,8 +583,8 @@ class OBJLoader extends THREE.Loader {
 
                 for (let mi = 0, miLen = materials.length; mi < miLen; mi++) {
                     const sourceMaterial = materials[mi];
-                    const materialHash = sourceMaterial.name + "_" +
-                        sourceMaterial.smooth + "_" + hasVertexColors;
+                    const materialHash = sourceMaterial.name + '_' +
+                        sourceMaterial.smooth + '_' + hasVertexColors;
                     let material = state.materials[materialHash];
 
                     if (this.materials !== null) {
@@ -702,13 +702,13 @@ class OBJLoader extends THREE.Loader {
                 });
                 const buffergeometry = new THREE.BufferGeometry();
                 buffergeometry.setAttribute(
-                    "position",
+                    'position',
                     new THREE.Float32BufferAttribute(state.vertices, 3),
                 );
 
                 if (state.colors.length > 0 && state.colors[0] !== undefined) {
                     buffergeometry.setAttribute(
-                        "color",
+                        'color',
                         new THREE.Float32BufferAttribute(state.colors, 3),
                     );
                     material.vertexColors = true;

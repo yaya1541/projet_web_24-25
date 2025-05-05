@@ -1,5 +1,5 @@
-import { JWTPayload, jwtVerify, SignJWT } from "npm:jose@5.9.6";
-import process from "node:process";
+import { JWTPayload, jwtVerify, SignJWT } from 'npm:jose@5.9.6';
+import process from 'node:process';
 
 const secret = new TextEncoder().encode(process.env.SECRET);
 
@@ -8,7 +8,7 @@ async function createJWT(
     payload: JWTPayload,
 ): Promise<string> {
     const jwt = await new SignJWT(payload)
-        .setProtectedHeader({ alg: "HS256" })
+        .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
         .setExpirationTime(duration)
         .sign(secret);

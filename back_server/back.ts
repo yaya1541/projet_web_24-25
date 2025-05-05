@@ -1,26 +1,26 @@
-import { Application, Router } from "https://deno.land/x/oak@v17.1.4/mod.ts";
-import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
-import { createJWT, verifyJWT } from "../BACK/jwt_func.ts";
-import { authorizationMiddleware } from "../BACK/middlewares.ts";
+import { Application, Router } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
+import { oakCors } from 'https://deno.land/x/cors@v1.2.2/mod.ts';
+import { createJWT, verifyJWT } from './jwt_func.ts';
+import { authorizationMiddleware } from './middlewares.ts';
 
 //import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
-import { bodies, circuit, connectedUsers, inputs, world } from "./script.js";
+import { bodies, circuit, connectedUsers, inputs, world } from './script.js';
 
-import { Car } from "./lib/car.js";
-import { InsertUser, UserExist, UserPassword } from "./rest.ts";
-import { Bodies, InputMessage, Inputs, Token } from "./interfaces.ts";
+import { Car } from './lib/car.js';
+import { InsertUser, UserExist, UserPassword } from './rest.ts';
+import { Bodies, InputMessage, Inputs, Token } from './interfaces.ts';
 
 const router = new Router();
 const app = new Application();
 
 app.use(oakCors({
-    origin: ["https://localhost:3000", "https://localhost:8080"],
-    methods: ["GET", "POST"],
+    origin: ['https://localhost:3000', 'https://localhost:8080'],
+    methods: ['GET', 'POST'],
     allowedHeaders: [
-        "Content-Type",
-        "Authorization",
-        "getsetcookie",
-        "setcookie",
+        'Content-Type',
+        'Authorization',
+        'getsetcookie',
+        'setcookie',
     ],
     optionsSuccessStatus: 200,
     credentials: true,
@@ -33,8 +33,8 @@ export const connections: WebSocket[] = [];
 //
 // MODULES
 //
-router.get("/lib/:module", authorizationMiddleware, async (ctx) => {
-    console.log("Trying to retrieve module");
+router.get('/lib/:module', authorizationMiddleware, async (ctx) => {
+    console.log('Trying to retrieve module');
 
     const { module } = ctx.params;
     console.log(`Sending : ${module}`);
@@ -43,7 +43,7 @@ router.get("/lib/:module", authorizationMiddleware, async (ctx) => {
 
     try {
         // Set the correct MIME type for JavaScript files
-        ctx.response.headers.set("Content-Type", "application/javascript");
+        ctx.response.headers.set('Content-Type', 'application/javascript');
 
         // Serve the file
         ctx.response.body = await Deno.readTextFile(path);
@@ -54,39 +54,39 @@ router.get("/lib/:module", authorizationMiddleware, async (ctx) => {
 });
 
 // resource loader
-router.get("/src/:module", async (ctx) => {
-    console.log("Trying to retrieve Resource");
+router.get('/src/:module', async (ctx) => {
+    console.log('Trying to retrieve Resource');
     const { module } = ctx.params;
     console.log(`Sending: ${module}`);
     const path = `./src/${module}`;
 
     try {
         // Determine the file extension
-        const fileExtension = (module.split(".").pop() as string).toLowerCase();
+        const fileExtension = (module.split('.').pop() as string).toLowerCase();
 
         // Set the appropriate Content-Type based on the file extension
         switch (fileExtension) {
-            case "gltf":
-            case "glb":
-                ctx.response.headers.set("Content-Type", "model/gltf-binary");
+            case 'gltf':
+            case 'glb':
+                ctx.response.headers.set('Content-Type', 'model/gltf-binary');
                 break;
-            case "svg":
-                ctx.response.headers.set("Content-Type", "image/svg+xml");
+            case 'svg':
+                ctx.response.headers.set('Content-Type', 'image/svg+xml');
                 break;
-            case "png":
-                ctx.response.headers.set("Content-Type", "image/png");
+            case 'png':
+                ctx.response.headers.set('Content-Type', 'image/png');
                 break;
-            case "jpg":
-            case "jpeg":
-                ctx.response.headers.set("Content-Type", "image/jpeg");
+            case 'jpg':
+            case 'jpeg':
+                ctx.response.headers.set('Content-Type', 'image/jpeg');
                 break;
-            case "css":
-                ctx.response.headers.set("Content-Type", "text/css");
+            case 'css':
+                ctx.response.headers.set('Content-Type', 'text/css');
                 break;
             default:
                 ctx.response.headers.set(
-                    "Content-Type",
-                    "application/octet-stream",
+                    'Content-Type',
+                    'application/octet-stream',
                 );
         }
 
@@ -104,20 +104,20 @@ export function notifyAllUsers(json: object) {
     connections.forEach((client) => {
         client.send(JSON.stringify(json));
     });
-    console.log("sent Message !");
+    console.log('sent Message !');
 }
 
 // Game
-router.get("/game/kartfever", authorizationMiddleware, (ctx) => {
-    console.log("Request recieved");
+router.get('/game/kartfever', authorizationMiddleware, (ctx) => {
+    console.log('Request recieved');
     try {
         const ws = ctx.upgrade();
         connections.push(ws);
 
         ws.onopen = async (_event) => {
             console.log(`New connection opened (${connections.length})`);
-            const user = await ctx.cookies.get("user") as string;
-            console.log("user : ", user);
+            const user = await ctx.cookies.get('user') as string;
+            console.log('user : ', user);
             if (connectedUsers.indexOf(user) == -1) {
                 connectedUsers.push(user);
             }
@@ -131,12 +131,12 @@ router.get("/game/kartfever", authorizationMiddleware, (ctx) => {
                 (bodies as Bodies)[user] = new Car(world, null, user);
                 (bodies as Bodies)[user].carBody!.position.y = 3;
                 (inputs as Inputs)[user] = {};
-                console.log("I : ", inputs);
+                console.log('I : ', inputs);
                 notifyAllUsers({ type: 4, users: Object.keys(bodies) });
             }
         };
         ws.onclose = (_event) => {
-            console.log("Connections closed");
+            console.log('Connections closed');
             function removeValue(
                 value: WebSocket,
                 index: number,
@@ -155,7 +155,7 @@ router.get("/game/kartfever", authorizationMiddleware, (ctx) => {
         };
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data) as InputMessage;
-            console.log("Message recieved", data);
+            console.log('Message recieved', data);
             switch (data.type) {
                 case 2:
                     (inputs as Inputs)[data.user][data.value] = true;
@@ -169,11 +169,11 @@ router.get("/game/kartfever", authorizationMiddleware, (ctx) => {
         };
     } catch {
         ctx.response.status = 501;
-        ctx.response.body = { message: "Unable to establish Websocket" };
+        ctx.response.body = { message: 'Unable to establish Websocket' };
     }
 });
 
-router.get("/game/kartfever/reload", (ctx) => {
+router.get('/game/kartfever/reload', (ctx) => {
     circuit.remove();
     circuit.reload();
     ctx.response.status = 200;
@@ -188,8 +188,8 @@ router.get("/api/stats/",(ctx)=>{})
 router.get("/api/stats/:user",(ctx)=>{})
 */
 
-router.get("/api/user/getdata", authorizationMiddleware, async (ctx) => {
-    const token = await ctx.cookies.get("refreshToken") as string;
+router.get('/api/user/getdata', authorizationMiddleware, async (ctx) => {
+    const token = await ctx.cookies.get('refreshToken') as string;
     const payload = await verifyJWT(token) as Token;
     console.log(payload);
     ctx.response.status = 200;
@@ -199,7 +199,7 @@ router.get("/api/user/getdata", authorizationMiddleware, async (ctx) => {
     };
 });
 
-router.post("/api/login", async (ctx) => {
+router.post('/api/login', async (ctx) => {
     const { user, pass } = await ctx.request.body.json();
     console.log(user, pass);
     try {
@@ -208,45 +208,45 @@ router.post("/api/login", async (ctx) => {
 
             if (await UserPassword(user) == pass) {
                 ctx.response.status = 200;
-                const refresh = await createJWT("14d", { username: user });
-                ctx.cookies.set("refreshToken", refresh, { httpOnly: true });
+                const refresh = await createJWT('14d', { username: user });
+                ctx.cookies.set('refreshToken', refresh, { httpOnly: true });
                 ctx.cookies.set(
-                    "accessToken",
-                    await createJWT("10s", { username: user }),
+                    'accessToken',
+                    await createJWT('10s', { username: user }),
                     { httpOnly: true },
                 );
-                ctx.cookies.set("user", user);
-                ctx.response.headers.set("Set-Login", "logged-in");
+                ctx.cookies.set('user', user);
+                ctx.response.headers.set('Set-Login', 'logged-in');
             } else {
                 ctx.response.status = 401;
             }
             //
         } else {
             ctx.response.status = 401;
-            console.log("User with this name already entered");
+            console.log('User with this name already entered');
         }
-        ctx.response.body = { message: "User registered successfully" };
+        ctx.response.body = { message: 'User registered successfully' };
     } catch (error) {
         console.error(error);
         ctx.response.status = 500;
-        ctx.response.body = { message: "Internal server error" };
+        ctx.response.body = { message: 'Internal server error' };
     }
 });
 
-router.post("/api/logout", authorizationMiddleware, (ctx) => {
-    ctx.cookies.delete("accessToken");
-    ctx.cookies.delete("refreshToken");
-    ctx.cookies.delete("user");
+router.post('/api/logout', authorizationMiddleware, (ctx) => {
+    ctx.cookies.delete('accessToken');
+    ctx.cookies.delete('refreshToken');
+    ctx.cookies.delete('user');
     ctx.response.status = 200;
 });
 
-router.get("/api/oauth", authorizationMiddleware, (ctx) => {
+router.get('/api/oauth', authorizationMiddleware, (ctx) => {
     const { refreshToken } = ctx.params;
     console.log(refreshToken);
     ctx.response.status = 200;
 });
 
-router.post("/api/register", async (ctx) => {
+router.post('/api/register', async (ctx) => {
     const data = await ctx.request.body.json();
     const user = data.user;
     const pass = data.pass;
@@ -257,22 +257,22 @@ router.post("/api/register", async (ctx) => {
             InsertUser(user, pass);
             ctx.response.status = 201;
         } else {
-            console.log("User with this name already registered");
+            console.log('User with this name already registered');
         }
-        ctx.response.body = { message: "User registered successfully" };
+        ctx.response.body = { message: 'User registered successfully' };
     } catch (error) {
         console.error(error);
         ctx.response.status = 500;
-        ctx.response.body = { message: "Internal server error" };
+        ctx.response.body = { message: 'Internal server error' };
     }
 });
 
 let session: number = 0;
 
-router.post("/api/startsession", async (ctx) => {
-    console.log("Protocol:", ctx.request.url.protocol);
-    console.log("Headers:", ctx.request.headers);
-    console.log("Cookies:", ctx.cookies);
+router.post('/api/startsession', async (ctx) => {
+    console.log('Protocol:', ctx.request.url.protocol);
+    console.log('Headers:', ctx.request.headers);
+    console.log('Cookies:', ctx.cookies);
 
     const expiration = new Date();
     expiration.setDate(expiration.getDate() + 1);
@@ -281,16 +281,16 @@ router.post("/api/startsession", async (ctx) => {
     session++;
     try {
         ctx.cookies.set(
-            "sessionId",
-            await createJWT("1d", { session: session }),
+            'sessionId',
+            await createJWT('1d', { session: session }),
             {
                 httpOnly: true,
                 secure: ctx.request.secure, // Only set secure if the request is actually secure
             },
         );
-        console.log("Cookie set successfully");
+        console.log('Cookie set successfully');
     } catch (error) {
-        console.error("Error setting cookie:", error);
+        console.error('Error setting cookie:', error);
     }
 });
 
@@ -302,8 +302,8 @@ router.post("/login");
 router.get("/oauth/refresh");
 */
 
-const certPath = "../certs/server.crt"; // Update to your certificate path
-const keyPath = "../certs/server.key"; // Update to your private key path
+const certPath = '../certs/server.crt'; // Update to your certificate path
+const keyPath = '../certs/server.key'; // Update to your private key path
 
 const options = {
     port: 3000,
