@@ -2,6 +2,74 @@ import CANNON from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 import { GLTFLoader } from './GLTFLoader.js';
 
+// Simple function to replace ALL materials in your model
+// Add this to your existing code
+
+function replaceAllMaterials(scene) {
+    console.log("Replacing all materials with compatible ones");
+    
+    scene.traverse((object) => {
+
+        if (object.isMesh) {
+            // Get basic properties from the original material
+            const originalMaterial = object.material;
+            const _texture = null;
+            const _color = 0xcccccc;
+            const _transparent = false;
+            const _opacity = 1.0;
+            
+            if (originalMaterial) {
+            // Handle array of materials
+            if (Array.isArray(originalMaterial)) {
+                // Create an array of new materials to replace the old ones
+                const newMaterials = originalMaterial.map(mat => {
+                return createSimpleMaterial(mat);
+                });
+                
+                // Replace with array of new materials
+                object.material = newMaterials;
+            } 
+            // Handle single material
+            else {
+                object.material = createSimpleMaterial(originalMaterial);
+            }
+            }
+        }
+    });
+    
+    console.log("All materials replaced successfully");
+  }
+  
+  // Helper function to create a compatible material
+  function createSimpleMaterial(originalMaterial) {
+    // Extract properties from original material
+    const texture = originalMaterial.map || null;
+    const color = originalMaterial.color ? originalMaterial.color.getHex() : 0xcccccc;
+    const transparent = originalMaterial.transparent || false;
+    const opacity = originalMaterial.opacity || 1.0;
+    const normalMap = originalMaterial.normalMap || null;
+    const emissive = originalMaterial.emissive ? originalMaterial.emissive.getHex() : 0x000000;
+    const emissiveMap = originalMaterial.emissiveMap || null;
+    
+    // Create new material - MeshPhongMaterial works well for most models
+    const newMaterial = new THREE.MeshPhongMaterial({
+      map: texture,
+      color: color,
+      transparent: transparent,
+      opacity: opacity,
+      normalMap: normalMap,
+      emissive: emissive,
+      emissiveMap: emissiveMap,
+      shininess: 30,
+      side: originalMaterial.side || THREE.DoubleSide
+    });
+    
+    // Copy name for debugging
+    newMaterial.name = originalMaterial.name ? originalMaterial.name + "_fixed" : "fixed_material";
+    
+    return newMaterial;
+  }
+
 export class Car{
     constructor(world, scene, id, options = {}){
         this.world = world;
@@ -12,6 +80,7 @@ export class Car{
             dimensions : {width : 2, height : 1, length : 4},
             color : 0x0066ff,
             mass : 500,
+            yOffset : -2,
             ...options
         }
         // Max steer, engine force values
@@ -32,6 +101,8 @@ export class Car{
         this.driftRecoveryRate = 0.5;
         this.driftTimer = 0;
 
+        this.yOffset = 5;
+
         if (world){
             this.createPhysicBody();
             this.createPhysicWheels();
@@ -42,68 +113,46 @@ export class Car{
                 quaternion:new CANNON.Quaternion(0,0,0)
             }
             this.createBody(); 
-            //this.createWheels();
+            this.createWheels();
             this.loadModel();
         }
         
     }
 
     loadModel(){
+        /*
         const positionOffset = {
             x:0,
-            y:0,
+            y:1,
             z:0
         }
+        */
         const loader = new GLTFLoader();
         // Configure le gestionnaire de requêtes
         loader.withCredentials = true;
-        loader.load('https://localhost:3000/src/Kart-3.glb',(obj)=>{
+        loader.load('https://localhost:3000/src/racing_kart.glb',(obj)=>{
             if (this.carMesh){
                 this.scene.remove(this.carMesh);
             }
             
-            const object = obj.scene.children[0];
+            const object = obj.scene;
             //this.loadedWheelMeshes = [];
             this.wheelMeshes = [];
             console.log("Scene",obj.scene);
-            console.log("Wheels ?",obj.scene.children[1].children);
-            
-            for (let index = 0; index < obj.scene.children[1].children.length; index++) {
-                this.wheelMeshes.push(obj.scene.children[1].children[index]);
-                this.scene.add(obj.scene.children[1].children[index]);
-                console.log("added wheel");
-                
-            }
             this.carMesh = object;
+            replaceAllMaterials(object);
 
+            // Center and scale model if needed
             const box = new THREE.Box3().setFromObject(object);
             const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 5 / maxDim;  // Scale to fit in view
             
-            object.position.set(0, 0, 0);
-            
-            object.traverse(child => {
-                if (child instanceof THREE.Mesh) {
-                    // Apply the original centering
-                    //child.geometry.translate(-center.x, -center.y, -center.z);
-                    
-                    // Then apply additional position offset
-                    /*child.geometry.translate(
-                        positionOffset.x, 
-                        positionOffset.y, 
-                        positionOffset.z
-                    );*/
-                    child.geometry.rotateY(-Math.PI/2);
-                    child.material.side = THREE.DoubleSide;
-                }
-            });
-            
-            object.rotation.y = -Math.PI/2;
-            object.castShadow = true;
-            object.updateMatrix();
-            
-            object.position.copy(this.carBody.position);
-            object.quaternion.copy(this.carBody.quaternion);
-            
+            object.position.x -= center.x;
+            object.position.y -= center.y;
+            object.position.z -= center.z;
+            object.scale.set(scale, scale, scale);
             this.scene.add(object);
             console.log(object);
             
@@ -122,7 +171,7 @@ export class Car{
     }
 
     createPhysicBody(){
-        const carBodyShape = new CANNON.Box(new CANNON.Vec3(1, 0.5, 2));
+        const carBodyShape = new CANNON.Box(new CANNON.Vec3(3,1,5));
         this.carBody = new CANNON.Body({ mass: 500 });
         this.carBody.addShape(carBodyShape);
         this.carBody.position.set(0, 1, 0);
@@ -143,7 +192,7 @@ export class Car{
     
     createBody(){
         // Create car body
-        const carGeometry = new THREE.BoxGeometry(2, 1, 4);
+        const carGeometry = new THREE.BoxGeometry(3, 1, 5);
         // Create car body visual
         this.carMesh = new THREE.Mesh(carGeometry, this.carMaterial);
         this.carMesh.castShadow = true;
@@ -170,7 +219,7 @@ export class Car{
             frictionSlip: this.normalFrictionSlip,
             dampingRelaxation: 2.3,
             dampingCompression: 4.4,
-            maxSuspensionForce: 100000,
+            maxSuspensionForce: 90000,
             rollInfluence: 0.01,
             axleLocal: new CANNON.Vec3(1, 0, 0),
             chassisConnectionPointLocal: new CANNON.Vec3(),
@@ -180,28 +229,28 @@ export class Car{
         };
 
         const frontWheelOptions = {
-            radius: 0.3,
+            radius: 0.4,
             ...wheelOptions
         };
         const backWheelOptions = {
-            radius: 0.5,
+            radius: 0.4,
             ...wheelOptions
         }
         
         // Front left wheel
-        wheelOptions.chassisConnectionPointLocal.set(-1.2, -.3, 1.1);
+        wheelOptions.chassisConnectionPointLocal.set(-1.5, -2, 1.1);
         this.vehicle.addWheel(frontWheelOptions);
         
         // Front right wheel
-        wheelOptions.chassisConnectionPointLocal.set(1.2, -.3, 1.1);
+        wheelOptions.chassisConnectionPointLocal.set(1.5, -2, 1.1);
         this.vehicle.addWheel(frontWheelOptions);
         
         // Rear left wheel
-        wheelOptions.chassisConnectionPointLocal.set(-1.1, -0.1, -1.2);
+        wheelOptions.chassisConnectionPointLocal.set(-1.1, -2, -1.5);
         this.vehicle.addWheel(backWheelOptions);
         
         // Rear right wheel
-        wheelOptions.chassisConnectionPointLocal.set(1.1, -0.1, -1.2);
+        wheelOptions.chassisConnectionPointLocal.set(1.1, -2, -1.5);
         this.vehicle.addWheel(backWheelOptions);
         
         this.vehicle.addToWorld(this.world);
@@ -284,7 +333,7 @@ export class Car{
             const sideVel = vel.vsub(forwardVel);
             
             // Calculate drift angle for visualization or gameplay effects
-            const driftAngle = Math.atan2(sideVel.length(), forwardVel.length());
+            const _driftAngle = Math.atan2(sideVel.length(), forwardVel.length());
             
             // Gradually reduce drift effect over time if needed
             if (this.driftTimer > 5) { // Maximum drift time in seconds
@@ -387,9 +436,13 @@ export class Car{
 
     update(deltaTime = 1/60) {
         // Update car mesh position and rotation
-        this.carMesh.position.copy(this.carBody.position);
+        this.carMesh.position.set(
+            this.carBody.position.x,
+            this.carBody.position.y - this.options.yOffset,
+            this.carBody.position.z
+        );
         this.carMesh.quaternion.copy(this.carBody.quaternion);
-        
+
         //console.log(this.currentSteering);
         this.checkWrongPosition();
 
@@ -398,6 +451,7 @@ export class Car{
             this.vehicle.updateWheelTransform(i);
             const transform = this.vehicle.wheelInfos[i].worldTransform;
             this.wheelMeshes[i].position.copy(transform.position);
+            this.wheelMeshes[i].position.y -= this.options.yOffset;
             this.wheelMeshes[i].quaternion.copy(transform.quaternion);
         }
         
