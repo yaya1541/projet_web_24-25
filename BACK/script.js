@@ -29,48 +29,84 @@ world.addContactMaterial(carRoadContactMaterial);
 
 console.log("Initiated server world");
 
-export const circuit = new Circuit(null,world);
+export const circuit = new Circuit(null,world,{turnNumber:25,turnAmplitude: 130,roadWidth:30});
 
 
 export const bodies = {}; // Store the Cannon.js bodies
-export var stateL = {};
-const inputs = {};
+export const connectedUsers = [];
+export let stateL = {};
+export const inputs = {};
 
-const EPSILON = 0.00005;
+const EPSILON = 0.01;
 
 function updatePhysics() {
-    world.step(1 / 60);
-
-    const state = {};
-    let hasChanges = false;
-
-    for (const id in bodies) {
-        const body = bodies[id];
-        const newPosition = { x: body.position.x, y: body.position.y, z: body.position.z };
-        const newQuaternion = { x: body.quaternion.x, y: body.quaternion.y, z: body.quaternion.z, w: body.quaternion.w };
-
-        if (!stateL[id] ||
-            Math.abs(stateL[id].position.x - newPosition.x ) > EPSILON &&
-            Math.abs(stateL[id].position.y - newPosition.y ) > EPSILON &&
-            Math.abs(stateL[id].position.z - newPosition.z ) > EPSILON ||
-            Math.abs(stateL[id].quaternion.x - newQuaternion.x ) > EPSILON &&
-            Math.abs(stateL[id].quaternion.y - newQuaternion.y ) > EPSILON &&
-            Math.abs(stateL[id].quaternion.z - newQuaternion.z ) > EPSILON &&
-            Math.abs(stateL[id].quaternion.w - newQuaternion.w) > EPSILON ) {
-            state[id] = { position: newPosition, quaternion: newQuaternion };
-            hasChanges = true;
-        }
+  // Step the physics world once
+  world.step(1 / 120);
+  
+  const state = {
+    type: 1,
+    user: {}
+  };
+  
+  let hasChanges = false;
+  
+  // Check each body for significant movement
+  for (const id in bodies) {
+    // Apply any control inputs
+    if (inputs[id]) {
+      bodies[id].control(inputs[id]);
     }
-
-    if (hasChanges) {
-        stateL = state;
-        connections.forEach((client) => {
-            client.send(JSON.stringify(state));
-        });
-
-        console.log("Sent state:", state); // Add this line for logging
+    
+    const body = bodies[id].carBody;
+    const newPosition = { x: body.position.x, y: body.position.y, z: body.position.z };
+    const newQuaternion = { x: body.quaternion.x, y: body.quaternion.y, z: body.quaternion.z, w: body.quaternion.w };
+    
+    // Check if this is a new body or if position/rotation has changed enough
+    const hasMovedEnough = !stateL[id] || hasChangedMoreThanEpsilon(stateL[id], newPosition, newQuaternion);
+    
+    if (hasMovedEnough) {
+      state.user[id] = { position: newPosition, quaternion: newQuaternion };
+      hasChanges = true;
     }
+  }
+  
+  // Only send updates if bodies have moved significantly
+  if (hasChanges) {
+    // Save the new state
+    stateL = {
+      type: state.type,
+      user: { ...state.user }  // Create a deep copy
+    };
+    // Send to all clients
+    connections.forEach((client) => {
+      client.send(JSON.stringify(state));
+    });
+  }
+  
+  // Final physics step
+  world.step(1 / 60);
 }
 
-setInterval(updatePhysics, 16.67); // Use 16.67ms for approximately 60 updates per second
+/**
+ * Helper function to check if position or quaternion has changed more than epsilon
+ */
+function hasChangedMoreThanEpsilon(oldState, newPosition, newQuaternion) {
+  // Check position (any axis exceeding epsilon counts as movement)
+  const positionChanged = 
+    Math.abs(oldState.position.x - newPosition.x) > EPSILON ||
+    Math.abs(oldState.position.y - newPosition.y) > EPSILON ||
+    Math.abs(oldState.position.z - newPosition.z) > EPSILON;
+  
+  // Check quaternion (any component exceeding epsilon counts as rotation)
+  const quaternionChanged = 
+    Math.abs(oldState.quaternion.x - newQuaternion.x) > EPSILON ||
+    Math.abs(oldState.quaternion.y - newQuaternion.y) > EPSILON ||
+    Math.abs(oldState.quaternion.z - newQuaternion.z) > EPSILON ||
+    Math.abs(oldState.quaternion.w - newQuaternion.w) > EPSILON;
+  
+  // Return true if either position or rotation changed significantly
+  return positionChanged || quaternionChanged;
+}
 
+// Run physics update approximately 30 times per second (16.67ms * 2)
+setInterval(updatePhysics, 16.67 * 2);
