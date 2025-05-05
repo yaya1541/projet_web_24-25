@@ -3,7 +3,7 @@ import { Application } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 
 // Define paths for SSL certificate and private key
 const certPath = "../certs/server.crt"; // Update to your certificate path
-const keyPath = "../certs/server.key";   // Update to your private key path
+const keyPath = "../certs/server.key";  // Update to your private key path
 
 // Create an Oak application
 const app = new Application();
@@ -12,6 +12,7 @@ const app = new Application();
 app.use(async (ctx) => {
   try {
     console.log("fetched data on server...")
+    ctx.response.headers.append("X-Frame-Options","SAMEORIGIN"); // deny iframe from other origins
     await ctx.send({
       root: `${Deno.cwd()}/`,
       index: "index.html"
