@@ -34,7 +34,7 @@ export function addRectangle(shape,x,y,w,h,thickness=1) {
 
 export function addQuad(shape,x,y,w,h,xo,yo,thickness =2){
     shape.add(quad(x,y,w,h,xo,yo));
-    var hs = new THREE.Shape();
+    const hs = new THREE.Shape();
     hs.add(quad(x,y,w-thickness,h-thickness,xo,yo));
     const hole = new THREE.ExtrudeGeometry(
         hs,

@@ -1,3 +1,3 @@
-export var Textures = {
+export const Textures = {
     
 }

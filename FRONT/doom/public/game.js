@@ -67,7 +67,7 @@ export class Game{
     }
 
     loadScene(objs){
-        for (const [key, value] of Object.entries(objs)) {
+        for (const [_, value] of Object.entries(objs)) {
             console.log(value);
             this.scene.add(value);
         }

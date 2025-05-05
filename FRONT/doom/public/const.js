@@ -1,3 +1,3 @@
-export var Constant = {
+export const Constant = {
     SPEED:1
 } 
