@@ -17,9 +17,9 @@ async function verifyJWT(token: string): Promise<JWTPayload | null> {
   try {
     const { payload } = await jwtVerify(token, secret);
     //console.log("JWT is valid:", payload);
+    console.log(payload);
     return payload;
-  } catch (error) {
-    console.error("Invalid JWT:", error);
+  } catch (_e) {
     return null;
   }
 }
