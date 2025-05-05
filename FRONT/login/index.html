@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Karting Rush - Connexion</title>
@@ -8,16 +8,21 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link
+      href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    >
+
     <script type="module" src="templates.js" defer></script>
-</head>
-<body style="visibility: hidden;">
-    <script>0</script>
-    
+  </head>
+  <body style="visibility: hidden">
+    <script>
+      0;
+    </script>
+
     <div class="background-overlay"></div>
     <style>
-      body{
+      body {
         background: transparent;
       }
     </style>
@@ -27,23 +32,33 @@
           <h1>KARTING<span>FEVER</span></h1>
         </div>
       </div>
-      
+
       <h2>Connexion</h2>
-      
+
       <div class="input-container">
         <div class="form-group">
           <label for="username">Nom d'utilisateur</label>
-          <input type="text" name="username" id="username" placeholder="Entrez votre nom d'utilisateur">
+          <input
+            type="text"
+            name="username"
+            id="username"
+            placeholder="Entrez votre nom d'utilisateur"
+          >
         </div>
-        
+
         <div class="form-group">
           <label for="password">Mot de passe</label>
-          <input type="password" name="password" id="password" placeholder="Entrez votre mot de passe">
+          <input
+            type="password"
+            name="password"
+            id="password"
+            placeholder="Entrez votre mot de passe"
+          >
         </div>
-        
+
         <button id="login-btn" class="primary-btn">Se connecter</button>
       </div>
-      
+
       <div class="links">
         <a href="#">Mot de passe oublié?</a>
         <a href="https://localhost:8080/register">Créer un compte</a>
@@ -51,15 +66,16 @@
     </div>
     <script>
       let domReady = (cb) => {
-        document.readyState === 'interactive' || document.readyState === 'complete'
+        document.readyState === "interactive" ||
+          document.readyState === "complete"
           ? cb()
-          : document.addEventListener('DOMContentLoaded', cb);
+          : document.addEventListener("DOMContentLoaded", cb);
       };
-      
+
       domReady(() => {
         // Display body when DOM is loaded
-        document.body.style.visibility = 'visible';
+        document.body.style.visibility = "visible";
       });
     </script>
-</body>
+  </body>
 </html>

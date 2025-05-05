@@ -1,3 +1,1 @@
-export const Textures = {
-    
-}
+export const Textures = {};

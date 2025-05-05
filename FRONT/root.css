@@ -1,12 +1,12 @@
-:root{
-    /*
-    Color palette
-    */
-    --blue-1 : #202D36;
-    --blue-2 : #5C7896;
-    --blue-3 : #7598B9;
-    --red-1 : #3C0007;
-    --red-2 : #800C1F;
-    --gray-1 : #929CAA;
-    --yellow-1 : #FFF200;
+:root {
+  /*
+  Color palette
+  */
+  --blue-1: #202d36;
+  --blue-2: #5c7896;
+  --blue-3: #7598b9;
+  --red-1: #3c0007;
+  --red-2: #800c1f;
+  --gray-1: #929caa;
+  --yellow-1: #fff200;
 }

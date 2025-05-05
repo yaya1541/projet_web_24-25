@@ -1,12 +1,12 @@
-import { oauth,handleLogin } from "./utils.js";
+import { handleLogin, oauth } from "./utils.js";
 
-class Footer extends HTMLElement{
-    constructor(){
-        super();
-    }
+class Footer extends HTMLElement {
+  constructor() {
+    super();
+  }
 
-    connectedCallback(){
-        this.innerHTML = `
+  connectedCallback() {
+    this.innerHTML = `
         <footer class="main-footer">
             <div class="footer-content">
             <div class="footer-info">
@@ -55,24 +55,24 @@ class Footer extends HTMLElement{
                 <a href="#" class="social-icon">YT</a>
             </div>
             </div>
-        </footer>`
-    }
+        </footer>`;
+  }
 }
 
-class Header extends HTMLElement{
-    constructor(){
-        super();
-        this.fr = document.createElement("iframe");
-        this.fr.id = "myFrame"
-        this.fr.frameBorder = 0;
-        this.fr.width = '500';
-        this.fr.height ='700';
-        this.fr.scrolling = 'no';
-        this.fr.style = 'top:5vh;right:5vw;position:absolute;z-index:200';
-    }
+class Header extends HTMLElement {
+  constructor() {
+    super();
+    this.fr = document.createElement("iframe");
+    this.fr.id = "myFrame";
+    this.fr.frameBorder = 0;
+    this.fr.width = "500";
+    this.fr.height = "700";
+    this.fr.scrolling = "no";
+    this.fr.style = "top:5vh;right:5vw;position:absolute;z-index:200";
+  }
 
-    async connectedCallback(){
-        this.innerHTML = `
+  async connectedCallback() {
+    this.innerHTML = `
         <header class="main-header">
             <div class="header-content">
                 <div class="logo-text">KARTING<span>FEVER</span></div>
@@ -100,53 +100,51 @@ class Header extends HTMLElement{
             </div>
         </header>
         `;
-        await this.oauthHandler();
-        
-    }
+    await this.oauthHandler();
+  }
 
-    async oauthHandler(){
-        const login = document.createElement("button");
-        const register = document.createElement("button");
-        const logout = document.createElement("button");
-        const play = document.createElement("li");
-        const play_link = document.createElement("a");
+  async oauthHandler() {
+    const login = document.createElement("button");
+    const register = document.createElement("button");
+    const logout = document.createElement("button");
+    const play = document.createElement("li");
+    const play_link = document.createElement("a");
 
-        login.id = "login";
-        login.innerText = "Login";
-        login.classList.add("auth-btn");
+    login.id = "login";
+    login.innerText = "Login";
+    login.classList.add("auth-btn");
 
-        login.addEventListener("click",(ev)=>{
-            this.bindIFrame(this.fr,ev);
-        })
+    login.addEventListener("click", (ev) => {
+      this.bindIFrame(this.fr, ev);
+    });
 
-        register.id = "register";
-        register.innerText = "Register";
-        register.classList.add("auth-btn");
+    register.id = "register";
+    register.innerText = "Register";
+    register.classList.add("auth-btn");
 
-        register.addEventListener("click",(ev)=>{
-            this.bindIFrame(this.fr,ev);
-        })
+    register.addEventListener("click", (ev) => {
+      this.bindIFrame(this.fr, ev);
+    });
 
-        logout.id = "logout";
-        logout.innerText = "Log out";
-        logout.classList.add("auth-btn");
+    logout.id = "logout";
+    logout.innerText = "Log out";
+    logout.classList.add("auth-btn");
 
-        logout.addEventListener("click",async (_ev)=>{
-            await this.logout();
-        })
+    logout.addEventListener("click", async (_ev) => {
+      await this.logout();
+    });
 
-        play.classList.add("nav-item");
-        play.appendChild(play_link);
-        play_link.href = "/kartfever/game";
-        play_link.innerHTML = "Play";
-        play_link.classList.add("nav-link");
+    play.classList.add("nav-item");
+    play.appendChild(play_link);
+    play_link.href = "/kartfever/game";
+    play_link.innerHTML = "Play";
+    play_link.classList.add("nav-link");
 
-
-        console.log(await oauth);
-        if (await oauth == 200){
-            // 1. First, let's modify your code to add some debugging and styles
-            const avatar = document.createElement("div");
-            avatar.innerHTML = `
+    console.log(await oauth);
+    if (await oauth == 200) {
+      // 1. First, let's modify your code to add some debugging and styles
+      const avatar = document.createElement("div");
+      avatar.innerHTML = `
             <div class="account-menu-wrapper">
                 <button id="avatar-btn" class="avatar-btn">
                 <img 
@@ -160,70 +158,70 @@ class Header extends HTMLElement{
             </div>
             `;
 
-            const headerAuth = document.querySelector(".header-auth");
-            headerAuth.appendChild(logout);
-            headerAuth.appendChild(avatar);
-            console.log("Oauth : Already Logged in !");
+      const headerAuth = document.querySelector(".header-auth");
+      headerAuth.appendChild(logout);
+      headerAuth.appendChild(avatar);
+      console.log("Oauth : Already Logged in !");
 
-            const navbar = document.querySelector(".nav-items");
-            navbar.appendChild(play);
-        }else if (await oauth == 401){
-            const headerAuth = document.querySelector(".header-auth");
-            headerAuth.appendChild(login);
-            headerAuth.appendChild(register);
-        }
+      const navbar = document.querySelector(".nav-items");
+      navbar.appendChild(play);
+    } else if (await oauth == 401) {
+      const headerAuth = document.querySelector(".header-auth");
+      headerAuth.appendChild(login);
+      headerAuth.appendChild(register);
     }
+  }
 
-    async logout(){
-        const response = await fetch("https://localhost:3000/api/logout",{
-            method:"POST",
-            credentials :"include"
-        })
-        if (response.status==200){
-            document.location.reload();
-        }
+  async logout() {
+    const response = await fetch("https://localhost:3000/api/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+    if (response.status == 200) {
+      document.location.reload();
     }
+  }
 
-    bindIFrame(frame,ev){
-        frame.src = `./${ev.target.id}`;
-        ev.target.after(this.fr);
-        try {
-            // Attendre que l'iframe soit complètement chargée
-            frame.addEventListener('load', function() {
-                // Accéder au document de l'iframe
-                const cw = frame.contentWindow.document;
-                console.log('Document iframe chargé:', cw);
-                
-                // Maintenant que l'iframe est chargée, on peut chercher les éléments
-                const password = cw.getElementById("password");
-                const loginBtn = cw.getElementById("login-btn");
-                
-                // Vérifier que les éléments existent
-                if (password && loginBtn) {
-                    // Ajouter les écouteurs d'événements
-                    password.addEventListener('keyup', function(event) {
-                    if (event.key === 'Enter') {
-                        handleLogin(cw);
-                    }
-                    });
-                    
-                    loginBtn.addEventListener('click', function() {
-                        handleLogin(cw);
-                    });
-                } else {
-                    console.error("Éléments non trouvés dans l'iframe");
-                }
-            });
-        } catch (e) {
-            console.error("Cannot access iframe content:", e);
+  bindIFrame(frame, ev) {
+    frame.src = `./${ev.target.id}`;
+    ev.target.after(this.fr);
+    try {
+      // Attendre que l'iframe soit complètement chargée
+      frame.addEventListener("load", function () {
+        // Accéder au document de l'iframe
+        const cw = frame.contentWindow.document;
+        console.log("Document iframe chargé:", cw);
+
+        // Maintenant que l'iframe est chargée, on peut chercher les éléments
+        const password = cw.getElementById("password");
+        const loginBtn = cw.getElementById("login-btn");
+
+        // Vérifier que les éléments existent
+        if (password && loginBtn) {
+          // Ajouter les écouteurs d'événements
+          password.addEventListener("keyup", function (event) {
+            if (event.key === "Enter") {
+              handleLogin(cw);
+            }
+          });
+
+          loginBtn.addEventListener("click", function () {
+            handleLogin(cw);
+          });
+        } else {
+          console.error("Éléments non trouvés dans l'iframe");
         }
+      });
+    } catch (e) {
+      console.error("Cannot access iframe content:", e);
     }
+  }
 }
 /*
 customElements.whenDefined("header-component").then(()=>
 {
     const auth_btns = document.getElementsByClassName("auth-btn");
-    
+
     const find_btns = ()=>{
         if (auth_btns.length == 2) {
             console.log("Charged");
@@ -238,10 +236,7 @@ customElements.whenDefined("header-component").then(()=>
 
     find_btns();
 }
-) */ 
-        
-        
-        
+) */
 
-customElements.define('footer-component', Footer);
-customElements.define('header-component', Header);
+customElements.define("footer-component", Footer);
+customElements.define("header-component", Header);

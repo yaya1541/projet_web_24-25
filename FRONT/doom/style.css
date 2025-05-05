@@ -1,21 +1,21 @@
 .ui {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    z-index: 10;
-    visibility: visible;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 10;
+  visibility: visible;
 }
 
-.gameUI{
-    position: absolute;
-    top: 50vh;
-    left: 50vw;
-    align-items: center;
+.gameUI {
+  position: absolute;
+  top: 50vh;
+  left: 50vw;
+  align-items: center;
 }
 
-.crosshair{
-    margin: 10px;
-    padding: 10px;
-    z-index: 2;
-    background: #fff;
+.crosshair {
+  margin: 10px;
+  padding: 10px;
+  z-index: 2;
+  background: #fff;
 }

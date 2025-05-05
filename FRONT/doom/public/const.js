@@ -1,3 +1,3 @@
 export const Constant = {
-    SPEED:1
-} 
+  SPEED: 1,
+};

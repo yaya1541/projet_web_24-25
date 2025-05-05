@@ -9,15 +9,34 @@ const dbClient = await new Client().connect({
 });
 
 //user in db
-export const UserExist = async (user:string)=>{console.log("userExist : ",(await dbClient.execute(`SELECT count(*) as N FROM User WHERE name = ?`,[user])).rows![0].N == 1);
-;return (await dbClient.execute(`SELECT count(*) as N FROM User WHERE name = ?`,[user])).rows![0].N == 1};
+export const UserExist = async (user: string) => {
+  console.log(
+    "userExist : ",
+    (await dbClient.execute(`SELECT count(*) as N FROM User WHERE name = ?`, [
+      user,
+    ])).rows![0].N == 1,
+  );
+  return (await dbClient.execute(
+    `SELECT count(*) as N FROM User WHERE name = ?`,
+    [user],
+  )).rows![0].N == 1;
+};
 
 //get password
 // TODO : hash password.
-export const UserPassword = async (user:string)=>{return (await dbClient.execute(`SELECT password FROM User WHERE name = ?;`,[user])).rows![0].password};
+export const UserPassword = async (user: string) => {
+  return (await dbClient.execute(`SELECT password FROM User WHERE name = ?;`, [
+    user,
+  ])).rows![0].password;
+};
 
 //insert user
-export const InsertUser = async (user:string,pass:string)=>{return await dbClient.execute(`INSERT INTO User (name, password) VALUES (?, ?);`,[user, pass])};
+export const InsertUser = async (user: string, pass: string) => {
+  return await dbClient.execute(
+    `INSERT INTO User (name, password) VALUES (?, ?);`,
+    [user, pass],
+  );
+};
 
 // TODO : mail regex verification
 // TODO : stats insertion
