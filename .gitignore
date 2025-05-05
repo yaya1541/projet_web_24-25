@@ -1,8 +1,11 @@
 */.vscode/*.
 .env
 ./certs/*
-./.github/
-*.json
+deno.lock
 *.lock
 *.sql
+*.pem
+scripts.json
+jsconfig.json
 node_modules
+*.puml
