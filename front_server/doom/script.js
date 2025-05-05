@@ -67,21 +67,21 @@ quit.addEventListener('click', function() {
     document.location.href = "/home"
 });
 */
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
-import { CSS2DRenderer } from "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/renderers/CSS2DRenderer.js";
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
+import { CSS2DRenderer } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/renderers/CSS2DRenderer.js';
 
-const back = "https://localhost:3000/";
+const back = 'https://localhost:3000/';
 const SPEED = 0.3;
 
-const diff = new THREE.TextureLoader().load("src/textures/429.png");
+const diff = new THREE.TextureLoader().load('src/textures/429.png');
 const _disp = new THREE.TextureLoader().load(
-    "src/textures/peeling_painted_wall_disp_1k.png",
+    'src/textures/peeling_painted_wall_disp_1k.png',
 );
 diff.wrapS = THREE.RepeatWrapping;
 diff.wrapT = THREE.RepeatWrapping;
 diff.repeat.set(1 / 5, 1 / 15);
 
-const ceilTexture = new THREE.TextureLoader().load("src/textures/082.png");
+const ceilTexture = new THREE.TextureLoader().load('src/textures/082.png');
 ceilTexture.wrapS = THREE.RepeatWrapping;
 ceilTexture.wrapT = THREE.RepeatWrapping;
 ceilTexture.repeat.set(64, 64);
@@ -100,7 +100,7 @@ let isLocked = false;
 async function init() {
     const scene = new THREE.Scene();
     const loader = new THREE.ObjectLoader();
-    const _data = await fetch(back + "api/map-data")
+    const _data = await fetch(back + 'api/map-data')
         .then((response) => response.json())
         .then((data) => {
             console.log(data);
@@ -111,7 +111,7 @@ async function init() {
                     output.push(loader.parse(element, (xhr) => {
                         scene.add(xhr);
                         xhr.material.map = diff;
-                        if (key == "third") {
+                        if (key == 'third') {
                             xhr.material.map = ceilTexture;
                         }
                         console.log(xhr);
@@ -138,8 +138,8 @@ async function init() {
 
     const labelRenderer = new CSS2DRenderer();
     labelRenderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
-    labelRenderer.domElement.style.position = "absolute";
-    labelRenderer.domElement.style.top = "0px";
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
 
     document.body.appendChild(labelRenderer.domElement);
     function animate() {
@@ -168,33 +168,33 @@ function handleMouseMove(event, camera) {
     }
 }
 
-const socket = new WebSocket("https://localhost:3000/game");
+const socket = new WebSocket('https://localhost:3000/game');
 //ws.onerror((ctx)=>console.log("no ws"));
 socket.onopen = () => {
     init();
-    document.addEventListener("keyup", () => {
-        socket.send("not moving");
+    document.addEventListener('keyup', () => {
+        socket.send('not moving');
         moving = false;
     });
-    document.addEventListener("keydown", () => {
+    document.addEventListener('keydown', () => {
         if (isLocked && !moving) {
-            socket.send("moving");
+            socket.send('moving');
             //moving = true;
         }
     });
 
-    document.addEventListener("mousemove", (event) => {
+    document.addEventListener('mousemove', (event) => {
         handleMouseMove(event, camera);
         //ws.send(JSON.stringify({player:player.name,"event":"rotation",value:player.camera.rotation.y}));
     });
-    document.addEventListener("pointerlockchange", function () {
+    document.addEventListener('pointerlockchange', function () {
         isLocked = document.pointerLockElement === document.body;
         console.log(isLocked);
 
-        if (ui.style.visibility == "hidden") {
-            ui.style.visibility = "visible";
+        if (ui.style.visibility == 'hidden') {
+            ui.style.visibility = 'visible';
         } else {
-            ui.style.visibility = "hidden";
+            ui.style.visibility = 'hidden';
         }
     });
 };
@@ -202,19 +202,19 @@ socket.onopen = () => {
 socket.onmessage = (event) => {
     console.log(event);
 
-    if (event.data == "moving") {
+    if (event.data == 'moving') {
         moving = true;
     }
-    if (event.data == "not moving") {
+    if (event.data == 'not moving') {
         moving = false;
     }
 };
 
 /// UI
 
-const ui = document.getElementById("ui");
+const ui = document.getElementById('ui');
 const resume = ui.children[0];
-resume.addEventListener("click", () => {
+resume.addEventListener('click', () => {
     //document.body.requestFullscreen();
     //renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.requestPointerLock();

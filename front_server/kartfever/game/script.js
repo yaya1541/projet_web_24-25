@@ -1,9 +1,9 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 
-import { Circuit } from "https://localhost:3000/lib/circuit.js";
-import { Car } from "https://localhost:3000/lib/car.js";
+import { Circuit } from 'https://localhost:3000/lib/circuit.js';
+import { Car } from 'https://localhost:3000/lib/car.js';
 
-const ws = new WebSocket("wss://localhost:3000/game/kartfever");
+const ws = new WebSocket('wss://localhost:3000/game/kartfever');
 
 // Basic Driveable Car using Cannon.js and Three.js
 const scene = new THREE.Scene();
@@ -37,11 +37,11 @@ directionalLight.shadow.mapSize.height = 1024;
 scene.add(directionalLight);
 
 const keysPressed = {};
-document.addEventListener("keydown", (event) => {
+document.addEventListener('keydown', (event) => {
     keysPressed[event.key.toLowerCase()] = true;
 });
 
-document.addEventListener("keyup", (event) => {
+document.addEventListener('keyup', (event) => {
     keysPressed[event.key.toLowerCase()] = false;
 });
 
@@ -80,15 +80,15 @@ function animate(time) {
 }
 
 // Handle window resize
-globalThis.addEventListener("resize", () => {
+globalThis.addEventListener('resize', () => {
     camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
 });
 
 let username = await fetch(`https://localhost:3000/api/user/getdata`, {
-    method: "GET",
-    credentials: "include",
+    method: 'GET',
+    credentials: 'include',
 }).then(async (res) => {
     return await res.json();
 }).then((data) => {
@@ -107,8 +107,8 @@ animate();
 
 ws.onopen = async (_ctx) => {
     username = await fetch(`https://localhost:3000/api/user/getdata`, {
-        method: "GET",
-        credentials: "include",
+        method: 'GET',
+        credentials: 'include',
     }).then(async (res) => {
         return await res.json();
     }).then((data) => {
@@ -123,7 +123,7 @@ ws.onmessage = (ctx) => {
     const data = JSON.parse(ctx.data);
     switch (data.type) {
         case 0: {
-            console.log("Received data:", data); // Add this line for logging
+            console.log('Received data:', data); // Add this line for logging
             circuit = new Circuit(scene, null, {
                 roadWidth: data.CircuitWitdh,
             });
@@ -176,7 +176,7 @@ ws.onmessage = (ctx) => {
         }
         case 4: {
             /*new player connection;*/
-            console.log("New player connected", data);
+            console.log('New player connected', data);
             data.users.forEach((elt) => {
                 if (!cars[elt]) {
                     cars[elt] = new Car(null, scene, elt);
@@ -193,7 +193,7 @@ ws.onmessage = (ctx) => {
 ws.onerror = (ctx) => {
     switch (ctx.status) {
         case 401:
-            document.location.replace("https://localhost:8080/login");
+            document.location.replace('https://localhost:8080/login');
             break;
         default:
             break;
@@ -202,7 +202,7 @@ ws.onerror = (ctx) => {
 
 const inputs = {};
 
-document.addEventListener("keydown", (event) => {
+document.addEventListener('keydown', (event) => {
     if (!inputs[event.key]) {
         ws.send(JSON.stringify({
             type: 2,
@@ -213,7 +213,7 @@ document.addEventListener("keydown", (event) => {
     inputs[event.key] = true;
 });
 
-document.addEventListener("keyup", (event) => {
+document.addEventListener('keyup', (event) => {
     ws.send(JSON.stringify({
         type: 3,
         user: username,
@@ -223,7 +223,7 @@ document.addEventListener("keyup", (event) => {
 });
 
 globalThis.onbeforeunload = (_ev) => {
-    alert("window unloading");
+    alert('window unloading');
 };
 /*
 window.addEventListener("gamepadconnected", (e) => {

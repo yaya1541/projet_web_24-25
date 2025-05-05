@@ -1,4 +1,4 @@
-import { handleLogin, oauth } from "./utils.js";
+import { handleLogin, oauth } from './utils.js';
 
 class Footer extends HTMLElement {
     constructor() {
@@ -62,13 +62,13 @@ class Footer extends HTMLElement {
 class Header extends HTMLElement {
     constructor() {
         super();
-        this.fr = document.createElement("iframe");
-        this.fr.id = "myFrame";
+        this.fr = document.createElement('iframe');
+        this.fr.id = 'myFrame';
         this.fr.frameBorder = 0;
-        this.fr.width = "500";
-        this.fr.height = "700";
-        this.fr.scrolling = "no";
-        this.fr.style = "top:5vh;right:5vw;position:absolute;z-index:200";
+        this.fr.width = '500';
+        this.fr.height = '700';
+        this.fr.scrolling = 'no';
+        this.fr.style = 'top:5vh;right:5vw;position:absolute;z-index:200';
     }
 
     async connectedCallback() {
@@ -104,46 +104,46 @@ class Header extends HTMLElement {
     }
 
     async oauthHandler() {
-        const login = document.createElement("button");
-        const register = document.createElement("button");
-        const logout = document.createElement("button");
-        const play = document.createElement("li");
-        const play_link = document.createElement("a");
+        const login = document.createElement('button');
+        const register = document.createElement('button');
+        const logout = document.createElement('button');
+        const play = document.createElement('li');
+        const play_link = document.createElement('a');
 
-        login.id = "login";
-        login.innerText = "Login";
-        login.classList.add("auth-btn");
+        login.id = 'login';
+        login.innerText = 'Login';
+        login.classList.add('auth-btn');
 
-        login.addEventListener("click", (ev) => {
+        login.addEventListener('click', (ev) => {
             this.bindIFrame(this.fr, ev);
         });
 
-        register.id = "register";
-        register.innerText = "Register";
-        register.classList.add("auth-btn");
+        register.id = 'register';
+        register.innerText = 'Register';
+        register.classList.add('auth-btn');
 
-        register.addEventListener("click", (ev) => {
+        register.addEventListener('click', (ev) => {
             this.bindIFrame(this.fr, ev);
         });
 
-        logout.id = "logout";
-        logout.innerText = "Log out";
-        logout.classList.add("auth-btn");
+        logout.id = 'logout';
+        logout.innerText = 'Log out';
+        logout.classList.add('auth-btn');
 
-        logout.addEventListener("click", async (_ev) => {
+        logout.addEventListener('click', async (_ev) => {
             await this.logout();
         });
 
-        play.classList.add("nav-item");
+        play.classList.add('nav-item');
         play.appendChild(play_link);
-        play_link.href = "/kartfever/game";
-        play_link.innerHTML = "Play";
-        play_link.classList.add("nav-link");
+        play_link.href = '/kartfever/game';
+        play_link.innerHTML = 'Play';
+        play_link.classList.add('nav-link');
 
         console.log(await oauth);
         if (await oauth == 200) {
             // 1. First, let's modify your code to add some debugging and styles
-            const avatar = document.createElement("div");
+            const avatar = document.createElement('div');
             avatar.innerHTML = `
             <div class="account-menu-wrapper">
                 <button id="avatar-btn" class="avatar-btn">
@@ -158,24 +158,24 @@ class Header extends HTMLElement {
             </div>
             `;
 
-            const headerAuth = document.querySelector(".header-auth");
+            const headerAuth = document.querySelector('.header-auth');
             headerAuth.appendChild(logout);
             headerAuth.appendChild(avatar);
-            console.log("Oauth : Already Logged in !");
+            console.log('Oauth : Already Logged in !');
 
-            const navbar = document.querySelector(".nav-items");
+            const navbar = document.querySelector('.nav-items');
             navbar.appendChild(play);
         } else if (await oauth == 401) {
-            const headerAuth = document.querySelector(".header-auth");
+            const headerAuth = document.querySelector('.header-auth');
             headerAuth.appendChild(login);
             headerAuth.appendChild(register);
         }
     }
 
     async logout() {
-        const response = await fetch("https://localhost:3000/api/logout", {
-            method: "POST",
-            credentials: "include",
+        const response = await fetch('https://localhost:3000/api/logout', {
+            method: 'POST',
+            credentials: 'include',
         });
         if (response.status == 200) {
             document.location.reload();
@@ -187,25 +187,25 @@ class Header extends HTMLElement {
         ev.target.after(this.fr);
         try {
             // Attendre que l'iframe soit complètement chargée
-            frame.addEventListener("load", function () {
+            frame.addEventListener('load', function () {
                 // Accéder au document de l'iframe
                 const cw = frame.contentWindow.document;
-                console.log("Document iframe chargé:", cw);
+                console.log('Document iframe chargé:', cw);
 
                 // Maintenant que l'iframe est chargée, on peut chercher les éléments
-                const password = cw.getElementById("password");
-                const loginBtn = cw.getElementById("login-btn");
+                const password = cw.getElementById('password');
+                const loginBtn = cw.getElementById('login-btn');
 
                 // Vérifier que les éléments existent
                 if (password && loginBtn) {
                     // Ajouter les écouteurs d'événements
-                    password.addEventListener("keyup", function (event) {
-                        if (event.key === "Enter") {
+                    password.addEventListener('keyup', function (event) {
+                        if (event.key === 'Enter') {
                             handleLogin(cw);
                         }
                     });
 
-                    loginBtn.addEventListener("click", function () {
+                    loginBtn.addEventListener('click', function () {
                         handleLogin(cw);
                     });
                 } else {
@@ -213,7 +213,7 @@ class Header extends HTMLElement {
                 }
             });
         } catch (e) {
-            console.error("Cannot access iframe content:", e);
+            console.error('Cannot access iframe content:', e);
         }
     }
 }
@@ -238,5 +238,5 @@ customElements.whenDefined("header-component").then(()=>
 }
 ) */
 
-customElements.define("footer-component", Footer);
-customElements.define("header-component", Header);
+customElements.define('footer-component', Footer);
+customElements.define('header-component', Header);

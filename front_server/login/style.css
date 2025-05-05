@@ -34,7 +34,7 @@
 }
 
 body {
-    font-family: "Montserrat", sans-serif;
+    font-family: 'Montserrat', sans-serif;
     background-color: var(--dark);
     color: var(--light);
     min-height: 100vh;
@@ -152,12 +152,12 @@ body {
 
 .nav-link {
     text-decoration: none;
-    font-family: "Russo One", sans-serif;
+    font-family: 'Russo One', sans-serif;
     color: var(--light);
 }
 
 .logo-text {
-    font-family: "Russo One", sans-serif;
+    font-family: 'Russo One', sans-serif;
     font-size: 1.8rem;
     letter-spacing: 2px;
     color: var(--light);
@@ -216,7 +216,7 @@ body {
 }
 
 h1 {
-    font-family: "Russo One", sans-serif;
+    font-family: 'Russo One', sans-serif;
     font-size: 2.8rem;
     letter-spacing: 2px;
     margin-bottom: 20px;
@@ -229,7 +229,7 @@ h1 span {
 }
 
 h2 {
-    font-family: "Montserrat", sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 1.5rem;
     margin-bottom: 25px;
     font-weight: 600;
@@ -238,7 +238,7 @@ h2 {
 }
 
 h2:after {
-    content: "";
+    content: '';
     position: absolute;
     bottom: -10px;
     left: 50%;
@@ -274,7 +274,7 @@ input {
     background-color: rgba(255, 255, 255, 0.05);
     color: var(--light);
     font-size: 1rem;
-    font-family: "Montserrat", sans-serif;
+    font-family: 'Montserrat', sans-serif;
     transition: all 0.3s ease;
 }
 
@@ -308,7 +308,7 @@ input::placeholder {
 }
 
 .primary-btn:before {
-    content: "";
+    content: '';
     position: absolute;
     top: -50%;
     left: -50%;
@@ -395,7 +395,7 @@ input::placeholder {
 }
 
 .footer-logo {
-    font-family: "Russo One", sans-serif;
+    font-family: 'Russo One', sans-serif;
     font-size: 1.2rem;
     background: var(--accent);
     color: var(--light);
@@ -409,7 +409,7 @@ input::placeholder {
 }
 
 .footer-name {
-    font-family: "Russo One", sans-serif;
+    font-family: 'Russo One', sans-serif;
     font-size: 1.2rem;
     color: var(--light);
 }
@@ -434,7 +434,7 @@ input::placeholder {
 }
 
 .footer-column h4:after {
-    content: "";
+    content: '';
     position: absolute;
     bottom: -8px;
     left: 0;

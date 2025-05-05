@@ -59,21 +59,21 @@
         <script>
             //fetch("https://localhost:3000/api/startsession",{method : 'POST',credentials :"include"})
             const username = document.getElementById(
-                "username",
+                'username',
             );
             const password = document.getElementById(
-                "password",
+                'password',
             );
             const registerBtn = document.getElementById(
-                "register-btn",
+                'register-btn',
             );
 
             const handleregister = async () => {
                 await fetch(
-                    "https://localhost:3000/api/register",
+                    'https://localhost:3000/api/register',
                     {
-                        method: "POST",
-                        credentials: "include",
+                        method: 'POST',
+                        credentials: 'include',
                         body: JSON.stringify({
                             user: username.value,
                             pass: password.value,
@@ -83,18 +83,18 @@
                     switch (res.status) {
                         case 201:
                             showError(
-                                "Registered successfully !",
+                                'Registered successfully !',
                             );
                             document.location.pathname =
-                                "/home";
+                                '/home';
                             break;
                         case 200:
                             showError(
-                                "Username already in use please change.",
+                                'Username already in use please change.',
                             );
                             break;
                         case 500:
-                            showError("Error with server !");
+                            showError('Error with server !');
                         default:
                             break;
                     }
@@ -102,22 +102,22 @@
             };
             function showError(message) {
                 const errorElement = document.createElement(
-                    "div",
+                    'div',
                 );
-                errorElement.className = "error-message";
+                errorElement.className = 'error-message';
                 errorElement.textContent = message;
 
                 const existingError = document.querySelector(
-                    ".error-message",
+                    '.error-message',
                 );
                 if (existingError) existingError.remove();
 
-                document.querySelector(".input-container")
+                document.querySelector('.input-container')
                     .appendChild(
                         errorElement,
                     );
                 setTimeout(() => {
-                    errorElement.classList.add("fade-out");
+                    errorElement.classList.add('fade-out');
                     setTimeout(
                         () => errorElement.remove(),
                         500,
@@ -126,16 +126,16 @@
             }
 
             password.addEventListener(
-                "keyup",
+                'keyup',
                 async (event) => {
-                    if (event.key == "Enter") {
+                    if (event.key == 'Enter') {
                         handleregister();
                     }
                 },
             );
 
             registerBtn.addEventListener(
-                "click",
+                'click',
                 handleregister,
             );
         </script>

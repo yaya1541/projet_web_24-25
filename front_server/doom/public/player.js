@@ -1,5 +1,5 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
-import { Constant } from "./const.js";
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
+import { Constant } from './const.js';
 
 export class Player {
     constructor(name) {
@@ -21,15 +21,15 @@ export class Player {
         this.forward = false;
         this.backward = false;
 
-        document.addEventListener("keydown", (event) => {
-            if (event.key == "z") {
+        document.addEventListener('keydown', (event) => {
+            if (event.key == 'z') {
                 if (!this.accelerating) {
                     this.forward = true;
                     this.accelerating = true;
                     this.accelerate();
                 }
             }
-            if (event.key == "s") {
+            if (event.key == 's') {
                 if (!this.accelerating) {
                     this.accelerating = true;
                     this.backward = true;
@@ -37,12 +37,12 @@ export class Player {
                 }
             }
         });
-        document.addEventListener("keyup", (event) => {
-            if (event.key == "z") {
+        document.addEventListener('keyup', (event) => {
+            if (event.key == 'z') {
                 this.accelerating = false;
                 this.decelerate();
             }
-            if (event.key == "s") {
+            if (event.key == 's') {
                 this.accelerating = false;
                 this.decelerate();
             }
@@ -51,8 +51,8 @@ export class Player {
 
     /** */
     accelerate() {
-        console.log("accelerating");
-        console.log("acce : " + this.acceleration);
+        console.log('accelerating');
+        console.log('acce : ' + this.acceleration);
         if (this.acceleration >= 1 || this.accelerating == false) {
             return;
         } else {
@@ -63,7 +63,7 @@ export class Player {
 
     /** */
     decelerate() {
-        console.log("dece :" + this.acceleration);
+        console.log('dece :' + this.acceleration);
         if (this.acceleration <= 0) {
             this.forward = false;
             this.backward = false;
