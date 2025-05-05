@@ -1,4 +1,4 @@
-import { oauth } from "./utils.js";
+import { oauth,handleLogin } from "./utils.js";
 
 class Footer extends HTMLElement{
     constructor(){
@@ -62,6 +62,13 @@ class Footer extends HTMLElement{
 class Header extends HTMLElement{
     constructor(){
         super();
+        this.fr = document.createElement("iframe");
+        this.fr.id = "myFrame"
+        this.fr.frameBorder = 0;
+        this.fr.width = '500';
+        this.fr.height ='700';
+        this.fr.scrolling = 'no';
+        this.fr.style = 'top:5vh;right:5vw;position:absolute;z-index:200';
     }
 
     async connectedCallback(){
@@ -71,8 +78,8 @@ class Header extends HTMLElement{
                 <div class="logo-text">KARTING<span>FEVER</span></div>
                 <div class="header-decoration"></div>
                 <div class="header-auth">
-                    <!--<button id="login" class="auth-btn" onclick="">Login</button>
-                    <button id="register" class="auth-btn" onclick="document.location.pathname = '/register'">Register</button>-->
+                    <!--<button id="login" class="auth-btn">Login</button>
+                    <button id="register" class="auth-btn">Register</button>-->
                 </div>
             </div>
             <div class="menu-wrapper">
@@ -87,31 +94,53 @@ class Header extends HTMLElement{
                         <a href="/home" class="nav-link">Discord</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/home" class="nav-link">À propos</a>
+                        <a href="/about" class="nav-link">À propos</a>
                     </li>
                 </ul>
             </div>
         </header>
         `;
         await this.oauthHandler();
+        
     }
 
     async oauthHandler(){
         const login = document.createElement("button");
         const register = document.createElement("button");
+        const logout = document.createElement("button");
+        const play = document.createElement("li");
+        const play_link = document.createElement("a");
+
         login.id = "login";
         login.innerText = "Login";
         login.classList.add("auth-btn");
-        login.onclick = ()=>{
-            document.location.pathname = '/login';
-        }
+
+        login.addEventListener("click",(ev)=>{
+            this.bindIFrame(this.fr,ev);
+        })
 
         register.id = "register";
         register.innerText = "Register";
         register.classList.add("auth-btn");
-        register.onclick = ()=>{
-            document.location.pathname = '/register';
-        }
+
+        register.addEventListener("click",(ev)=>{
+            this.bindIFrame(this.fr,ev);
+        })
+
+        logout.id = "logout";
+        logout.innerText = "Log out";
+        logout.classList.add("auth-btn");
+
+        logout.addEventListener("click",async (_ev)=>{
+            await this.logout();
+        })
+
+        play.classList.add("nav-item");
+        play.appendChild(play_link);
+        play_link.href = "/kartfever/game";
+        play_link.innerHTML = "Play";
+        play_link.classList.add("nav-link");
+
 
         console.log(await oauth);
         if (await oauth == 200){
@@ -132,15 +161,87 @@ class Header extends HTMLElement{
             `;
 
             const headerAuth = document.querySelector(".header-auth");
+            headerAuth.appendChild(logout);
             headerAuth.appendChild(avatar);
-            console.log("Already Logged in !");
+            console.log("Oauth : Already Logged in !");
+
+            const navbar = document.querySelector(".nav-items");
+            navbar.appendChild(play);
         }else if (await oauth == 401){
             const headerAuth = document.querySelector(".header-auth");
             headerAuth.appendChild(login);
             headerAuth.appendChild(register);
         }
     }
+
+    async logout(){
+        const response = await fetch("https://localhost:3000/api/logout",{
+            method:"POST",
+            credentials :"include"
+        })
+        if (response.status==200){
+            document.location.reload();
+        }
+    }
+
+    bindIFrame(frame,ev){
+        frame.src = `./${ev.target.id}`;
+        ev.target.after(this.fr);
+        try {
+            // Attendre que l'iframe soit complètement chargée
+            frame.addEventListener('load', function() {
+                // Accéder au document de l'iframe
+                const cw = frame.contentWindow.document;
+                console.log('Document iframe chargé:', cw);
+                
+                // Maintenant que l'iframe est chargée, on peut chercher les éléments
+                const password = cw.getElementById("password");
+                const loginBtn = cw.getElementById("login-btn");
+                
+                // Vérifier que les éléments existent
+                if (password && loginBtn) {
+                    // Ajouter les écouteurs d'événements
+                    password.addEventListener('keyup', function(event) {
+                    if (event.key === 'Enter') {
+                        handleLogin(cw);
+                    }
+                    });
+                    
+                    loginBtn.addEventListener('click', function() {
+                        handleLogin(cw);
+                    });
+                } else {
+                    console.error("Éléments non trouvés dans l'iframe");
+                }
+            });
+        } catch (e) {
+            console.error("Cannot access iframe content:", e);
+        }
+    }
 }
+/*
+customElements.whenDefined("header-component").then(()=>
+{
+    const auth_btns = document.getElementsByClassName("auth-btn");
+    
+    const find_btns = ()=>{
+        if (auth_btns.length == 2) {
+            console.log("Charged");
+            for (const element of auth_btns) {
+                //element.addEventListener('click',(ev)=>(addifr(ev)));
+            }
+            return;
+        }else{
+            setTimeout(find_btns,50);
+        }
+    }
+
+    find_btns();
+}
+) */ 
+        
+        
+        
 
 customElements.define('footer-component', Footer);
 customElements.define('header-component', Header);

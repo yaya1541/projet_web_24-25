@@ -5,36 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="login/style.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <script type="module" src="templates.js" defer></script>
 </head>
 <body>
-    <header-component></header-component>
-    <div class="container">
-        <div class="login-box">
-          <div class="logo-container">
-            <div class="logo-badge">
-              <h1>KARTING<span>FEVER</span></h1>
-            </div>
-          </div>
-          
-          <h2>Créer un compte</h2>
-          
-          <div class="input-container">
-            <div class="form-group">
-              <label for="username">Nom d'utilisateur</label>
-              <input type="text" name="username" id="username" placeholder="Entrez votre nom d'utilisateur">
-            </div>
-            
-            <div class="form-group">
-              <label for="password">Mot de passe</label>
-              <input type="password" name="password" id="password" placeholder="Entrez votre mot de passe">
-            </div>
-            
-            <button id="register-btn" class="primary-btn">S'enregister</button>
-          </div>
+    <style>
+        body{
+          background: transparent;
+        }
+      </style>
+    <div class="login-box">
+      <div class="logo-container">
+        <div class="logo-badge">
+          <h1>KARTING<span>FEVER</span></h1>
         </div>
+      </div>
+      
+      <h2>Créer un compte</h2>
+      
+      <div class="input-container">
+        <div class="form-group">
+          <label for="username">Nom d'utilisateur</label>
+          <input type="text" name="username" id="username" placeholder="Entrez votre nom d'utilisateur">
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input type="password" name="password" id="password" placeholder="Entrez votre mot de passe">
+        </div>
+        
+        <button id="register-btn" class="primary-btn">S'enregister</button>
+      </div>
     </div>
-    <footer-component></footer-component>
     <script>
         //fetch("https://localhost:3000/api/startsession",{method : 'POST',credentials :"include"})
         const username = document.getElementById("username");

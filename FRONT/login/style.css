@@ -190,6 +190,7 @@
   
   /* Boîte de connexion */
   .login-box {
+    margin: 1em 1em;
     background: var(--dark-overlay);
     border-radius: 15px;
     box-shadow: 0 0 30px var(--accent-shadow);
