@@ -1,0 +1,8 @@
+*/.vscode/*.
+.env
+./certs/*
+./.github/
+*.json
+*.lock
+*.sql
+node_modules
