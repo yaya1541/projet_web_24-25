@@ -1,5 +1,5 @@
 import { Application, Router } from "https://deno.land/x/oak@v17.1.4/mod.ts";
-import { oakCors } from "https://deno.land/x/cors/mod.ts";
+import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
 import {verifyJWT,createJWT} from "../BACK/jwt_func.ts"
 import { authorizationMiddleware } from "../BACK/middlewares.ts";
 
@@ -8,21 +8,21 @@ import { bodies, world, circuit,inputs, connectedUsers } from "./script.js";
 
 import { Car } from "./lib/car.js";
 import { InsertUser, UserExist, UserPassword } from "./rest.ts";
-import { Bodies,Inputs,InputMessage,Token} from "./interfaces.ts"; 
-  
+import { Bodies,Inputs,InputMessage,Token} from "./interfaces.ts";  
 
 const router = new Router();
 const app = new Application();
 
 app.use(oakCors({
-    origin: "https://localhost:8080",
+    origin: ["https://localhost:3000","https://localhost:8080"],
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization","getsetcookie","setcookie"],
     optionsSuccessStatus : 200,
     credentials: true,
 }));
 
-const tokens = {};
+//const tokens = {};
+// TODO : Store token on login
 export const connections : WebSocket[] =[];
 
 //
@@ -42,15 +42,14 @@ router.get("/lib/:module",authorizationMiddleware, async (ctx) => {
     
     // Serve the file
     ctx.response.body = await Deno.readTextFile(path);
-  } catch (e) {
+  } catch (_e) {
     ctx.response.status = 404;
     ctx.response.body = `Module ${module}.js not found`;
   }
 });
 
 // resource loader
-
-router.get("/src/:module", authorizationMiddleware, async (ctx) => {
+router.get("/src/:module", async (ctx) => {
   console.log("Trying to retrieve Resource");
   const { module } = ctx.params;
   console.log(`Sending: ${module}`);
@@ -93,7 +92,7 @@ router.get("/src/:module", authorizationMiddleware, async (ctx) => {
 });
 
 //router.get("/");
-export function notifyAllUsers(json: Object) {
+export function notifyAllUsers(json: object) {
   connections.forEach((client) => {
     client.send(JSON.stringify(json));
   });
@@ -101,12 +100,14 @@ export function notifyAllUsers(json: Object) {
   
 }
 
+// Game
 router.get("/game/kartfever",authorizationMiddleware,(ctx)=>{
   console.log("Request recieved");
   try{
     const ws = ctx.upgrade();
     connections.push(ws);
-    ws.onopen =async (event)=>{
+
+    ws.onopen = async (_event)=>{
       console.log(`New connection opened (${connections.length})`);
       const user = (await ctx.cookies.get("user") as string);
       console.log("user : ",user);
@@ -127,7 +128,7 @@ router.get("/game/kartfever",authorizationMiddleware,(ctx)=>{
         notifyAllUsers({ type :4, users : Object.keys(bodies)});
       }
     }
-    ws.onclose = (event)=>{
+    ws.onclose = (_event)=>{
       console.log("Connections closed");
       function removeValue(value:WebSocket, index:number, arr:WebSocket[]) {
         // If the value at the current array index matches the specified value (2)
@@ -197,7 +198,9 @@ router.post("/api/login",async (ctx)=>{
       
       if (await UserPassword(user) == pass){
         ctx.response.status = 200;
-        ctx.cookies.set("refreshToken",await createJWT("30d",{username:user,date:new Date()}),{httpOnly:true});
+        const refresh = await createJWT("14d",{username:user});
+        ctx.cookies.set("refreshToken",refresh,{httpOnly:true});
+        ctx.cookies.set("accessToken",await createJWT("10s",{username:user}),{httpOnly:true});
         ctx.cookies.set("user",user);
         ctx.response.headers.set("Set-Login","logged-in");
       }else {
@@ -217,9 +220,18 @@ router.post("/api/login",async (ctx)=>{
   }
 })
 
-router.get("/api/oauth",authorizationMiddleware,(ctx)=>{
+router.post("/api/logout",authorizationMiddleware,(ctx)=>{
+  ctx.cookies.delete("accessToken");
+  ctx.cookies.delete("refreshToken");
+  ctx.cookies.delete("user");
   ctx.response.status = 200;
-});
+})
+
+router.get("/api/oauth",authorizationMiddleware,(ctx)=>{
+  const {refreshToken} = ctx.params;
+  console.log(refreshToken);
+  ctx.response.status = 200;
+})
 
 router.post("/api/register", async (ctx) => {
     const data = await ctx.request.body.json();
@@ -240,9 +252,8 @@ router.post("/api/register", async (ctx) => {
       ctx.response.status = 500;
      ctx.response.body = { message: "Internal server error" };
      }
-  });
+  })
   
-
 let session : number = 0;
 
 router.post("/api/startsession", async (ctx) => {
@@ -281,7 +292,7 @@ const keyPath = "../certs/server.key";   // Update to your private key path
 const options = {
   port : 3000,
   cert:await Deno.readTextFile(certPath),
-  key: await Deno.readTextFile(keyPath),
+  key: await Deno.readTextFile(keyPath)
 };
 
 console.log(`Oak back server running on port ${options.port}`);
