@@ -4,11 +4,9 @@ import { createJWT, verifyJWT } from './jwt_func.ts';
 import { authorizationMiddleware } from './middlewares.ts';
 
 //import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
-import { bodies, circuit, connectedUsers, inputs, world } from './script.js';
-
-import { Car } from './lib/car.js';
+import { circuit, connectedUsers, setupGameRouter } from './script.js';
 import { InsertUser, UserExist, UserPassword } from './rest.ts';
-import { Bodies, InputMessage, Inputs, Token } from './interfaces.ts';
+import { Token } from './interfaces.ts';
 
 const router = new Router();
 const app = new Application();
@@ -108,70 +106,7 @@ export function notifyAllUsers(json: object) {
 }
 
 // Game
-router.get('/game/kartfever', authorizationMiddleware, (ctx) => {
-    console.log('Request recieved');
-    try {
-        const ws = ctx.upgrade();
-        connections.push(ws);
-
-        ws.onopen = async (_event) => {
-            console.log(`New connection opened (${connections.length})`);
-            const user = await ctx.cookies.get('user') as string;
-            console.log('user : ', user);
-            if (connectedUsers.indexOf(user) == -1) {
-                connectedUsers.push(user);
-            }
-            ws.send(JSON.stringify({
-                type: 0, // Type 0 initialization
-                CircuitNodes: circuit.pathNodes,
-                CircuitPoints: circuit.pathPoints,
-                CircuitWitdh: circuit.options.roadWidth,
-            }));
-            if (!(bodies as Bodies)[user]) {
-                (bodies as Bodies)[user] = new Car(world, null, user);
-                (bodies as Bodies)[user].carBody!.position.y = 3;
-                (inputs as Inputs)[user] = {};
-                console.log('I : ', inputs);
-                notifyAllUsers({ type: 4, users: Object.keys(bodies) });
-            }
-        };
-        ws.onclose = (_event) => {
-            console.log('Connections closed');
-            function removeValue(
-                value: WebSocket,
-                index: number,
-                arr: WebSocket[],
-            ) {
-                // If the value at the current array index matches the specified value (2)
-                if (value === ws) {
-                    // Removes the value from the original array
-                    arr.splice(index, 1);
-                    return true;
-                }
-                return false;
-            }
-            // Pass the removeValue function into the filter function to return the specified value
-            connections.filter(removeValue);
-        };
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data) as InputMessage;
-            console.log('Message recieved', data);
-            switch (data.type) {
-                case 2:
-                    (inputs as Inputs)[data.user][data.value] = true;
-                    break;
-                case 3:
-                    (inputs as Inputs)[data.user][data.value] = false;
-                    break;
-                default:
-                    break;
-            }
-        };
-    } catch {
-        ctx.response.status = 501;
-        ctx.response.body = { message: 'Unable to establish Websocket' };
-    }
-});
+setupGameRouter(router, authorizationMiddleware);
 
 router.get('/game/kartfever/reload', (ctx) => {
     circuit.remove();
@@ -208,12 +143,26 @@ router.post('/api/login', async (ctx) => {
 
             if (await UserPassword(user) == pass) {
                 ctx.response.status = 200;
+
+                let expires = new Date();
+                let expiresTime = expires.getTime() + 1000 * 60 * 60 * 24 * 14;
+                expires.setTime(expiresTime);
+
                 const refresh = await createJWT('14d', { username: user });
-                ctx.cookies.set('refreshToken', refresh, { httpOnly: true });
+
+                ctx.cookies.set('refreshToken', refresh, {
+                    httpOnly: true,
+                    expires: expires,
+                });
+
+                expires = new Date();
+                expiresTime = expires.getTime() + 1000 * 60 * 60;
+                expires.setTime(expiresTime);
+
                 ctx.cookies.set(
                     'accessToken',
                     await createJWT('10s', { username: user }),
-                    { httpOnly: true },
+                    { httpOnly: true, expires: expires },
                 );
                 ctx.cookies.set('user', user);
                 ctx.response.headers.set('Set-Login', 'logged-in');

@@ -1,10 +1,9 @@
+// Completed Car class with full prediction support
 import CANNON from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 import { GLTFLoader } from './GLTFLoader.js';
 
 // Simple function to replace ALL materials in your model
-// Add this to your existing code
-
 function replaceAllMaterials(scene) {
     console.log('Replacing all materials with compatible ones');
 
@@ -12,10 +11,6 @@ function replaceAllMaterials(scene) {
         if (object.isMesh) {
             // Get basic properties from the original material
             const originalMaterial = object.material;
-            const _texture = null;
-            const _color = 0xcccccc;
-            const _transparent = false;
-            const _opacity = 1.0;
 
             if (originalMaterial) {
                 // Handle array of materials
@@ -75,6 +70,7 @@ function createSimpleMaterial(originalMaterial) {
 }
 
 export class Car {
+    // Add constructor modifications
     constructor(world, scene, id, options = {}) {
         this.world = world;
         this.scene = scene;
@@ -84,13 +80,14 @@ export class Car {
             dimensions: { width: 2, height: 1, length: 4 },
             color: 0x0066ff,
             mass: 500,
-            yOffset: -2,
+            yOffset: 0.5, // CHANGED: Reduced from 4 to 0.5 to raise the car above ground
             ...options,
         };
+
         // Max steer, engine force values
         this.maxSteerVal = 0.5;
         this.maxForce = 1000;
-        this.brakeForce = 15;
+        this.brakeForce = 20;
 
         // Improved deceleration and steering
         this.decelerationRate = 1000; // Higher value = faster deceleration
@@ -105,17 +102,36 @@ export class Car {
         this.driftRecoveryRate = 0.5;
         this.driftTimer = 0;
 
-        this.yOffset = 5;
+        // FIXED: Set yOffset from options
+        this.yOffset = this.options.yOffset;
 
+        // Client prediction variables
+        this.lastServerPosition = null;
+        this.lastServerQuaternion = null;
+        this.previousServerQuaternion = null; // ADDED: Initialize this property
+        this.lastUpdateTime = Date.now();
+        this.velocity = new THREE.Vector3();
+        this.angularVelocity = new THREE.Vector3();
+        this.interpolationFactor = 0.3; // For smooth corrections
+
+        // Create physics body if world is provided (server or client with prediction)
         if (world) {
             this.createPhysicBody();
             this.createPhysicWheels();
         }
+
+        // Create visual elements if scene is provided
         if (scene) {
-            this.carBody = {
-                position: new CANNON.Vec3(0, 1, 0),
-                quaternion: new CANNON.Quaternion(0, 0, 0),
-            };
+            // If no physics world, create a temporary object to hold position/rotation
+            if (!world) {
+                this.carBody = {
+                    position: new CANNON.Vec3(0, 1, 0),
+                    quaternion: new CANNON.Quaternion(0, 0, 0, 1), // FIXED: Added w component
+                    velocity: new CANNON.Vec3(0, 0, 0),
+                    angularVelocity: new CANNON.Vec3(0, 0, 0),
+                };
+            }
+
             this.createBody();
             this.createWheels();
             this.loadModel();
@@ -123,13 +139,6 @@ export class Car {
     }
 
     loadModel() {
-        /*
-        const positionOffset = {
-            x:0,
-            y:1,
-            z:0
-        }
-        */
         const loader = new GLTFLoader();
         // Configure le gestionnaire de requêtes
         loader.withCredentials = true;
@@ -141,34 +150,37 @@ export class Car {
                 }
 
                 const object = obj.scene;
-                //this.loadedWheelMeshes = [];
                 this.wheelMeshes = [];
-                console.log('Scene', obj.scene);
                 this.carMesh = object;
                 replaceAllMaterials(object);
 
-                // Center and scale model if needed
+                // Center and scale model
                 const box = new THREE.Box3().setFromObject(object);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
-                const scale = 5 / maxDim; // Scale to fit in view
+                const scale = 5 / maxDim;
 
+                // CHANGED: Only adjust X and Z, preserve Y to maintain height
                 object.position.x -= center.x;
-                object.position.y -= center.y;
+                // object.position.y -= center.y; // Commented out to prevent sinking
                 object.position.z -= center.z;
+
+                // ADDED: Raise the model slightly to ensure it's above ground
+                object.position.y += 1.0;
+
                 object.scale.set(scale, scale, scale);
                 this.scene.add(object);
-                console.log(object);
-            }, // called while loading is progressing
+            },
+            // called while loading is progressing
             (xhr) => {
                 console.log(
                     `${xhr.loaded} sur ${xhr.total} octets chargés (${
                         (xhr.loaded / xhr.total * 100).toFixed(2)
                     }%)`,
                 );
-                // Vérifiez si ces valeurs semblent correctes par rapport à la taille de votre fichier
-            }, // called when loading has errors
+            },
+            // called when loading has errors
             function (error) {
                 console.log('An error happened');
                 console.log(error);
@@ -198,10 +210,24 @@ export class Car {
 
     createBody() {
         // Create car body
-        const carGeometry = new THREE.BoxGeometry(3, 1, 5);
+        const carGeometry = new THREE.BoxGeometry(
+            this.options.dimensions.width,
+            this.options.dimensions.height,
+            this.options.dimensions.length,
+        );
+
+        // Create car body material
+        this.carMaterial = new THREE.MeshStandardMaterial({
+            color: this.options.color,
+            roughness: 0.5,
+            metalness: 0.5,
+        });
+
         // Create car body visual
         this.carMesh = new THREE.Mesh(carGeometry, this.carMaterial);
         this.carMesh.castShadow = true;
+
+        // Add to scene
         this.scene.add(this.carMesh);
     }
 
@@ -225,7 +251,7 @@ export class Car {
             frictionSlip: this.normalFrictionSlip,
             dampingRelaxation: 2.3,
             dampingCompression: 4.4,
-            maxSuspensionForce: 90000,
+            maxSuspensionForce: 100000,
             rollInfluence: 0.01,
             axleLocal: new CANNON.Vec3(1, 0, 0),
             chassisConnectionPointLocal: new CANNON.Vec3(),
@@ -244,19 +270,19 @@ export class Car {
         };
 
         // Front left wheel
-        wheelOptions.chassisConnectionPointLocal.set(-1.5, -2, 1.1);
+        wheelOptions.chassisConnectionPointLocal.set(-1.5, -0.8, 1.7);
         this.vehicle.addWheel(frontWheelOptions);
 
         // Front right wheel
-        wheelOptions.chassisConnectionPointLocal.set(1.5, -2, 1.1);
+        wheelOptions.chassisConnectionPointLocal.set(1.5, -0.8, 1.7);
         this.vehicle.addWheel(frontWheelOptions);
 
         // Rear left wheel
-        wheelOptions.chassisConnectionPointLocal.set(-1.1, -2, -1.5);
+        wheelOptions.chassisConnectionPointLocal.set(-1.5, -0.8, -1.7);
         this.vehicle.addWheel(backWheelOptions);
 
         // Rear right wheel
-        wheelOptions.chassisConnectionPointLocal.set(1.1, -2, -1.5);
+        wheelOptions.chassisConnectionPointLocal.set(1.5, -0.8, -1.7);
         this.vehicle.addWheel(backWheelOptions);
 
         this.vehicle.addToWorld(this.world);
@@ -264,112 +290,23 @@ export class Car {
 
     createWheels() {
         // Create wheel visuals
-        this.frontWheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.3, 32);
-        this.backWheelGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.5, 32);
-        this.frontWheelGeometry.rotateZ(Math.PI / 2);
-        this.backWheelGeometry.rotateZ(Math.PI / 2);
+        this.wheelGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.5, 32);
+        this.wheelGeometry.rotateZ(Math.PI / 2);
         this.wheelMesh = new THREE.MeshStandardMaterial({
             color: 0x333333,
             roughness: 0.7,
-            metalness: 0.2,
+            metalness: 0,
         });
         this.wheelMeshes = [];
 
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 4; i++) {
             const cylinderMesh = new THREE.Mesh(
-                this.frontWheelGeometry,
+                this.wheelGeometry,
                 this.wheelMesh,
             );
             cylinderMesh.castShadow = true;
             this.scene.add(cylinderMesh);
             this.wheelMeshes.push(cylinderMesh);
-        }
-        for (let i = 0; i < 2; i++) {
-            const cylinderMesh = new THREE.Mesh(
-                this.backWheelGeometry,
-                this.wheelMesh,
-            );
-            cylinderMesh.castShadow = true;
-            this.scene.add(cylinderMesh);
-            this.wheelMeshes.push(cylinderMesh);
-        }
-    }
-
-    startDrift() {
-        if (!this.isDrifting) {
-            this.isDrifting = true;
-
-            // Reduce tire friction on rear wheels for sliding
-            for (let i = 2; i < 4; i++) {
-                this.vehicle.wheelInfos[i].frictionSlip =
-                    this.driftFrictionSlip;
-            }
-
-            // Apply a slight sideways force to initiate the drift
-            const forwardDir = new CANNON.Vec3();
-            this.carBody.vectorToWorldFrame(
-                new CANNON.Vec3(0, 0, 1),
-                forwardDir,
-            );
-
-            const rightDir = new CANNON.Vec3();
-            this.carBody.vectorToWorldFrame(new CANNON.Vec3(1, 0, 0), rightDir);
-
-            // Apply sideways impulse based on steering direction
-            const steeringDir = this.vehicle.wheelInfos[0].steering > 0
-                ? 1
-                : -1;
-            rightDir.scale(
-                steeringDir * this.carBody.velocity.length() * 0.2,
-                rightDir,
-            );
-            this.carBody.applyImpulse(rightDir, new CANNON.Vec3());
-        }
-    }
-
-    endDrift() {
-        if (this.isDrifting) {
-            this.isDrifting = false;
-            this.driftTimer = 0;
-
-            // Gradually restore normal friction values
-            for (let i = 2; i < 4; i++) {
-                this.vehicle.wheelInfos[i].frictionSlip =
-                    this.normalFrictionSlip;
-            }
-        }
-    }
-
-    updateDrift(deltaTime) {
-        if (this.isDrifting) {
-            this.driftTimer += deltaTime;
-
-            // Get sideways velocity component for countersteer assist
-            const forwardDir = new CANNON.Vec3();
-            this.carBody.vectorToWorldFrame(
-                new CANNON.Vec3(0, 0, 1),
-                forwardDir,
-            );
-            forwardDir.normalize();
-
-            // Apply slight countersteer assistance to maintain drift
-            const vel = this.carBody.velocity.clone();
-            const forwardVel = forwardDir.scale(
-                vel.dot(forwardDir),
-                new CANNON.Vec3(),
-            );
-            const sideVel = vel.vsub(forwardVel);
-
-            // Calculate drift angle for visualization or gameplay effects
-            const _driftAngle = Math.atan2(
-                sideVel.length(),
-                forwardVel.length(),
-            );
-
-            // Gradually reduce drift effect over time if needed
-            if (this.driftTimer > 5) { // Maximum drift time in seconds
-                this.endDrift();
-            }
         }
     }
 
@@ -389,8 +326,7 @@ export class Car {
             direction.normalize();
 
             // Scale direction by deceleration force
-            direction.scale(-Math.max(decelForce, speed), direction);
-            //console.log(decelForce,speed);
+            direction.scale(-Math.min(decelForce, speed), direction);
 
             // Apply force to slow down the car
             this.carBody.applyLocalForce(direction, new CANNON.Vec3(0, 0, 0));
@@ -402,31 +338,208 @@ export class Car {
         // Interpolate between current and target steering value
         const steeringDiff = targetSteeringValue - this.currentSteering;
         this.currentSteering += steeringDiff * this.steeringSmoothing /
-            deltaTime /
-            100;
-        //sssssssssssssssssssssssssssssdddconsole.log(steeringDiff,targetSteeringValue,this.currentSteering,deltaTime);
+            deltaTime / 100;
 
         // Apply the smooth steering value to both front wheels
         this.vehicle.setSteeringValue(this.currentSteering, 0);
         this.vehicle.setSteeringValue(this.currentSteering, 1);
     }
 
+    // Update state from server and reconcile differences with predicted state
+    updateFromServerState(
+        serverPosition,
+        serverQuaternion,
+        serverVelocity,
+        serverAngularVelocity,
+    ) {
+        if (!this.world) {
+            // For other cars (without physics), just update visual position
+            this.carMesh.position.lerp(
+                new THREE.Vector3(
+                    serverPosition.x,
+                    serverPosition.y,
+                    serverPosition.z,
+                ),
+                this.interpolationFactor,
+            );
+
+            this.carMesh.quaternion.slerp(
+                new THREE.Quaternion(
+                    serverQuaternion.x,
+                    serverQuaternion.y,
+                    serverQuaternion.z,
+                    serverQuaternion.w,
+                ),
+                this.interpolationFactor,
+            );
+
+            // Store server position and velocity for prediction
+            this.lastServerPosition = new THREE.Vector3(
+                serverPosition.x,
+                serverPosition.y,
+                serverPosition.z,
+            );
+            this.lastServerQuaternion = new THREE.Quaternion(
+                serverQuaternion.x,
+                serverQuaternion.y,
+                serverQuaternion.z,
+                serverQuaternion.w,
+            );
+
+            // Update velocity for prediction
+            if (serverVelocity) {
+                this.velocity.set(
+                    serverVelocity.x,
+                    serverVelocity.y,
+                    serverVelocity.z,
+                );
+            }
+
+            if (serverAngularVelocity) {
+                this.angularVelocity.set(
+                    serverAngularVelocity.x,
+                    serverAngularVelocity.y,
+                    serverAngularVelocity.z,
+                );
+            }
+
+            this.lastUpdateTime = Date.now();
+        } else {
+            // For player car (with physics), reconcile with server state
+            const currentPos = this.carBody.position;
+            const currentQuat = this.carBody.quaternion;
+
+            // Calculate position error
+            const posError = new CANNON.Vec3(
+                serverPosition.x - currentPos.x,
+                serverPosition.y - currentPos.y,
+                serverPosition.z - currentPos.z,
+            );
+
+            const posErrorMagnitude = posError.length();
+
+            // Calculate quaternion error (as angle)
+            const serverQuat = new CANNON.Quaternion(
+                serverQuaternion.x,
+                serverQuaternion.y,
+                serverQuaternion.z,
+                serverQuaternion.w,
+            );
+            const quatDiff = serverQuat.mult(currentQuat.inverse());
+            const angle = 2 * Math.acos(Math.abs(quatDiff.w));
+
+            // If error is large, snap to server position
+            if (posErrorMagnitude > 5.0 || angle > Math.PI / 4) {
+                // Major correction needed - snap position
+                this.carBody.position.copy(serverPosition);
+                this.carBody.quaternion.copy(serverQuat);
+
+                if (serverVelocity) {
+                    this.carBody.velocity.set(
+                        serverVelocity.x,
+                        serverVelocity.y,
+                        serverVelocity.z,
+                    );
+                }
+
+                if (serverAngularVelocity) {
+                    this.carBody.angularVelocity.set(
+                        serverAngularVelocity.x,
+                        serverAngularVelocity.y,
+                        serverAngularVelocity.z,
+                    );
+                }
+            } // Medium error - stronger interpolation
+            else if (posErrorMagnitude > 1.0 || angle > Math.PI / 8) {
+                // Apply a stronger correction (20%)
+                this.carBody.position.x += posError.x * 0.2;
+                this.carBody.position.y += posError.y * 0.2;
+                this.carBody.position.z += posError.z * 0.2;
+
+                // Interpolate rotation
+                this.carBody.quaternion.slerp(serverQuat, 0.2);
+
+                // Adjust velocity if provided
+                if (serverVelocity) {
+                    this.carBody.velocity.x = this.carBody.velocity.x * 0.8 +
+                        serverVelocity.x * 0.2;
+                    this.carBody.velocity.y = this.carBody.velocity.y * 0.8 +
+                        serverVelocity.y * 0.2;
+                    this.carBody.velocity.z = this.carBody.velocity.z * 0.8 +
+                        serverVelocity.z * 0.2;
+                }
+            } // Small error - gentle correction
+            else if (posErrorMagnitude > 0.1 || angle > Math.PI / 16) {
+                // Apply a gentle correction (10%)
+                this.carBody.position.x += posError.x * 0.1;
+                this.carBody.position.y += posError.y * 0.1;
+                this.carBody.position.z += posError.z * 0.1;
+
+                // Gentle rotation correction
+                this.carBody.quaternion.slerp(serverQuat, 0.1);
+            }
+
+            // Update timestamp for future predictions
+            this.lastUpdateTime = Date.now();
+        }
+    }
+
+    // Predict position for remote cars
+    predictPosition(deltaTime) {
+        if (!this.world && this.lastServerPosition && this.velocity) {
+            // Only predict for other cars without physics
+            const predictedPos = new THREE.Vector3(
+                this.lastServerPosition.x + this.velocity.x * deltaTime,
+                this.lastServerPosition.y + this.velocity.y * deltaTime,
+                this.lastServerPosition.z + this.velocity.z * deltaTime,
+            );
+
+            // Apply prediction to visual mesh
+            this.carMesh.position.copy(predictedPos);
+
+            // Predict rotation using angular velocity if available
+            if (this.lastServerQuaternion && this.angularVelocity) {
+                // Convert angular velocity (radians/sec) to quaternion change
+                const angularSpeed = this.angularVelocity.length();
+
+                if (angularSpeed > 0.001) {
+                    const axis = this.angularVelocity.clone().divideScalar(
+                        angularSpeed,
+                    );
+                    const rotationQuaternion = new THREE.Quaternion();
+                    rotationQuaternion.setFromAxisAngle(
+                        axis,
+                        angularSpeed * deltaTime,
+                    );
+
+                    // Apply rotation to last server quaternion
+                    const newQuaternion = this.lastServerQuaternion.clone()
+                        .multiply(rotationQuaternion);
+                    this.carMesh.quaternion.copy(newQuaternion);
+                }
+            }
+        }
+    }
+
     control(keysPressed, deltaTime = 1 / 60) {
+        if (!this.vehicle) return;
+
         // Calculate target steering value
-        deltaTime = deltaTime != 0 ? deltaTime : 0.01;
+        deltaTime = deltaTime !== 0 ? deltaTime : 0.01;
         let targetSteering = 0;
         if (keysPressed['q'] || keysPressed['arrowleft']) {
             targetSteering = this.maxSteerVal;
         } else if (keysPressed['d'] || keysPressed['arrowright']) {
             targetSteering = -this.maxSteerVal;
         }
-        //console.log(targetSteering);
 
         // Apply smooth steering
         this.applySmoothSteering(targetSteering, deltaTime);
 
         // Apply engine force on rear wheels
-        if (keysPressed['z'] || keysPressed['arrowup'] && this.speed() < 130) {
+        if (
+            (keysPressed['z'] || keysPressed['arrowup']) && this.speed() < 130
+        ) {
             this.vehicle.applyEngineForce(-this.maxForce, 2);
             this.vehicle.applyEngineForce(-this.maxForce, 3);
         } else if (keysPressed['s'] || keysPressed['arrowdown']) {
@@ -452,62 +565,75 @@ export class Car {
             this.vehicle.setBrake(0, 3);
         }
 
-        // Drift control - trigger with SHIFT key while turning
+        // Drift control - triggered with Shift key while turning
         const isTurning = Math.abs(targetSteering) > 0.1;
         const speed = this.speed();
+        const isDriftKeyPressed = keysPressed['shift'];
 
-        if (keysPressed['shift'] && isTurning && speed > 30) {
-            this.startDrift();
-        } else if (!keysPressed['shift'] || !isTurning || speed < 15) {
-            this.endDrift();
+        if (isTurning && speed > 40 && isDriftKeyPressed && !this.isDrifting) {
+            // Initiate drift
+            this.isDrifting = true;
+
+            // Lower friction during drift
+            for (let i = 0; i < 4; i++) {
+                this.vehicle.wheelInfos[i].frictionSlip =
+                    this.driftFrictionSlip;
+            }
+        } else if (this.isDrifting && (!isDriftKeyPressed || speed < 20)) {
+            // End drift
+            this.isDrifting = false;
+
+            // Reset friction
+            for (let i = 0; i < 4; i++) {
+                this.vehicle.wheelInfos[i].frictionSlip =
+                    this.normalFrictionSlip;
+            }
         }
-
-        // Update drift physics and effects
-        this.updateDrift(deltaTime);
     }
 
-    update(deltaTime = 1 / 60) {
-        // Update car mesh position and rotation
-        this.carMesh.position.set(
-            this.carBody.position.x,
-            this.carBody.position.y - this.options.yOffset,
-            this.carBody.position.z,
-        );
-        this.carMesh.quaternion.copy(this.carBody.quaternion);
+    update() {
+        if (!this.carMesh) return;
 
-        //console.log(this.currentSteering);
-        this.checkWrongPosition();
+        if (this.world) {
+            // CHANGED: Adjusted Y position calculation
+            this.carMesh.position.set(
+                this.carBody.position.x,
+                this.carBody.position.y - this.options.yOffset,
+                this.carBody.position.z,
+            );
+            this.carMesh.quaternion.copy(this.carBody.quaternion);
 
-        // Update wheel meshes
-        for (let i = 0; i < 4; i++) {
-            this.vehicle.updateWheelTransform(i);
-            const transform = this.vehicle.wheelInfos[i].worldTransform;
-            this.wheelMeshes[i].position.copy(transform.position);
-            this.wheelMeshes[i].position.y -= this.options.yOffset;
-            this.wheelMeshes[i].quaternion.copy(transform.quaternion);
-        }
+            this.checkWrongPosition();
 
-        // Update drift effects
-        if (this.isDrifting) {
-            this.updateDrift(deltaTime);
+            // Update wheel meshes with corrected position
+            for (let i = 0; i < Math.min(4, this.wheelMeshes.length); i++) {
+                if (this.vehicle) {
+                    this.vehicle.updateWheelTransform(i);
+                    const transform = this.vehicle.wheelInfos[i].worldTransform;
+                    this.wheelMeshes[i].position.copy(transform.position);
+                    this.wheelMeshes[i].position.y -= this.options.yOffset;
+                    this.wheelMeshes[i].quaternion.copy(transform.quaternion);
+                }
+            }
         }
     }
 
     checkWrongPosition() {
-        if (this.carBody.position.y < 5) {
-            this.carBody.position.y = 1;
+        if (this.carBody && this.carBody.position.y < -10) {
+            // Reset car if it falls off the world
+            this.carBody.position.set(0, 5, 0);
+            this.carBody.velocity.set(0, 0, 0);
+            this.carBody.angularVelocity.set(0, 0, 0);
+            this.carBody.quaternion.set(0, 0, 0, 1);
         }
     }
 
-    carPosition = () => {
-        return this.carMesh.position;
-    };
+    carPosition() {
+        return this.carMesh ? this.carMesh.position : new THREE.Vector3();
+    }
 
-    speed = () => {
+    speed() {
+        if (!this.carBody || !this.carBody.velocity) return 0;
         return (this.carBody.velocity.length() * 3.6).toFixed(1);
-    };
-
-    isDriftingNow = () => {
-        return this.isDrifting;
-    };
+    }
 }
