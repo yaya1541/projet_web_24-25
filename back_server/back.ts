@@ -14,6 +14,7 @@ import { imgRoutes } from './imgRoutes.ts';
 import { msgRoutes } from './msgRoutes.ts';
 import { userRoutes } from './userRoutes.ts';
 import { partyRouter } from './partyRoutes.ts';
+import { settingRouter } from './router/settingsRoutes.ts';
 
 const router = new Router();
 export const app = new Application();
@@ -146,6 +147,7 @@ router.use(imgRoutes.routes());
 router.use(msgRoutes.routes());
 router.use(userRoutes.routes());
 router.use(partyRouter.routes());
+router.use(settingRouter.routes());
 
 const certPath = '../certs/server.crt'; // Update to your certificate path
 const keyPath = '../certs/server.key'; // Update to your private key path
