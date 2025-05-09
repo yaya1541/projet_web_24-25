@@ -4,16 +4,16 @@ import { createJWT, verifyJWT } from './jwt_func.ts';
 import { authorizationMiddleware } from './middlewares.ts';
 
 //import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
-import { circuit, connectedUsers, setupGameRouter } from './script.js';
+import { circuit, connectedUsers } from './script.js';
 import { create, verify } from 'https://deno.land/x/djwt@v2.8/mod.ts';
 import * as db from './rest.ts'; // Importez les fonctions de la base de données
 import { Token } from './interfaces.ts';
-import { authRouter } from './authRoutes.ts';
-import { adminRoutes } from './adminRoutes.ts';
-import { imgRoutes } from './imgRoutes.ts';
-import { msgRoutes } from './msgRoutes.ts';
-import { userRoutes } from './userRoutes.ts';
-import { partyRouter } from './partyRoutes.ts';
+import { authRouter } from './router/authRoutes.ts';
+import { adminRoutes } from './router/adminRoutes.ts';
+import { imgRoutes } from './router/imgRoutes.ts';
+import { msgRoutes } from './router/msgRoutes.ts';
+import { userRoutes } from './router/userRoutes.ts';
+import { partyRouter } from './router/partyRoutes.ts';
 import { settingRouter } from './router/settingsRoutes.ts';
 
 const router = new Router();
@@ -21,7 +21,7 @@ export const app = new Application();
 
 app.use(oakCors({
     origin: [`${Deno.env.get('SERVER')}`, `${Deno.env.get('DOMAIN')}`],
-    methods: ['GET', 'POST','PUT','DELETE','OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
         'Content-Type',
         'Authorization',
@@ -34,7 +34,7 @@ app.use(oakCors({
 
 //const tokens = {};
 // TODO : Store token on login
-export const connections = new Map<number,WebSocket>();
+export const connections = new Map<number, WebSocket>();
 
 //
 // MODULES
@@ -106,9 +106,9 @@ router.get('/src/:module', async (ctx) => {
 });
 
 //router.get("/");
-export function notifyAllUsers(from : WebSocket,json : object) {
+export function notifyAllUsers(from: WebSocket, json: object) {
     connections.forEach((client) => {
-        if (client != from){
+        if (client != from) {
             client.send(JSON.stringify(json));
         }
     });
@@ -130,14 +130,14 @@ router.get("/api/stats/",(ctx)=>{})
 router.get("/api/stats/:user",(ctx)=>{})
 */
 
-router.get('/api/user/getdata', authorizationMiddleware, async (ctx) => {
+router.get('/api/users/getdata', authorizationMiddleware, async (ctx) => {
     const token = await ctx.cookies.get('accessToken') as string;
     const payload = await verifyJWT(token) as Token;
     console.log(payload);
     ctx.response.status = 200;
     ctx.response.body = {
+        id: ctx.state.userId,
         user: payload.username,
-        others: connectedUsers,
     };
 });
 

@@ -1,7 +1,7 @@
 import { Router } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
-import * as db from './rest.ts';
-import { createJWT } from './jwt_func.ts';
-import { authorizationMiddleware } from './middlewares.ts';
+import * as db from '../rest.ts';
+import { createJWT } from '../jwt_func.ts';
+import { authorizationMiddleware } from '../middlewares.ts';
 
 export const authRouter = new Router();
 
@@ -23,17 +23,15 @@ authRouter.post('/api/auth/register', async (ctx) => {
             return;
         }
 
-        
-
         let userId;
         // Création de l'utilisateur
-        if (body.email){
+        if (body.email) {
             if (await db.emailExist(body.email)) {
                 ctx.response.status = 409;
                 ctx.response.body = { message: 'Email already in use' };
                 return;
             }
-    
+
             if (!db.isValidEmail(body.email)) {
                 ctx.response.status = 400;
                 ctx.response.body = { message: 'Invalid email format' };
@@ -45,7 +43,7 @@ authRouter.post('/api/auth/register', async (ctx) => {
                 email: body.email,
                 image_id: 1, // Image par défaut
             });
-        }else{
+        } else {
             userId = await db.createUser({
                 userName: body.userName,
                 userPassword: body.userPassword,
@@ -110,13 +108,13 @@ authRouter.post('/api/auth/login', async (ctx) => {
         // Mettre à jour la dernière connexion
         await db.updateLastConnection(user.id!);
 
-        const jwt = await createJWT('1h', { userId : user.id!});
+        const jwt = await createJWT('1h', { userId: user.id! });
 
         // Générer un token de rafraîchissement
         const refreshToken = await db.createRefreshToken(user.id!);
 
-        ctx.cookies.set("accessToken",jwt);
-        ctx.cookies.set("refreshToken",refreshToken);
+        ctx.cookies.set('accessToken', jwt);
+        ctx.cookies.set('refreshToken', refreshToken);
         ctx.response.status = 200;
         ctx.response.body = {
             token: jwt,

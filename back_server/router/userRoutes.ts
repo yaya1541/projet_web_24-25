@@ -1,15 +1,15 @@
 import { Router } from 'https://deno.land/x/oak@v17.1.4/router.ts';
-import { authorizationMiddleware } from './middlewares.ts';
-import { User } from './interfaces.ts';
-import * as db from './rest.ts';
+import { authorizationMiddleware } from '../middlewares.ts';
+import { User } from '../interfaces.ts';
+import * as db from '../rest.ts';
 
-export const userRoutes = new Router()
+export const userRoutes = new Router();
 
 userRoutes.get('/api/users/me', authorizationMiddleware, async (ctx) => {
     try {
         const userId = ctx.state.userId;
-        console.log("User id : ",userId);
-        
+        console.log('User id : ', userId);
+
         const success = await db.getUserById(userId);
         if (!success) {
             ctx.response.status = 400;
@@ -18,7 +18,10 @@ userRoutes.get('/api/users/me', authorizationMiddleware, async (ctx) => {
         }
 
         ctx.response.status = 200;
-        ctx.response.body = { user : success, message: 'User data successfully fetched' };
+        ctx.response.body = {
+            user: success,
+            message: 'User data successfully fetched',
+        };
     } catch (err) {
         ctx.response.status = 500;
         ctx.response.body = { message: 'Server error: ' + err };

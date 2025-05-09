@@ -1,9 +1,9 @@
 import { Router } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
-import { authorizationMiddleware } from './middlewares.ts';
-import * as db from './rest.ts';
-import { connections, notifyAllUsers } from './back.ts';
+import { authorizationMiddleware } from '../middlewares.ts';
+import * as db from '../rest.ts';
+import { connections, notifyAllUsers } from '../back.ts';
 
-export const msgRoutes = new Router()
+export const msgRoutes = new Router();
 
 // Routes pour les messages
 msgRoutes.post('/api/messages', authorizationMiddleware, async (ctx) => {
@@ -18,8 +18,8 @@ msgRoutes.post('/api/messages', authorizationMiddleware, async (ctx) => {
             };
             return;
         }
-        
-        if (body.receiver){
+
+        if (body.receiver) {
             // Vérifier si le destinataire existe
             const receiver = await db.getUserById(body.receiver);
             if (!receiver) {
@@ -35,8 +35,11 @@ msgRoutes.post('/api/messages', authorizationMiddleware, async (ctx) => {
             });
 
             ctx.response.status = 201;
-            ctx.response.body = { message: 'Message sent successfully', messageId };
-        }else{
+            ctx.response.body = {
+                message: 'Message sent successfully',
+                messageId,
+            };
+        } else {
             const messageId = await db.sendMessage({
                 sender,
                 receiver: 1,
@@ -44,7 +47,10 @@ msgRoutes.post('/api/messages', authorizationMiddleware, async (ctx) => {
             });
 
             ctx.response.status = 201;
-            ctx.response.body = { message: 'Message sent successfully', messageId };
+            ctx.response.body = {
+                message: 'Message sent successfully',
+                messageId,
+            };
         }
     } catch (err) {
         ctx.response.status = 500;
@@ -101,6 +107,23 @@ msgRoutes.get('/api/messages/sent', authorizationMiddleware, async (ctx) => {
         ctx.response.body = { message: 'Server error: ' + err };
     }
 });
+
+msgRoutes.get(
+    '/api/messages/conversation/global',
+    async (ctx) => {
+        try {
+            const messages = await db.getAllGlobalMessages();
+            //console.log(messages);
+            ctx.response.status = 200;
+            ctx.response.body = {
+                messages,
+            };
+        } catch (err) {
+            ctx.response.status = 500;
+            ctx.response.body = { message: 'Server error: ' + err };
+        }
+    },
+);
 
 msgRoutes.get(
     '/api/messages/conversation/:userId',
@@ -174,17 +197,16 @@ msgRoutes.delete('/api/messages/:id', authorizationMiddleware, async (ctx) => {
     }
 });
 
-
-msgRoutes.get("/chat",authorizationMiddleware,(ctx)=>{
+msgRoutes.get('/chat', authorizationMiddleware, (ctx) => {
     const ws = ctx.upgrade();
-    connections.set(ctx.state.userId,ws);
-    ws.onopen = (ev)=>{
+    connections.set(ctx.state.userId, ws);
+    ws.onopen = (ev) => {
         console.log('chat connection opened');
-    }
-    ws.onmessage = async (ev)=>{
+    };
+    ws.onmessage = async (ev) => {
         const data = JSON.parse(ev.data);
         console.log(data);
-        const messageId  = await db.sendMessage(data.message);
-        notifyAllUsers(data.user,data);
-    }
-})
+        const messageId = await db.sendMessage(data.message);
+        notifyAllUsers(data.user, data);
+    };
+});

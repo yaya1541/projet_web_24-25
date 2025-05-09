@@ -1,16 +1,16 @@
 import { Router } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
-import { authorizationMiddleware } from './middlewares.ts';
-import * as db from './rest.ts';
-import { connections, notifyAllUsers } from './back.ts';
-import { activeGames } from './partyUtils';
-import { inputs } from './script.js';
-import { Inputs } from './interfaces.ts';
+import { authorizationMiddleware } from '../middlewares.ts';
+import * as db from '../rest.ts';
+import { connections, notifyAllUsers } from '../back.ts';
+import { activeGames } from '../partyUtils';
+import { inputs } from '../script.js';
+import { Inputs } from '../interfaces.ts';
 
 // Router handler for WebSocket connections
-export const partyRouter = new Router()
+export const partyRouter = new Router();
 
 interface roomId extends URLSearchParams {
-    roomId : string
+    roomId: string;
 }
 
 partyRouter.get('kartfever/game', authorizationMiddleware, (ctx) => {
@@ -19,10 +19,10 @@ partyRouter.get('kartfever/game', authorizationMiddleware, (ctx) => {
     const { roomId } = ctx.request.url.searchParams as roomId;
     try {
         const ws = ctx.upgrade();
-        if (!connections.has(user)){
-            connections.set(user,ws);
+        if (!connections.has(user)) {
+            connections.set(user, ws);
         }
-        ws.onopen = async (_event) => {
+        ws.onopen = (_event) => {
             console.log(`New connection opened (${connections.size})`);
             console.log('user : ', user);
             /*
@@ -51,7 +51,7 @@ partyRouter.get('kartfever/game', authorizationMiddleware, (ctx) => {
         };
         ws.onclose = (_event) => {
             console.log('Connection closed');
-            
+
             // Remove this connection from the connections array
             connections.delete(user);
         };
@@ -75,7 +75,14 @@ partyRouter.get('kartfever/game', authorizationMiddleware, (ctx) => {
         ctx.response.body = { message: 'Unable to establish WebSocket' };
     }
 });
-
+/*
+// TODO : Add rest create party.
+// TODO : complete game api request.
 partyRouter.post("/kartfever/game",authorizationMiddleware,(ctx)=>{
     ctx.response.status = 200;
+    const partyCode = db.
+    ctx.response.body = {
+        party :
+    }
 })
+*/

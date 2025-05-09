@@ -1,6 +1,6 @@
 import { Router } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
-import { authorizationMiddleware } from './middlewares.ts';
-import * as db from './rest.ts';
+import { authorizationMiddleware } from '../middlewares.ts';
+import * as db from '../rest.ts';
 
 export const imgRoutes = new Router();
 

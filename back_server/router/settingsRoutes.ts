@@ -1,6 +1,7 @@
-import { authorizationMiddleware,adminMiddleware } from '../middlewares.ts';
+import { adminMiddleware, authorizationMiddleware } from '../middlewares.ts';
 import { Router } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
-import * as db from "../rest.ts"
+import * as db from '../rest.ts';
+import { Settings } from '../interfaces.ts';
 
 export const settingRouter = new Router();
 
@@ -12,7 +13,7 @@ settingRouter.post(
     async (ctx) => {
         try {
             const userId = parseInt(ctx.params.id!);
-            const body = await ctx.request.body().value;
+            const body = await ctx.request.body.json();
 
             if (!body.roleId) {
                 ctx.response.status = 400;
@@ -39,7 +40,7 @@ settingRouter.post(
             ctx.response.body = { message: 'Role assigned successfully' };
         } catch (err) {
             ctx.response.status = 500;
-            ctx.response.body = { message: 'Server error: ' + err.message };
+            ctx.response.body = { message: 'Server error: ' + err };
         }
     },
 );
@@ -72,12 +73,10 @@ settingRouter.delete(
             ctx.response.body = { message: 'Role removed successfully' };
         } catch (err) {
             ctx.response.status = 500;
-            ctx.response.body = { message: 'Server error: ' + err.message };
+            ctx.response.body = { message: 'Server error: ' + err };
         }
     },
 );
-
-
 
 // Routes pour les paramètres utilisateur
 settingRouter.get('/api/settings', authorizationMiddleware, async (ctx) => {
@@ -108,16 +107,16 @@ settingRouter.get('/api/settings', authorizationMiddleware, async (ctx) => {
         };
     } catch (err) {
         ctx.response.status = 500;
-        ctx.response.body = { message: 'Server error: ' + err.message };
+        ctx.response.body = { message: 'Server error: ' + err };
     }
 });
 
 settingRouter.put('/api/settings', authorizationMiddleware, async (ctx) => {
     try {
         const userId = ctx.state.userId;
-        const body = await ctx.request.body().value;
+        const body = await ctx.request.body.json();
 
-        const updateData: Partial<db.Settings> = {};
+        const updateData: Partial<Settings> = {};
 
         if (body.theme !== undefined) updateData.theme = body.theme;
         if (body.email_notification !== undefined) {
@@ -145,7 +144,7 @@ settingRouter.put('/api/settings', authorizationMiddleware, async (ctx) => {
         ctx.response.body = { message: 'Settings updated successfully' };
     } catch (err) {
         ctx.response.status = 500;
-        ctx.response.body = { message: 'Server error: ' + err.message };
+        ctx.response.body = { message: 'Server error: ' + err };
     }
 });
 
@@ -186,7 +185,7 @@ settingRouter.get(
             };
         } catch (err) {
             ctx.response.status = 500;
-            ctx.response.body = { message: 'Server error: ' + err.message };
+            ctx.response.body = { message: 'Server error: ' + err };
         }
     },
 );

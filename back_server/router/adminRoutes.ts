@@ -1,7 +1,7 @@
 import { Router } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
-import { adminMiddleware, authorizationMiddleware } from './middlewares.ts';
-import { User } from './interfaces.ts';
-import * as db from './rest.ts';
+import { adminMiddleware, authorizationMiddleware } from '../middlewares.ts';
+import { User } from '../interfaces.ts';
+import * as db from '../rest.ts';
 
 export const adminRoutes = new Router();
 
