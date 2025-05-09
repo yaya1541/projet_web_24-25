@@ -5,15 +5,22 @@ import { authorizationMiddleware } from './middlewares.ts';
 
 //import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 import { circuit, connectedUsers, setupGameRouter } from './script.js';
-import { InsertUser, UserExist, UserPassword } from './rest.ts';
+import { create, verify } from 'https://deno.land/x/djwt@v2.8/mod.ts';
+import * as db from './rest.ts'; // Importez les fonctions de la base de données
 import { Token } from './interfaces.ts';
+import { authRouter } from './authRoutes.ts';
+import { adminRoutes } from './adminRoutes.ts';
+import { imgRoutes } from './imgRoutes.ts';
+import { msgRoutes } from './msgRoutes.ts';
+import { userRoutes } from './userRoutes.ts';
+import { partyRouter } from './partyRoutes.ts';
 
 const router = new Router();
-const app = new Application();
+export const app = new Application();
 
 app.use(oakCors({
-    origin: ['https://localhost:3000', 'https://localhost:8080'],
-    methods: ['GET', 'POST'],
+    origin: [`${Deno.env.get('SERVER')}`, `${Deno.env.get('DOMAIN')}`],
+    methods: ['GET', 'POST','PUT','DELETE','OPTIONS'],
     allowedHeaders: [
         'Content-Type',
         'Authorization',
@@ -26,7 +33,7 @@ app.use(oakCors({
 
 //const tokens = {};
 // TODO : Store token on login
-export const connections: WebSocket[] = [];
+export const connections = new Map<number,WebSocket>();
 
 //
 // MODULES
@@ -98,15 +105,14 @@ router.get('/src/:module', async (ctx) => {
 });
 
 //router.get("/");
-export function notifyAllUsers(json: object) {
+export function notifyAllUsers(from : WebSocket,json : object) {
     connections.forEach((client) => {
-        client.send(JSON.stringify(json));
+        if (client != from){
+            client.send(JSON.stringify(json));
+        }
     });
     console.log('sent Message !');
 }
-
-// Game
-setupGameRouter(router, authorizationMiddleware);
 
 router.get('/game/kartfever/reload', (ctx) => {
     circuit.remove();
@@ -124,7 +130,7 @@ router.get("/api/stats/:user",(ctx)=>{})
 */
 
 router.get('/api/user/getdata', authorizationMiddleware, async (ctx) => {
-    const token = await ctx.cookies.get('refreshToken') as string;
+    const token = await ctx.cookies.get('accessToken') as string;
     const payload = await verifyJWT(token) as Token;
     console.log(payload);
     ctx.response.status = 200;
@@ -134,122 +140,12 @@ router.get('/api/user/getdata', authorizationMiddleware, async (ctx) => {
     };
 });
 
-router.post('/api/login', async (ctx) => {
-    const { user, pass } = await ctx.request.body.json();
-    console.log(user, pass);
-    try {
-        if (await UserExist(user)) {
-            console.log(await UserPassword(user));
-
-            if (await UserPassword(user) == pass) {
-                ctx.response.status = 200;
-
-                let expires = new Date();
-                let expiresTime = expires.getTime() + 1000 * 60 * 60 * 24 * 14;
-                expires.setTime(expiresTime);
-
-                const refresh = await createJWT('14d', { username: user });
-
-                ctx.cookies.set('refreshToken', refresh, {
-                    httpOnly: true,
-                    expires: expires,
-                });
-
-                expires = new Date();
-                expiresTime = expires.getTime() + 1000 * 60 * 60;
-                expires.setTime(expiresTime);
-
-                ctx.cookies.set(
-                    'accessToken',
-                    await createJWT('10s', { username: user }),
-                    { httpOnly: true, expires: expires },
-                );
-                ctx.cookies.set('user', user);
-                ctx.response.headers.set('Set-Login', 'logged-in');
-            } else {
-                ctx.response.status = 401;
-            }
-            //
-        } else {
-            ctx.response.status = 401;
-            console.log('User with this name already entered');
-        }
-        ctx.response.body = { message: 'User registered successfully' };
-    } catch (error) {
-        console.error(error);
-        ctx.response.status = 500;
-        ctx.response.body = { message: 'Internal server error' };
-    }
-});
-
-router.post('/api/logout', authorizationMiddleware, (ctx) => {
-    ctx.cookies.delete('accessToken');
-    ctx.cookies.delete('refreshToken');
-    ctx.cookies.delete('user');
-    ctx.response.status = 200;
-});
-
-router.get('/api/oauth', authorizationMiddleware, (ctx) => {
-    const { refreshToken } = ctx.params;
-    console.log(refreshToken);
-    ctx.response.status = 200;
-});
-
-router.post('/api/register', async (ctx) => {
-    const data = await ctx.request.body.json();
-    const user = data.user;
-    const pass = data.pass;
-
-    try {
-        ctx.response.status = 200;
-        if (!(await UserExist(user))) {
-            InsertUser(user, pass);
-            ctx.response.status = 201;
-        } else {
-            console.log('User with this name already registered');
-        }
-        ctx.response.body = { message: 'User registered successfully' };
-    } catch (error) {
-        console.error(error);
-        ctx.response.status = 500;
-        ctx.response.body = { message: 'Internal server error' };
-    }
-});
-
-let session: number = 0;
-
-router.post('/api/startsession', async (ctx) => {
-    console.log('Protocol:', ctx.request.url.protocol);
-    console.log('Headers:', ctx.request.headers);
-    console.log('Cookies:', ctx.cookies);
-
-    const expiration = new Date();
-    expiration.setDate(expiration.getDate() + 1);
-    console.log(expiration);
-
-    session++;
-    try {
-        ctx.cookies.set(
-            'sessionId',
-            await createJWT('1d', { session: session }),
-            {
-                httpOnly: true,
-                secure: ctx.request.secure, // Only set secure if the request is actually secure
-            },
-        );
-        console.log('Cookie set successfully');
-    } catch (error) {
-        console.error('Error setting cookie:', error);
-    }
-});
-
-/*
-//user login
-router.post("/signin");
-router.post("/login");
-
-router.get("/oauth/refresh");
-*/
+router.use(authRouter.routes());
+router.use(adminRoutes.routes());
+router.use(imgRoutes.routes());
+router.use(msgRoutes.routes());
+router.use(userRoutes.routes());
+router.use(partyRouter.routes());
 
 const certPath = '../certs/server.crt'; // Update to your certificate path
 const keyPath = '../certs/server.key'; // Update to your private key path
