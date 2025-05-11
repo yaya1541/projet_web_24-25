@@ -3,7 +3,32 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Document</title>
+        <title>Your account</title>
+        <link rel="stylesheet" type="text/css" href="login/style.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        >
+        <link rel="stylesheet" href="style.css">
+        <script type="module" src="templates.js"></script>
     </head>
-    <body></body>
+    <body>
+        <header-component></header-component>
+        <div class="container">
+            <div class="sidebar">
+                <ul class="settings-wrapper">
+                    <li>profile</li>
+                    <li>theme</li>
+                    <li>settings</li>
+                </ul>
+                <button onclick="fetch('https://localhost:3000/api/users/me',{
+                    method:'DELETE',
+                    credentials:'include'
+                })">Delete account</button>
+            </div>
+        </div>
+        <footer-component></footer-component>
+    </body>
 </html>
