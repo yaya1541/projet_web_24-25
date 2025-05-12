@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Account | GamerCraft</title>
+  <link rel="stylesheet" type="text/css" href="login/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="account/style.css">
+  <script type="module" src="templates.js"></script>
+</head>
+<body>
+  <script type="module">
+    import {oauth} from "../utils.js"
+    if (await oauth != 200){
+      document.location.pathname = "home";
+    }
+  </script>
+  <div class="background-overlay"></div>
+  <header-component></header-component>
+  
+  <div class="container">
+    <div class="sidebar">
+      <ul class="settings-wrapper">
+        <li class="active">Profile</li>
+        <li>Settings</li>
+        <li>Security</li>
+        <li>Notifications</li>
+      </ul>
+      <button class="delete-account-btn" onclick="if(confirm('Are you sure you want to delete your account? This action cannot be undone.')) { fetch('https://localhost:3000/api/users/me', { method: 'DELETE', credentials: 'include' }) }">Delete Account</button>
+    </div>
+    <style>
+        iframe{
+            width: max-content;
+            height: max-content;
+            min-width: 90%;
+            min-height: 90%;
+            position: absolute;
+        }
+    </style>
+    <div class="content-area">
+      <iframe src="/account/profile" style="border:0px #ffffff none;" name="myiFrame" frameborder="0" marginheight="0px" marginwidth="0px" allowfullscreen></iframe>
+    </div>
+  </div>
+  
+  <footer-component></footer-component>
+</body>
+</html>

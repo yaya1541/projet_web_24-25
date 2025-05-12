@@ -1,0 +1,13 @@
+settings.json
+.env
+./certs/*
+deno.lock
+*.lock
+*.sql
+*.pem
+scripts.json
+jsconfig.json
+node_modules
+*.puml
+certs/server.crt
+certs/server.key

@@ -1,0 +1,10 @@
+{
+    "fmt": {
+      "include": ["**/*.ts", "**/*.js", "**/*.css"],
+      "exclude": [],
+      "useTabs": false,
+      "indentWidth": 4,
+      "lineWidth": 80,
+      "singleQuote": true
+    }
+  }

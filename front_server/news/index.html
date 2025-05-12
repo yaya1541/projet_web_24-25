@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KartFever - Visualiseur de Commits</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="login/style.css">
+    <link rel="stylesheet" type="text/css" href="chat_context.css">
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="templates.js"></script>
+    <style>
+        /* Styles spécifiques pour le visualiseur de commits */
+        .commit-viewer {
+            background-color: var(--dark-overlay);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 0 30px var(--accent-shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--light-overlay);
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .commits-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+        }
+
+        .commits-title {
+            font-family: 'Russo One', sans-serif;
+            color: var(--light);
+            font-size: 1.5rem;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-badge {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: var(--dark);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-badge.active {
+            background: linear-gradient(135deg, var(--accent-bright), var(--accent));
+            transform: scale(1.05);
+        }
+
+        .filter-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--accent-shadow);
+        }
+
+        .commit {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .commit:hover {
+            transform: translateX(5px);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .commit.feat {
+            border-left-color: #28a745;
+        }
+
+        .commit.fix {
+            border-left-color: #d73a49;
+        }
+
+        .commit.refactor {
+            border-left-color: #6f42c1;
+        }
+
+        .commit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .commit-type {
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: var(--dark);
+        }
+        
+        .commit-type.feat {
+            background: linear-gradient(135deg, #28a745, #34d058);
+        }
+        
+        .commit-type.fix {
+            background: linear-gradient(135deg, #d73a49, #ff4757);
+        }
+        
+        .commit-type.refactor {
+            background: linear-gradient(135deg, #6f42c1, #9966FF);
+        }
+
+        .commit-date {
+            color: var(--neutral);
+            font-size: 0.8rem;
+        }
+
+        .commit-message {
+            font-size: 1rem;
+            color: var(--light);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .commit-author {
+            color: var(--primary-medium-light);
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .commit-details {
+            display: flex;
+            justify-content: space-between;
+            color: var(--neutral);
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        .commit-sha {
+            font-family: monospace;
+            color: var(--accent);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .commit-sha:hover {
+            color: var(--accent-bright);
+            text-decoration: underline;
+        }
+
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--neutral);
+        }
+
+        .error {
+            color: #ff6b6b;
+            background-color: rgba(128, 12, 31, 0.2);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--neutral);
+        }
+
+        .repo-info {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        /* Les classes .section, .item-list, .item, etc. sont déjà définies dans vos fichiers CSS importés */
+        
+        /* Responsive tweaks */
+        @media (max-width: 768px) {
+            .filters {
+                flex-wrap: wrap;
+            }
+            
+            .commit-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .commit-date {
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header-component></header-component>
+    
+    <div class="container inline-container">
+        <div class="section commit-viewer">
+            <div class="commits-header">
+                <div class="commits-title">Derniers développements</div>
+                <div class="filters">
+                    <div class="filter-badge active" data-type="feat">Features</div>
+                    <div class="filter-badge active" data-type="fix">Fixes</div>
+                    <div class="filter-badge active" data-type="refactor">Refactors</div>
+                </div>
+            </div>
+            
+            <div class="repo-info" id="repo-info">Chargement du dépôt...</div>
+            <div id="error-display"></div>
+            <div id="loading-indicator" class="loading">Chargement des derniers commits...</div>
+            
+            <div id="commits-container"></div>
+        </div>
+    </div>
+    
+    <chat-component></chat-component>
+    <footer-component id="footer"></footer-component>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const commitsContainer = document.getElementById('commits-container');
+            const errorDisplay = document.getElementById('error-display');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const repoInfoDisplay = document.getElementById('repo-info');
+            const filterBadges = document.querySelectorAll('.filter-badge');
+            
+            // Dépôt par défaut (vous pouvez changer ceci selon vos besoins)
+            const defaultRepo = 'yaya1541/projet_web_24-25';
+            
+            // Filtres actifs
+            const activeFilters = {
+                feat: true,
+                fix: true,
+                refactor: true
+            };
+            
+            // Gestion des filtres
+            filterBadges.forEach(badge => {
+                badge.addEventListener('click', () => {
+                    const filterType = badge.dataset.type;
+                    badge.classList.toggle('active');
+                    activeFilters[filterType] = badge.classList.contains('active');
+                    
+                    // Réappliquer les filtres sur les commits déjà chargés
+                    applyFilters();
+                });
+            });
+            
+            // Fonction pour appliquer les filtres sur les commits
+            function applyFilters() {
+                const allCommits = document.querySelectorAll('.commit');
+                
+                allCommits.forEach(commit => {
+                    const commitType = commit.classList.contains('feat') ? 'feat' : 
+                                       commit.classList.contains('fix') ? 'fix' : 
+                                       commit.classList.contains('refactor') ? 'refactor' : '';
+                                       
+                    if (commitType && activeFilters[commitType]) {
+                        commit.style.display = 'block';
+                    } else {
+                        commit.style.display = 'block';
+                    }
+                });
+                
+                // Vérifier si des commits sont visibles
+                const visibleCommits = document.querySelectorAll('.commit[style="display: block;"]');
+                if (visibleCommits.length === 0 && allCommits.length > 0) {
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.className = 'empty-state';
+                    emptyMessage.textContent = 'Aucun commit ne correspond aux filtres sélectionnés.';
+                    
+                    // Supprimer tout message vide existant avant d'en ajouter un nouveau
+                    const existingEmpty = document.querySelector('.empty-state');
+                    if (existingEmpty) {
+                        existingEmpty.remove();
+                    }
+                    
+                    commitsContainer.appendChild(emptyMessage);
+                } else {
+                    // Supprimer le message vide s'il existe et qu'il y a des commits visibles
+                    const existingEmpty = document.querySelector('.empty-state');
+                    if (existingEmpty) {
+                        existingEmpty.remove();
+                    }
+                }
+            }
+            
+            // Charger les commits au chargement de la page
+            loadCommits(defaultRepo);
+            
+            // Fonction pour charger les commits
+            async function loadCommits(repoUrl) {
+                errorDisplay.innerHTML = '';
+                commitsContainer.innerHTML = '';
+                loadingIndicator.style.display = 'block';
+                
+                try {
+                    // URL de l'API GitHub
+                    const apiUrl = `https://api.github.com/repos/${repoUrl}/commits`;
+                    
+                    // Récupération des commits
+                    const response = await fetch(apiUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Erreur: ${response.status} - ${response.statusText}`);
+                    }
+                    
+                    const commits = await response.json();
+                    
+                    // Informations sur le dépôt
+                    repoInfoDisplay.textContent = `Dépôt: ${repoUrl}`;
+                    
+                    // Traitement des commits
+                    const filteredCommits = commits.filter(commit => {
+                        const message = commit.commit.message.toLowerCase();
+                        
+                        // Vérification du type de commit
+                        return (message.startsWith('feat')) || 
+                               (message.startsWith('feature')) ||
+                               (message.startsWith('fix')) ||
+                               (message.startsWith('refactor'));
+                    });
+                    
+                    console.log(filteredCommits);
+                    
+
+                    // Affichage des commits filtrés
+                    if (filteredCommits.length === 0) {
+                        commitsContainer.innerHTML = '<div class="empty-state">Aucun commit correspondant aux conventions feat/fix/refactor n\'a été trouvé.</div>';
+                    } else {
+                        displayCommits(filteredCommits);
+                    }
+                } catch (error) {
+                    showError(`Erreur lors de la récupération des commits: ${error.message}`);
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                }
+            }
+            
+            // Fonction pour afficher les commits
+            function displayCommits(commits) {
+                commits.forEach(commit => {
+                    const message = commit.commit.message;
+                    let type = '';
+                    let className = '';
+                    let commitMessage = message;
+                    
+                    // Déterminer le type de commit
+                    if (message.toLowerCase().startsWith('feat:') || message.toLowerCase().startsWith('feature:')) {
+                        type = 'feat';
+                        className = 'feat';
+                        commitMessage = message.substring(message.indexOf(':') + 1).trim();
+                    } else if (message.toLowerCase().startsWith('fix:')) {
+                        type = 'fix';
+                        className = 'fix';
+                        commitMessage = message.substring(message.indexOf(':') + 1).trim();
+                    } else if (message.toLowerCase().startsWith('refactor:')) {
+                        type = 'refactor';
+                        className = 'refactor';
+                        commitMessage = message.substring(message.indexOf(':') + 1).trim();
+                    }
+                    
+                    // Création de l'élément commit
+                    const commitElement = document.createElement('div');
+                    commitElement.className = `commit ${className}`;
+                    
+                    // Date du commit
+                    const date = new Date(commit.commit.author.date);
+                    const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                    
+                    // Lien vers le commit
+                    const commitUrl = commit.html_url;
+                    
+                    commitElement.innerHTML = `
+                        <div class="commit-header">
+                            <span class="commit-type ${className}">${type}</span>
+                            <span class="commit-date">${formattedDate}</span>
+                        </div>
+                        <div class="commit-message">${commitMessage}</div>
+                        <div class="commit-author">Auteur: ${commit.commit.author.name}</div>
+                        <div class="commit-details">
+                            <a href="${commitUrl}" target="_blank" class="commit-sha">${commit.sha.substring(0, 7)}</a>
+                        </div>
+                    `;
+                    
+                    commitsContainer.appendChild(commitElement);
+                });
+                
+                // Appliquer les filtres après l'affichage
+                applyFilters();
+            }
+            
+            // Fonction pour afficher les erreurs
+            function showError(message) {
+                errorDisplay.innerHTML = `<div class="error">${message}</div>`;
+                loadingIndicator.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
