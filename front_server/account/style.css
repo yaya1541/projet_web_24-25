@@ -1,0 +1,313 @@
+/* Additional Account Page Styling */
+.container {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 30px;
+}
+
+.sidebar {
+    background: var(--dark-overlay);
+    border-radius: 15px;
+    box-shadow: 0 0 20px var(--accent-shadow);
+    padding: 30px;
+    width: 240px;
+    border: 1px solid var(--light-overlay);
+    backdrop-filter: blur(10px);
+}
+
+.settings-wrapper {
+    list-style: none;
+}
+
+.settings-wrapper li {
+    margin-bottom: 15px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    color: var(--light);
+    text-transform: capitalize;
+}
+
+.settings-wrapper li:hover {
+    background-color: var(--primary-medium);
+    transform: translateX(5px);
+}
+
+.settings-wrapper li.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    box-shadow: 0 5px 10px var(--accent-shadow);
+}
+
+.delete-account-btn {
+    background-color: rgba(255, 107, 107, 0.2);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 107, 107, 0.5);
+    border-radius: 8px;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    width: 100%;
+    margin-top: 30px;
+    transition: all 0.3s ease;
+}
+
+.delete-account-btn:hover {
+    background-color: rgba(255, 107, 107, 0.4);
+}
+
+.content-area {
+    flex: 1;
+    background: var(--dark-overlay);
+    border-radius: 15px;
+    box-shadow: 0 0 30px var(--accent-shadow);
+    padding: 40px;
+    border: 1px solid var(--light-overlay);
+    backdrop-filter: blur(10px);
+    min-height: 600px;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--light-overlay);
+}
+
+.content-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--light);
+    position: relative;
+}
+
+.content-title:after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background-color: var(--highlight);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.user-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 30px;
+    border: 4px solid var(--accent);
+    box-shadow: 0 0 20px var(--accent-shadow);
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-info h3 {
+    font-family: 'Russo One', sans-serif;
+    font-size: 1.8rem;
+    color: var(--light);
+    margin-bottom: 5px;
+}
+
+.profile-info .user-status {
+    display: inline-block;
+    padding: 5px 15px;
+    background: linear-gradient(
+        135deg,
+        var(--primary-medium),
+        var(--primary-medium-dark)
+    );
+    border-radius: 20px;
+    color: var(--light);
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.stat {
+    color: var(--neutral);
+    font-size: 0.9rem;
+}
+
+.stat span {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    flex: 1;
+}
+
+.accent-text {
+    color: var(--accent);
+}
+
+.save-changes-btn {
+    background: linear-gradient(
+        135deg,
+        var(--primary-medium),
+        var(--primary-medium-dark)
+    );
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    margin-top: 20px;
+}
+
+.save-changes-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(83, 182, 152, 0.4);
+    background: linear-gradient(
+        135deg,
+        var(--primary-medium-light),
+        var(--primary-medium)
+    );
+}
+
+.section-title {
+    font-size: 1.2rem;
+    color: var(--light);
+    margin: 30px 0 15px;
+    position: relative;
+    padding-left: 15px;
+}
+
+.section-title:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: var(--accent);
+    border-radius: 2px;
+}
+
+.divider {
+    height: 1px;
+    background: var(--light-overlay);
+    margin: 30px 0;
+}
+
+.achievement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.achievement {
+    background: var(--primary-dark);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.achievement:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.achievement-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-size: 1.5rem;
+    color: var(--dark);
+}
+
+.achievement-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--light);
+}
+
+.achievement-desc {
+    font-size: 0.8rem;
+    color: var(--neutral);
+}
+
+@media (max-width: 1024px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        margin-bottom: 30px;
+    }
+
+    .settings-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .settings-wrapper li {
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .user-profile {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .user-avatar {
+        margin-right: 0;
+        margin-bottom: 20px;
+    }
+
+    .profile-stats {
+        justify-content: center;
+    }
+
+    .content-area {
+        padding: 30px 20px;
+    }
+}

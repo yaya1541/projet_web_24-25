@@ -1,0 +1,29 @@
+* {
+    .inline-container {
+        display: inline;
+        padding: 0;
+    }
+
+    .section {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 70vh;
+    }
+
+    .title {
+        padding: 10% 10%;
+        background-image: url('https://localhost:3000/src/kart-home.png');
+        background-repeat: repeat;
+        background-size: 100%;
+    }
+
+    header-component {
+        z-index: 400;
+        top: 0;
+        position: sticky;
+        > * {
+            position: inherit;
+        }
+    }
+}
