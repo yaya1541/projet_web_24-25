@@ -1,4 +1,4 @@
-export const oauth = fetch('https://localhost:3000/api/oauth', {
+export const oauth = fetch('https://localhost:3000/api/auth/oauth', {
     method: 'GET',
     credentials: 'include',
 }).then((res) => {
@@ -9,12 +9,12 @@ export const handleLogin = async (doc) => {
     const username = doc.getElementById('username');
     const password = doc.getElementById('password');
     //const loginBtn = doc.getElementById("login-btn");
-    await fetch('https://localhost:3000/api/login', {
+    await fetch('https://localhost:3000/api/auth/login', {
         method: 'POST',
         credentials: 'include',
         body: JSON.stringify({
-            user: username.value,
-            pass: password.value,
+            userName: username.value,
+            userPassword: password.value,
         }),
     }).then((res) => {
         console.log(res.status);
