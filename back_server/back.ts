@@ -25,10 +25,7 @@ app.use(oakCors({
     allowedHeaders: [
         'Content-Type',
         'Authorization',
-        'getsetcookie',
-        'setcookie',
     ],
-    optionsSuccessStatus: 200,
     credentials: true,
 }));
 
