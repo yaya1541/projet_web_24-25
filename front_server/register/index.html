@@ -32,6 +32,16 @@
 
             <div class="input-container">
                 <div class="form-group">
+                    <label for="password">Adresse mail</label>
+                    <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        placeholder="Entrez adresse mail"
+                    >
+                </div>
+
+                <div class="form-group">
                     <label for="username">Nom d'utilisateur</label>
                     <input
                         type="text"
@@ -58,6 +68,9 @@
         </div>
         <script>
             //fetch("https://localhost:3000/api/startsession",{method : 'POST',credentials :"include"})
+            const email = document.getElementById(
+                'email',
+            );
             const username = document.getElementById(
                 'username',
             );
@@ -70,13 +83,14 @@
 
             const handleregister = async () => {
                 await fetch(
-                    'https://localhost:3000/api/register',
+                    `https://localhost:3000/api/auth/register`,
                     {
                         method: 'POST',
                         credentials: 'include',
                         body: JSON.stringify({
-                            user: username.value,
-                            pass: password.value,
+                            email : email.value,
+                            userName: username.value,
+                            userPassword: password.value,
                         }),
                     },
                 ).then((res) => {
