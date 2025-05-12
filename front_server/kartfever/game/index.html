@@ -1,51 +1,493 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Document</title>
-        <style>
-            body {
-                margin: 0;
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KartFever</title>
+    <style>
+        /* Root variables from your existing CSS */
+        :root {
+            /* Primary colors */
+            --primary-dark: #45474b; /* Dark gray */
+            --primary-medium: #379777; /* Teal green */
+            --primary-light: #f5f7f8; /* Light gray/off-white */
+
+            /* Accent colors */
+            --accent-dark: #cd9c00; /* Darker gold */
+            --accent: #f4ce14; /* Bright yellow/gold */
+            --accent-bright: #ffe04d; /* Brighter yellow variant */
+
+            /* Other colors */
+            --neutral: #8b9196; /* Medium gray */
+            --highlight: #f4ce14; /* Same as accent for highlighting */
+            --dark: #2d2e31; /* Darker than primary-dark */
+            --light: #f5f7f8; /* Same as primary-light */
+
+            /* Functional overlays */
+            --dark-overlay: rgba(69, 71, 75, 0.9); /* Based on dark gray */
+            --light-overlay: rgba(245, 247, 248, 0.1); /* Based on light color */
+            --accent-shadow: rgba(244, 206, 20, 0.4); /* Based on accent */
+            --ui-overlay: rgba(45, 46, 49, 0.7); /* Semi-transparent dark */
+
+            /* Additional variations */
+            --primary-medium-light: #53b698; /* Lighter version of teal */
+            --primary-medium-dark: #2a7259; /* Darker version of teal */
+        }
+
+        /* General styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--light);
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Welcome Screen */
+        #welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            background: radial-gradient(circle, rgba(45, 46, 49, 0.9) 0%, rgba(25, 26, 29, 0.95) 100%);
+        }
+
+        .game-box {
+            background: var(--dark-overlay);
+            border-radius: 15px;
+            box-shadow: 0 0 30px var(--accent-shadow);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--light-overlay);
+        }
+
+        .logo-container {
+            margin-bottom: 30px;
+        }
+
+        h1.game-title {
+            font-family: 'Russo One', sans-serif;
+            font-size: 2.8rem;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px var(--accent-shadow);
+            color: var(--light);
+        }
+
+        h1.game-title span {
+            color: var(--accent);
+        }
+
+        .input-container {
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: var(--neutral);
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 2px solid var(--primary-dark);
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--light);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 8px var(--accent-shadow);
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            flex: 1;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .primary-btn:before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--highlight) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 15px var(--accent-shadow);
+            background: linear-gradient(135deg, var(--accent-bright), var(--accent));
+        }
+
+        .primary-btn:hover:before {
+            opacity: 0.1;
+        }
+
+        .primary-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* In-game UI Elements */
+        #game-ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+        }
+
+        .speed-display {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 20px;
+            background: var(--ui-overlay);
+            border-radius: 12px;
+            border-left: 3px solid var(--accent);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .speed-value {
+            font-family: 'Russo One', sans-serif;
+            font-size: 2.5rem;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .speed-unit {
+            font-size: 0.9rem;
+            color: var(--neutral);
+            margin-top: 5px;
+        }
+
+        .race-info {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--ui-overlay);
+            border-radius: 12px;
+            padding: 10px 25px;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .lap-display {
+            display: flex;
+            align-items: center;
+            font-family: 'Russo One', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+
+        .current-lap {
+            color: var(--accent);
+            margin-right: 5px;
+        }
+
+        .total-laps {
+            color: var(--neutral);
+        }
+
+        .timer {
+            font-family: 'Russo One', sans-serif;
+            font-size: 1.8rem;
+            color: var(--light);
+        }
+
+        .leaderboard {
+            position: absolute;
+            top: 100px;
+            left: 30px;
+            background: var(--ui-overlay);
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 200px;
+            border-right: 3px solid var(--accent);
+        }
+
+        .leaderboard-title {
+            font-family: 'Russo One', sans-serif;
+            font-size: 1rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .player-list {
+            list-style: none;
+        }
+
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .player-item:last-child {
+            border-bottom: none;
+        }
+
+        .player-position {
+            font-weight: bold;
+            color: var(--accent);
+            margin-right: 10px;
+        }
+
+        .player-name {
+            flex: 1;
+        }
+
+        .player-time {
+            color: var(--neutral);
+        }
+
+        .current-player {
+            background: rgba(244, 206, 20, 0.2);
+            border-radius: 5px;
+        }
+
+        /* Countdown overlay */
+        #countdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
+        .countdown-number {
+            font-family: 'Russo One', sans-serif;
+            font-size: 8rem;
+            color: var(--accent);
+            text-shadow: 0 0 20px var(--accent-shadow);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .game-box {
+                padding: 30px 20px;
+                max-width: 90%;
             }
-            canvas {
-                display: block;
+
+            h1.game-title {
+                font-size: 2.3rem;
             }
-        </style>
-        <script type="importmap">
-            {
-                "imports": {
-                    "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js"
-                }
+
+            .speed-display {
+                bottom: 20px;
+                right: 20px;
+                padding: 10px 15px;
             }
-        </script>
-        <script
-            type="module"
-            src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js"
-            crossorigin="anonymous"
-        ></script>
-        <script
-            type="module"
-            src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm"
-            crossorigin="anonymous"
-        ></script>
-        <script
-            type="module"
-            src="https://localhost:3000/lib/circuit.js"
-            crossorigin="use-credentials"
-        ></script>
-        <script
-            type="module"
-            src="https://localhost:3000/lib/car.js"
-            crossorigin="use-credentials"
-        ></script>
-        <script
-            type="module"
-            src="https://localhost:3000/lib/GLTFLoader.js"
-            crossorigin="use-credentials"
-        ></script>
-    </head>
-    <body>
-        <script type="module" src="./game/script.js"></script>
-    </body>
+
+            .speed-value {
+                font-size: 2rem;
+            }
+
+            .race-info {
+                padding: 8px 20px;
+            }
+
+            .leaderboard {
+                top: 80px;
+                left: 20px;
+                min-width: 180px;
+            }
+        }
+    </style>
+    <style>
+        body {
+            margin: 0;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js"
+            }
+        }
+    </script>
+    <script
+        type="module"
+        src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js"
+        crossorigin="anonymous"
+    ></script>
+    <script
+        type="module"
+        src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm"
+        crossorigin="anonymous"
+    ></script>
+    <script
+        type="module"
+        src='https://localhost:3000/lib/circuit.js'
+        crossorigin="use-credentials"
+    ></script>
+    <script
+        type="module"
+        src="https://localhost:3000/lib/car.js"
+        crossorigin="use-credentials"
+    ></script>
+    <script
+        type="module"
+        src="https://localhost:3000/lib/GLTFLoader.js"
+        crossorigin="use-credentials"
+    ></script>
+</head>
+<body>
+    <!-- Welcome Screen (Join/Create Game) -->
+    <div id="welcome-screen">
+        <div class="game-box">
+            <div class="logo-container">
+                <h1 class="game-title">Kart<span>Fever</span></h1>
+            </div>
+            <div class="input-container">
+                <div class="form-group">
+                    <label for="game-code">Game Code</label>
+                    <input type="text" id="game-code" placeholder="Enter game code (e.g., AZE34R)" maxlength="6">
+                </div>
+            </div>
+            <div class="btn-container">
+                <button id="join-game" class="primary-btn">Join Game</button>
+                <button id="create-game" class="primary-btn">Create Game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- In-game UI -->
+    <div id="game-ui">
+        <!-- Speed Display -->
+        <div class="speed-display">
+            <div class="speed-value">0</div>
+            <div class="speed-unit">KM/H</div>
+        </div>
+
+        <!-- Race Information (Lap Counter & Timer) -->
+        <div class="race-info">
+            <div class="lap-display">
+                LAP <span class="current-lap">1</span>/<span class="total-laps">3</span>
+            </div>
+            <div class="timer">00:00.000</div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="leaderboard">
+            <div class="leaderboard-title">Ranking</div>
+            <ul class="player-list">
+                <li class="player-item current-player">
+                    <span class="player-position">1</span>
+                    <span class="player-name">You</span>
+                    <span class="player-time">00:45.321</span>
+                </li>
+                <li class="player-item">
+                    <span class="player-position">2</span>
+                    <span class="player-name">Player2</span>
+                    <span class="player-time">00:46.842</span>
+                </li>
+                <li class="player-item">
+                    <span class="player-position">3</span>
+                    <span class="player-name">Player3</span>
+                    <span class="player-time">00:48.157</span>
+                </li>
+                <li class="player-item">
+                    <span class="player-position">4</span>
+                    <span class="player-name">Player4</span>
+                    <span class="player-time">00:51.985</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Countdown Overlay -->
+    <div id="countdown-overlay">
+        <div class="countdown-number">3</div>
+    </div>
+
+    <!-- Placeholder for the Three.js game script -->
+    <script type="module" src="./game/script.js"></script>
+</body>
 </html>
