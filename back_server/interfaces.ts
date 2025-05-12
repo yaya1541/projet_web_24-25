@@ -18,7 +18,7 @@ export interface Inputs {
 }
 
 export interface Token extends JWTPayload {
-    username: string;
+    userId: number;
 }
 
 export interface User {
@@ -30,34 +30,34 @@ export interface User {
     userDateOfCreation?: Date;
     email?: string;
     image_id: number;
-  }
-  
-  export interface Role {
+}
+
+export interface Role {
     role_id: number;
     user_id: number;
-  }
-  
-  export interface RefreshToken {
+}
+
+export interface RefreshToken {
     token: string;
     userId: number;
-  }
-  
-  export interface Message {
+}
+
+export interface Message {
     id?: number;
     sender: number;
     receiver: number;
     content: string;
     sentAt?: Date;
-  }
-  
-  export interface Settings {
+}
+
+export interface Settings {
     user_id: number;
     theme: boolean;
     email_notification: boolean;
-  }
-  
-  export interface ImageStore {
+}
+
+export interface ImageStore {
     id?: number;
     image_name: string;
     image_data: Uint8Array;
-  }
+}
