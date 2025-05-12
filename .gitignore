@@ -1,4 +1,4 @@
-*/.vscode/*.
+settings.json
 .env
 ./certs/*
 deno.lock
@@ -9,3 +9,5 @@ scripts.json
 jsconfig.json
 node_modules
 *.puml
+certs/server.crt
+certs/server.key
