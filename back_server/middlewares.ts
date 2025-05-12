@@ -53,7 +53,7 @@ async function authorizationMiddleware(
         // Generate new access token directly
         const newAccessToken = await generateAccessToken(
             '10s',
-            (refreshPayload as Token).username,
+            (refreshPayload as Token).userId,
         );
         const expiresIn = 3600; // 1 hour in seconds (adjust as needed)
 
@@ -106,7 +106,7 @@ export const adminMiddleware = async (
 // Helper function to generate a new access token
 function generateAccessToken(
     duration: string,
-    username: string,
+    username: number,
 ): Promise<string> {
     // Create JWT with appropriate expiration time
     const expirationTime = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
