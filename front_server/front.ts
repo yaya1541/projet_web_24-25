@@ -13,6 +13,12 @@ app.use(async (ctx) => {
     try {
         console.log('fetched data on server...');
         ctx.response.headers.append('X-Frame-Options', 'SAMEORIGIN'); // deny iframe from other origins
+        /* TODO : After deploy add csp policies.
+        ctx.response.headers.append(
+            'Content-Security-Policy',
+            "default-src "
+        );
+        */
         await ctx.send({
             root: `${Deno.cwd()}/`,
             index: 'index.html',
