@@ -1,10 +1,10 @@
-// Completed Car class with full prediction support
+// Simplified Car class without prediction logic
 import CANNON from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 import { GLTFLoader } from './GLTFLoader.js';
 
 // Simple function to replace ALL materials in your model
-function replaceAllMaterials(scene) {
+export function replaceAllMaterials(scene) {
     console.log('Replacing all materials with compatible ones');
 
     scene.traverse((object) => {
@@ -70,7 +70,6 @@ function createSimpleMaterial(originalMaterial) {
 }
 
 export class Car {
-    // Add constructor modifications
     constructor(world, scene, id, options = {}) {
         this.world = world;
         this.scene = scene;
@@ -80,41 +79,30 @@ export class Car {
             dimensions: { width: 2, height: 1, length: 4 },
             color: 0x0066ff,
             mass: 500,
-            yOffset: 0.5, // CHANGED: Reduced from 4 to 0.5 to raise the car above ground
+            yOffset: 0.5,
             ...options,
         };
 
-        // Max steer, engine force values
+        // Car control parameters
         this.maxSteerVal = 0.5;
         this.maxForce = 1000;
         this.brakeForce = 20;
-
-        // Improved deceleration and steering
-        this.decelerationRate = 1000; // Higher value = faster deceleration
-        this.steeringSmoothing = 0.05; // Lower value = smoother steering (0-1)
+        this.decelerationRate = 1000;
+        this.steeringSmoothing = 0.05;
         this.currentSteering = 0.0;
 
         // Drift properties
         this.isDrifting = false;
-        this.driftFactor = 0.25; // Lower value = more sideways sliding
+        this.driftFactor = 0.25;
         this.normalFrictionSlip = 5;
-        this.driftFrictionSlip = 1.5; // Lower friction when drifting
+        this.driftFrictionSlip = 1.5;
         this.driftRecoveryRate = 0.5;
         this.driftTimer = 0;
 
-        // FIXED: Set yOffset from options
+        // Store yOffset for position adjustments
         this.yOffset = this.options.yOffset;
 
-        // Client prediction variables
-        this.lastServerPosition = null;
-        this.lastServerQuaternion = null;
-        this.previousServerQuaternion = null; // ADDED: Initialize this property
-        this.lastUpdateTime = Date.now();
-        this.velocity = new THREE.Vector3();
-        this.angularVelocity = new THREE.Vector3();
-        this.interpolationFactor = 0.3; // For smooth corrections
-
-        // Create physics body if world is provided (server or client with prediction)
+        // Create physics body if world is provided
         if (world) {
             this.createPhysicBody();
             this.createPhysicWheels();
@@ -126,7 +114,7 @@ export class Car {
             if (!world) {
                 this.carBody = {
                     position: new CANNON.Vec3(0, 1, 0),
-                    quaternion: new CANNON.Quaternion(0, 0, 0, 1), // FIXED: Added w component
+                    quaternion: new CANNON.Quaternion(0, 0, 0, 1),
                     velocity: new CANNON.Vec3(0, 0, 0),
                     angularVelocity: new CANNON.Vec3(0, 0, 0),
                 };
@@ -140,10 +128,10 @@ export class Car {
 
     loadModel() {
         const loader = new GLTFLoader();
-        // Configure le gestionnaire de requêtes
+        // Configure request handler
         loader.withCredentials = true;
         loader.load(
-            'https://localhost:3000/src/racing_kart.glb',
+            `https://localhost:3000/src/racing_kart.glb`,
             (obj) => {
                 if (this.carMesh) {
                     this.scene.remove(this.carMesh);
@@ -161,12 +149,11 @@ export class Car {
                 const maxDim = Math.max(size.x, size.y, size.z);
                 const scale = 5 / maxDim;
 
-                // CHANGED: Only adjust X and Z, preserve Y to maintain height
+                // Only adjust X and Z, preserve Y to maintain height
                 object.position.x -= center.x;
-                // object.position.y -= center.y; // Commented out to prevent sinking
                 object.position.z -= center.z;
 
-                // ADDED: Raise the model slightly to ensure it's above ground
+                // Raise the model slightly to ensure it's above ground
                 object.position.y += 1.0;
 
                 object.scale.set(scale, scale, scale);
@@ -262,6 +249,7 @@ export class Car {
 
         const frontWheelOptions = {
             radius: 0.4,
+            isFrontWheel : true,
             ...wheelOptions,
         };
         const backWheelOptions = {
@@ -337,187 +325,26 @@ export class Car {
     applySmoothSteering(targetSteeringValue, deltaTime) {
         // Interpolate between current and target steering value
         const steeringDiff = targetSteeringValue - this.currentSteering;
-        this.currentSteering += steeringDiff * this.steeringSmoothing /
-            deltaTime / 100;
+        this.currentSteering += steeringDiff * this.steeringSmoothing / deltaTime / 100;
 
         // Apply the smooth steering value to both front wheels
         this.vehicle.setSteeringValue(this.currentSteering, 0);
         this.vehicle.setSteeringValue(this.currentSteering, 1);
     }
 
-    // Update state from server and reconcile differences with predicted state
-    updateFromServerState(
-        serverPosition,
-        serverQuaternion,
-        serverVelocity,
-        serverAngularVelocity,
-    ) {
-        if (!this.world) {
-            // For other cars (without physics), just update visual position
-            this.carMesh.position.lerp(
-                new THREE.Vector3(
-                    serverPosition.x,
-                    serverPosition.y,
-                    serverPosition.z,
-                ),
-                this.interpolationFactor,
-            );
-
-            this.carMesh.quaternion.slerp(
-                new THREE.Quaternion(
-                    serverQuaternion.x,
-                    serverQuaternion.y,
-                    serverQuaternion.z,
-                    serverQuaternion.w,
-                ),
-                this.interpolationFactor,
-            );
-
-            // Store server position and velocity for prediction
-            this.lastServerPosition = new THREE.Vector3(
-                serverPosition.x,
-                serverPosition.y,
-                serverPosition.z,
-            );
-            this.lastServerQuaternion = new THREE.Quaternion(
-                serverQuaternion.x,
-                serverQuaternion.y,
-                serverQuaternion.z,
-                serverQuaternion.w,
-            );
-
-            // Update velocity for prediction
-            if (serverVelocity) {
-                this.velocity.set(
-                    serverVelocity.x,
-                    serverVelocity.y,
-                    serverVelocity.z,
-                );
-            }
-
-            if (serverAngularVelocity) {
-                this.angularVelocity.set(
-                    serverAngularVelocity.x,
-                    serverAngularVelocity.y,
-                    serverAngularVelocity.z,
-                );
-            }
-
-            this.lastUpdateTime = Date.now();
-        } else {
-            // For player car (with physics), reconcile with server state
-            const currentPos = this.carBody.position;
-            const currentQuat = this.carBody.quaternion;
-
-            // Calculate position error
-            const posError = new CANNON.Vec3(
-                serverPosition.x - currentPos.x,
-                serverPosition.y - currentPos.y,
-                serverPosition.z - currentPos.z,
-            );
-
-            const posErrorMagnitude = posError.length();
-
-            // Calculate quaternion error (as angle)
-            const serverQuat = new CANNON.Quaternion(
-                serverQuaternion.x,
-                serverQuaternion.y,
-                serverQuaternion.z,
-                serverQuaternion.w,
-            );
-            const quatDiff = serverQuat.mult(currentQuat.inverse());
-            const angle = 2 * Math.acos(Math.abs(quatDiff.w));
-
-            // If error is large, snap to server position
-            if (posErrorMagnitude > 5.0 || angle > Math.PI / 4) {
-                // Major correction needed - snap position
-                this.carBody.position.copy(serverPosition);
-                this.carBody.quaternion.copy(serverQuat);
-
-                if (serverVelocity) {
-                    this.carBody.velocity.set(
-                        serverVelocity.x,
-                        serverVelocity.y,
-                        serverVelocity.z,
-                    );
-                }
-
-                if (serverAngularVelocity) {
-                    this.carBody.angularVelocity.set(
-                        serverAngularVelocity.x,
-                        serverAngularVelocity.y,
-                        serverAngularVelocity.z,
-                    );
-                }
-            } // Medium error - stronger interpolation
-            else if (posErrorMagnitude > 1.0 || angle > Math.PI / 8) {
-                // Apply a stronger correction (20%)
-                this.carBody.position.x += posError.x * 0.2;
-                this.carBody.position.y += posError.y * 0.2;
-                this.carBody.position.z += posError.z * 0.2;
-
-                // Interpolate rotation
-                this.carBody.quaternion.slerp(serverQuat, 0.2);
-
-                // Adjust velocity if provided
-                if (serverVelocity) {
-                    this.carBody.velocity.x = this.carBody.velocity.x * 0.8 +
-                        serverVelocity.x * 0.2;
-                    this.carBody.velocity.y = this.carBody.velocity.y * 0.8 +
-                        serverVelocity.y * 0.2;
-                    this.carBody.velocity.z = this.carBody.velocity.z * 0.8 +
-                        serverVelocity.z * 0.2;
-                }
-            } // Small error - gentle correction
-            else if (posErrorMagnitude > 0.1 || angle > Math.PI / 16) {
-                // Apply a gentle correction (10%)
-                this.carBody.position.x += posError.x * 0.1;
-                this.carBody.position.y += posError.y * 0.1;
-                this.carBody.position.z += posError.z * 0.1;
-
-                // Gentle rotation correction
-                this.carBody.quaternion.slerp(serverQuat, 0.1);
-            }
-
-            // Update timestamp for future predictions
-            this.lastUpdateTime = Date.now();
-        }
-    }
-
-    // Predict position for remote cars
-    predictPosition(deltaTime) {
-        if (!this.world && this.lastServerPosition && this.velocity) {
-            // Only predict for other cars without physics
-            const predictedPos = new THREE.Vector3(
-                this.lastServerPosition.x + this.velocity.x * deltaTime,
-                this.lastServerPosition.y + this.velocity.y * deltaTime,
-                this.lastServerPosition.z + this.velocity.z * deltaTime,
-            );
-
-            // Apply prediction to visual mesh
-            this.carMesh.position.copy(predictedPos);
-
-            // Predict rotation using angular velocity if available
-            if (this.lastServerQuaternion && this.angularVelocity) {
-                // Convert angular velocity (radians/sec) to quaternion change
-                const angularSpeed = this.angularVelocity.length();
-
-                if (angularSpeed > 0.001) {
-                    const axis = this.angularVelocity.clone().divideScalar(
-                        angularSpeed,
-                    );
-                    const rotationQuaternion = new THREE.Quaternion();
-                    rotationQuaternion.setFromAxisAngle(
-                        axis,
-                        angularSpeed * deltaTime,
-                    );
-
-                    // Apply rotation to last server quaternion
-                    const newQuaternion = this.lastServerQuaternion.clone()
-                        .multiply(rotationQuaternion);
-                    this.carMesh.quaternion.copy(newQuaternion);
-                }
-            }
+    /**
+     * Set wheel mesh states (steering and rotation) from server data.
+     * @param {Array} wheels - Array of wheel state objects from server.
+    */
+    setWheelStatesFromServer(wheels) {
+        if (!this.wheelMeshes || !wheels) return;
+        for (let i = 0; i < Math.min(this.wheelMeshes.length, wheels.length); i++) {
+            const mesh = this.wheelMeshes[i];
+            const wheel = wheels[i];
+            // Only update X (roll) and Y (steer), never Z!
+            mesh.rotation.y = wheel.steering || 0; // steering (front wheels)
+            mesh.rotation.x = wheel.rotation || 0; // rolling
+            // mesh.rotation.z = 0; // (optional: forcibly zero out Z)
         }
     }
 
@@ -537,9 +364,7 @@ export class Car {
         this.applySmoothSteering(targetSteering, deltaTime);
 
         // Apply engine force on rear wheels
-        if (
-            (keysPressed['z'] || keysPressed['arrowup']) && this.speed() < 130
-        ) {
+        if ((keysPressed['z'] || keysPressed['arrowup']) && this.speed() < 130) {
             this.vehicle.applyEngineForce(-this.maxForce, 2);
             this.vehicle.applyEngineForce(-this.maxForce, 3);
         } else if (keysPressed['s'] || keysPressed['arrowdown']) {
@@ -576,8 +401,7 @@ export class Car {
 
             // Lower friction during drift
             for (let i = 0; i < 4; i++) {
-                this.vehicle.wheelInfos[i].frictionSlip =
-                    this.driftFrictionSlip;
+                this.vehicle.wheelInfos[i].frictionSlip = this.driftFrictionSlip;
             }
         } else if (this.isDrifting && (!isDriftKeyPressed || speed < 20)) {
             // End drift
@@ -585,8 +409,7 @@ export class Car {
 
             // Reset friction
             for (let i = 0; i < 4; i++) {
-                this.vehicle.wheelInfos[i].frictionSlip =
-                    this.normalFrictionSlip;
+                this.vehicle.wheelInfos[i].frictionSlip = this.normalFrictionSlip;
             }
         }
     }
@@ -595,7 +418,7 @@ export class Car {
         if (!this.carMesh) return;
 
         if (this.world) {
-            // CHANGED: Adjusted Y position calculation
+            // Update car body position
             this.carMesh.position.set(
                 this.carBody.position.x,
                 this.carBody.position.y - this.options.yOffset,
@@ -628,12 +451,43 @@ export class Car {
         }
     }
 
-    carPosition() {
+    // Get car position - useful for cameras and other attachments
+    getPosition() {
         return this.carMesh ? this.carMesh.position : new THREE.Vector3();
     }
 
+    // Get car speed in km/h
     speed() {
         if (!this.carBody || !this.carBody.velocity) return 0;
         return (this.carBody.velocity.length() * 3.6).toFixed(1);
+    }
+
+    // Get the full state of the car for networking
+    getState() {
+        if (!this.carBody) return null;
+        
+        return {
+            position: {
+                x: this.carBody.position.x,
+                y: this.carBody.position.y,
+                z: this.carBody.position.z
+            },
+            quaternion: {
+                x: this.carBody.quaternion.x,
+                y: this.carBody.quaternion.y,
+                z: this.carBody.quaternion.z,
+                w: this.carBody.quaternion.w
+            },
+            velocity: {
+                x: this.carBody.velocity.x,
+                y: this.carBody.velocity.y,
+                z: this.carBody.velocity.z
+            },
+            angularVelocity: {
+                x: this.carBody.angularVelocity.x,
+                y: this.carBody.angularVelocity.y,
+                z: this.carBody.angularVelocity.z
+            }
+        };
     }
 }
