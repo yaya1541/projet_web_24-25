@@ -3,107 +3,111 @@ import { authorizationMiddleware } from '../middlewares.ts';
 import * as db from '../rest.ts';
 import { connections, notifyAllUsers } from '../back.ts';
 import { activeGames, generateGameCode } from '../partyUtils';
-import { inputs } from '../script.js';
-import { Inputs } from '../interfaces.ts';
+import { bodies, createWorld, inputs, Worlds } from '../script.js';
+import { Bodies, Inputs } from '../interfaces.ts';
 import { Circuit } from '../lib/circuit.js';
-import { world } from '../script.js';
-import { circuit } from '../script.js';
+import { Car } from '../lib/car.js';
 
 // Router handler for WebSocket connections
 export const partyRouter = new Router();
 
-interface roomId extends URLSearchParams {
-    roomId: string;
-}
-/*
-partyRouter.get('kartfever/game', authorizationMiddleware, (ctx) => {
-    console.log('Party Request received');
-    const user = ctx.state.userId;
-    const { roomId } = ctx.request.url.searchParams as roomId;
-    console.log(roomId);
+export function sendParty(
+    roomId: string,
+    currentUser: number,
+    stringified: string,
+) {
+    console.log(`sending to party as ${currentUser}`);
 
-    try {
-        const ws = ctx.upgrade();
-        if (!connections.has(user)) {
-            connections.set(user, ws);
+    (activeGames.get(roomId).users as number[]).forEach((elt) => {
+        console.log(elt);
+        if (elt != currentUser) {
+            console.log(`sending to ${elt}`);
+            console.log('Connections : ', connections.get(elt));
+            connections.get(elt)?.send(stringified);
         }
+    });
+
+    console.log('End sending to party');
+}
+
+partyRouter.get('/kartfever/game', authorizationMiddleware, (ctx) => {
+    console.log('   Party Request received');
+    const user = ctx.state.userId;
+    const roomId = <string> ctx.request.url.searchParams.get('roomId');
+    console.log('   ', roomId);
+
+    // If the request is a WebSocket upgrade
+    if (ctx.request.headers.get('Upgrade') === 'websocket') {
+        const ws = ctx.upgrade();
+        connections.set(user, ws);
         ws.onopen = (_event) => {
-            console.log(`New connection opened (${connections.size})`);
-            console.log('user : ', user);
-
-            if (connectedUsers.indexOf(user) == -1) {
-                connectedUsers.push(user);
-            }
-            ws.send(JSON.stringify({
-                type: 0, // Type 0 initialization
-                CircuitNodes: circuit.pathNodes,
-                CircuitPoints: circuit.pathPoints,
-                CircuitWitdh: circuit.options.roadWidth,
-            }));
-            // FIXED: Add debug output for player initialization
-            if (!bodies[user]) {
-                console.log(`Initializing new player: ${user}`);
-                bodies[user] = new Car(world, null, user);
-                bodies[user].carBody.position.set(0, 3, 0); // FIXED: Raised initial position
-                inputs[user] = {};
-                console.log(
-                    `Player initialized: ${user} at position y=${
-                        bodies[user].carBody.position.y
-                    }`,
+            console.log(`   New connection opened (${connections.size})`);
+            console.log('   user : ', user);
+            //console.log(activeGames.get(roomId));
+            if (!activeGames.get(roomId)) return;
+            if (
+                activeGames.get(roomId) &&
+                !((activeGames.get(roomId).users as number[]).includes(
+                    ctx.state.userId,
+                ))
+            ) {
+                const car = new Car(Worlds.get(roomId), null, user);
+                (bodies as Bodies)[ctx.state.userId] = car;
+                //Worlds.get(roomId).addBody(car);
+                (activeGames.get(roomId).users as number[]).push(
+                    ctx.state.userId,
                 );
-                notifyAllUsers({ type: 4, users: Object.keys(bodies) });
+                console.log('before sending', roomId);
+                sendParty(
+                    roomId,
+                    ctx.state.userId,
+                    JSON.stringify({
+                        type: 4,
+                        users: activeGames.get(roomId).users,
+                    }),
+                );
             }
-        };
-        ws.onclose = (_event) => {
-            console.log('Connection closed');
-
-            // Remove this connection from the connections array
-            connections.delete(user);
+            console.log(activeGames.get(roomId).users);
+            // Handle WebSocket connection here
         };
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             //console.log('Message received', data);
             switch (data.type) {
                 case 2:
-                    (inputs as Inputs)[data.user][data.value] = true;
+                    if ((inputs as Inputs)[data.user]) {
+                        (inputs as Inputs)[data.user][data.value] = true;
+                    } else {
+                        (inputs as Inputs)[data.user] = {};
+                    }
                     break;
                 case 3:
-                    (inputs as Inputs)[data.user][data.value] = false;
+                    if ((inputs as Inputs)[data.user]) {
+                        (inputs as Inputs)[data.user][data.value] = false;
+                    } else {
+                        (inputs as Inputs)[data.user] = {};
+                    }
                     break;
                 default:
                     break;
             }
         };
-    } catch (error) {
-        console.error('WebSocket error:', error);
-        ctx.response.status = 501;
-        ctx.response.body = { message: 'Unable to establish WebSocket' };
-    }
-});
-*/
-partyRouter.get('/kartfever/game', authorizationMiddleware, (ctx) => {
-    console.log('      Party Request received');
-    const user = ctx.state.userId;
-    const { roomId } = ctx.request.url.searchParams as roomId;
-    console.log(roomId);
-
-    // If the request is a WebSocket upgrade
-    if (ctx.request.headers.get('Upgrade') === 'websocket') {
-        const ws = ctx.upgrade();
-        if (!connections.has(user)) {
-            connections.set(user, ws);
-        }
-        ws.onopen = (_event) => {
-            console.log(`New connection opened (${connections.size})`);
-            console.log('user : ', user);
-            // Handle WebSocket connection here
-        };
 
         return;
     }
-
-    // Otherwise, handle the regular GET request (e.g., return a response)
-    ctx.response.body = { message: `Room ID: ${roomId}` };
+    if (activeGames.has(roomId)) {
+        // return room data if it exist
+        ctx.response.body = {
+            message: `Room ID: ${roomId}`,
+            user: ctx.state.userId,
+            data: activeGames.get(roomId),
+        };
+    } else {
+        ctx.response.status = 404;
+        ctx.response.body = {
+            message: `room with code ${roomId} doesn't exist.`,
+        };
+    }
 });
 
 /*
@@ -114,7 +118,16 @@ partyRouter.post('/kartfever/game', authorizationMiddleware, (ctx) => {
     ctx.response.status = 200;
     const roomId = generateGameCode(6);
     console.log(roomId);
-    const circuit = new Circuit(null, world);
+
+    const user = ctx.state.userId;
+    const world = createWorld();
+    const car = new Car(world, null, user);
+    (bodies as Bodies)[user] = car;
+    const circuit = new Circuit(null, world, {
+        turnNumber: 25,
+        turnAmplitude: 95,
+        roadWidth: 30,
+    });
     activeGames.set(roomId, {
         circuit: {
             CircuitNodes: circuit.pathNodes,
@@ -123,6 +136,10 @@ partyRouter.post('/kartfever/game', authorizationMiddleware, (ctx) => {
         },
         users: [ctx.state.userId],
     });
-    ctx.response.body = { id: roomId, ...activeGames.get(roomId) };
+    console.log('creating world');
+    Worlds.set(roomId, world);
+    console.log(Worlds.keys());
+
+    ctx.response.body = { id: roomId, ...activeGames.get(roomId), ...Worlds };
     //console.log(activeGames);
 });
