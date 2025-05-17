@@ -249,7 +249,7 @@ export class Car {
 
         const frontWheelOptions = {
             radius: 0.4,
-            isFrontWheel : true,
+            isFrontWheel: true,
             ...wheelOptions,
         };
         const backWheelOptions = {
@@ -325,7 +325,8 @@ export class Car {
     applySmoothSteering(targetSteeringValue, deltaTime) {
         // Interpolate between current and target steering value
         const steeringDiff = targetSteeringValue - this.currentSteering;
-        this.currentSteering += steeringDiff * this.steeringSmoothing / deltaTime / 100;
+        this.currentSteering += steeringDiff * this.steeringSmoothing /
+            deltaTime / 100;
 
         // Apply the smooth steering value to both front wheels
         this.vehicle.setSteeringValue(this.currentSteering, 0);
@@ -335,10 +336,14 @@ export class Car {
     /**
      * Set wheel mesh states (steering and rotation) from server data.
      * @param {Array} wheels - Array of wheel state objects from server.
-    */
+     */
     setWheelStatesFromServer(wheels) {
         if (!this.wheelMeshes || !wheels) return;
-        for (let i = 0; i < Math.min(this.wheelMeshes.length, wheels.length); i++) {
+        for (
+            let i = 0;
+            i < Math.min(this.wheelMeshes.length, wheels.length);
+            i++
+        ) {
             const mesh = this.wheelMeshes[i];
             const wheel = wheels[i];
             // Only update X (roll) and Y (steer), never Z!
@@ -364,7 +369,9 @@ export class Car {
         this.applySmoothSteering(targetSteering, deltaTime);
 
         // Apply engine force on rear wheels
-        if ((keysPressed['z'] || keysPressed['arrowup']) && this.speed() < 130) {
+        if (
+            (keysPressed['z'] || keysPressed['arrowup']) && this.speed() < 130
+        ) {
             this.vehicle.applyEngineForce(-this.maxForce, 2);
             this.vehicle.applyEngineForce(-this.maxForce, 3);
         } else if (keysPressed['s'] || keysPressed['arrowdown']) {
@@ -401,7 +408,8 @@ export class Car {
 
             // Lower friction during drift
             for (let i = 0; i < 4; i++) {
-                this.vehicle.wheelInfos[i].frictionSlip = this.driftFrictionSlip;
+                this.vehicle.wheelInfos[i].frictionSlip =
+                    this.driftFrictionSlip;
             }
         } else if (this.isDrifting && (!isDriftKeyPressed || speed < 20)) {
             // End drift
@@ -409,7 +417,8 @@ export class Car {
 
             // Reset friction
             for (let i = 0; i < 4; i++) {
-                this.vehicle.wheelInfos[i].frictionSlip = this.normalFrictionSlip;
+                this.vehicle.wheelInfos[i].frictionSlip =
+                    this.normalFrictionSlip;
             }
         }
     }
@@ -465,29 +474,29 @@ export class Car {
     // Get the full state of the car for networking
     getState() {
         if (!this.carBody) return null;
-        
+
         return {
             position: {
                 x: this.carBody.position.x,
                 y: this.carBody.position.y,
-                z: this.carBody.position.z
+                z: this.carBody.position.z,
             },
             quaternion: {
                 x: this.carBody.quaternion.x,
                 y: this.carBody.quaternion.y,
                 z: this.carBody.quaternion.z,
-                w: this.carBody.quaternion.w
+                w: this.carBody.quaternion.w,
             },
             velocity: {
                 x: this.carBody.velocity.x,
                 y: this.carBody.velocity.y,
-                z: this.carBody.velocity.z
+                z: this.carBody.velocity.z,
             },
             angularVelocity: {
                 x: this.carBody.angularVelocity.x,
                 y: this.carBody.angularVelocity.y,
-                z: this.carBody.angularVelocity.z
-            }
+                z: this.carBody.angularVelocity.z,
+            },
         };
     }
 }
