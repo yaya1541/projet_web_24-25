@@ -19,17 +19,29 @@ export class CarPredictionSystem {
         });
     }
 
-    handlePlayerCarUpdate(car, serverPos, serverQuat, serverVelocity, serverAngularVelocity, serverWheels) {
+    handlePlayerCarUpdate(
+        car,
+        serverPos,
+        serverQuat,
+        serverVelocity,
+        serverAngularVelocity,
+        serverWheels,
+    ) {
         if (!car || !car.carBody) return;
 
         const posError = new CANNON.Vec3(
             serverPos.x - car.carBody.position.x,
             serverPos.y - car.carBody.position.y,
-            serverPos.z - car.carBody.position.z
+            serverPos.z - car.carBody.position.z,
         );
         const posErrorMagnitude = posError.length();
 
-        const serverQuatObj = new CANNON.Quaternion(serverQuat.x, serverQuat.y, serverQuat.z, serverQuat.w);
+        const serverQuatObj = new CANNON.Quaternion(
+            serverQuat.x,
+            serverQuat.y,
+            serverQuat.z,
+            serverQuat.w,
+        );
         const quatDiff = serverQuatObj.mult(car.carBody.quaternion.inverse());
         const angle = 2 * Math.acos(Math.abs(quatDiff.w));
 
@@ -37,16 +49,21 @@ export class CarPredictionSystem {
             car.carBody.position.copy(serverPos);
             car.carBody.quaternion.copy(serverQuatObj);
             if (serverVelocity) car.carBody.velocity.copy(serverVelocity);
-            if (serverAngularVelocity) car.carBody.angularVelocity.copy(serverAngularVelocity);
+            if (serverAngularVelocity) {
+                car.carBody.angularVelocity.copy(serverAngularVelocity);
+            }
         } else if (posErrorMagnitude > 0.2 || angle > Math.PI / 32) {
             car.carBody.position.x += posError.x * 0.05;
             car.carBody.position.y += posError.y * 0.05;
             car.carBody.position.z += posError.z * 0.05;
             car.carBody.quaternion.slerp(serverQuatObj, 0.05);
             if (serverVelocity) {
-                car.carBody.velocity.x = car.carBody.velocity.x * 0.95 + serverVelocity.x * 0.05;
-                car.carBody.velocity.y = car.carBody.velocity.y * 0.95 + serverVelocity.y * 0.05;
-                car.carBody.velocity.z = car.carBody.velocity.z * 0.95 + serverVelocity.z * 0.05;
+                car.carBody.velocity.x = car.carBody.velocity.x * 0.95 +
+                    serverVelocity.x * 0.05;
+                car.carBody.velocity.y = car.carBody.velocity.y * 0.95 +
+                    serverVelocity.y * 0.05;
+                car.carBody.velocity.z = car.carBody.velocity.z * 0.95 +
+                    serverVelocity.z * 0.05;
             }
         }
 
@@ -59,21 +76,54 @@ export class CarPredictionSystem {
         }
     }
 
-    handleRemoteCarUpdate(carId, car, serverPos, serverQuat, serverVelocity, serverAngularVelocity, serverWheels, now) {
+    handleRemoteCarUpdate(
+        carId,
+        car,
+        serverPos,
+        serverQuat,
+        serverVelocity,
+        serverAngularVelocity,
+        serverWheels,
+        now,
+    ) {
         if (!car || !car.carMesh) return;
         if (!this.carStates.has(carId)) this.initializeCarState(carId);
 
         const state = this.carStates.get(carId);
 
-        state.lastServerPosition = new THREE.Vector3(serverPos.x, serverPos.y, serverPos.z);
-        state.lastServerQuaternion = new THREE.Quaternion(serverQuat.x, serverQuat.y, serverQuat.z, serverQuat.w);
-        state.lastServerVelocity = serverVelocity ? new THREE.Vector3(serverVelocity.x, serverVelocity.y, serverVelocity.z) : new THREE.Vector3();
-        state.lastServerAngularVelocity = serverAngularVelocity ? new THREE.Vector3(serverAngularVelocity.x, serverAngularVelocity.y, serverAngularVelocity.z) : new THREE.Vector3();
+        state.lastServerPosition = new THREE.Vector3(
+            serverPos.x,
+            serverPos.y,
+            serverPos.z,
+        );
+        state.lastServerQuaternion = new THREE.Quaternion(
+            serverQuat.x,
+            serverQuat.y,
+            serverQuat.z,
+            serverQuat.w,
+        );
+        state.lastServerVelocity = serverVelocity
+            ? new THREE.Vector3(
+                serverVelocity.x,
+                serverVelocity.y,
+                serverVelocity.z,
+            )
+            : new THREE.Vector3();
+        state.lastServerAngularVelocity = serverAngularVelocity
+            ? new THREE.Vector3(
+                serverAngularVelocity.x,
+                serverAngularVelocity.y,
+                serverAngularVelocity.z,
+            )
+            : new THREE.Vector3();
         state.lastServerWheels = serverWheels || [];
         state.lastUpdateTime = now;
 
         // Quaternion history for smoothing
-        state.quaternionHistory.push({ time: now, quat: state.lastServerQuaternion.clone() });
+        state.quaternionHistory.push({
+            time: now,
+            quat: state.lastServerQuaternion.clone(),
+        });
         if (state.quaternionHistory.length > 5) state.quaternionHistory.shift();
 
         const timeSinceUpdate = (Date.now() - state.lastUpdateTime) / 1000;
@@ -87,7 +137,10 @@ export class CarPredictionSystem {
             const smoothQuat = q1.quat.clone().slerp(q2.quat, t);
             car.carMesh.quaternion.copy(smoothQuat);
         } else {
-            car.carMesh.quaternion.slerp(state.lastServerQuaternion, adaptiveFactor);
+            car.carMesh.quaternion.slerp(
+                state.lastServerQuaternion,
+                adaptiveFactor,
+            );
         }
 
         if (car.setWheelStatesFromServer) {
@@ -100,12 +153,16 @@ export class CarPredictionSystem {
         for (const [carId, car] of Object.entries(cars)) {
             if (car.world) continue;
             const state = this.carStates.get(carId);
-            if (!state || !state.lastServerPosition || !state.lastServerVelocity) continue;
+            if (
+                !state || !state.lastServerPosition || !state.lastServerVelocity
+            ) continue;
 
             const timeSinceUpdate = (now - state.lastUpdateTime) / 1000;
             const damping = Math.exp(-timeSinceUpdate);
             const predictedPos = state.lastServerPosition.clone().add(
-                state.lastServerVelocity.clone().multiplyScalar(timeSinceUpdate * damping)
+                state.lastServerVelocity.clone().multiplyScalar(
+                    timeSinceUpdate * damping,
+                ),
             );
             const adaptiveFactor = Math.min(1, timeSinceUpdate * 4);
             car.carMesh.position.lerp(predictedPos, adaptiveFactor);
@@ -115,8 +172,12 @@ export class CarPredictionSystem {
                 const angle = angVel.length() * timeSinceUpdate;
                 if (angle > 0.0001) {
                     const axis = angVel.clone().normalize();
-                    const deltaQuat = new THREE.Quaternion().setFromAxisAngle(axis, angle);
-                    const predictedQuat = state.lastServerQuaternion.clone().multiply(deltaQuat);
+                    const deltaQuat = new THREE.Quaternion().setFromAxisAngle(
+                        axis,
+                        angle,
+                    );
+                    const predictedQuat = state.lastServerQuaternion.clone()
+                        .multiply(deltaQuat);
                     car.carMesh.quaternion.slerp(predictedQuat, adaptiveFactor);
                 }
             }
