@@ -19,10 +19,11 @@ const camera = new THREE.PerspectiveCamera(
     75,
     globalThis.innerWidth / globalThis.innerHeight,
     0.1,
-    400,
+    4000,
 );
 
 const renderer = new THREE.WebGLRenderer();
+renderer.outputColorSpace = THREE.SRGBColorSpace; // Replaces renderer.outputEncoding
 renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
@@ -49,28 +50,67 @@ const predictionSystem = new CarPredictionSystem();
 
 function loadModel() {
     const loader = new GLTFLoader();
-    // Configure le gestionnaire de requêtes
-    loader.withCredentials = true;
+
     loader.load(
-        `https://localhost:3000/src/city.glb`,
-        (obj) => {
-            const object = obj.scene;
+        `https://localhost:3000/src/city3.glb`,
+        (gltf) => {
+            const object = gltf.scene;
             console.log(object);
-            replaceAllMaterials(object);
+            /*
+            // Modern material/texture handling
+            object.traverse((node) => {
+                if (node.isMesh) {
+                    const materials = Array.isArray(node.material)
+                        ? node.material
+                        : [node.material];
+
+                    node.material = materials.map(mat => {
+                        // Create new material while preserving important properties
+                        const newMat = mat.clone();
+
+                        // Fix texture color spaces
+                        if (newMat.map) {
+                            newMat.map.colorSpace = THREE.SRGBColorSpace; // Replaces THREE.sRGBEncoding
+                            newMat.map.format = THREE.RGBAFormat;
+                            newMat.map.type = THREE.UnsignedByteType;
+                        }
+
+                        // Handle other texture types
+                        const textureTypes = [
+                            'normalMap', 'roughnessMap',
+                            'metalnessMap', 'aoMap', 'displacementMap'
+                        ];
+
+                        textureTypes.forEach(type => {
+                            if (newMat[type]) {
+                                newMat[type].colorSpace = THREE.LinearSRGBColorSpace;
+                            }
+                        });
+
+                        return newMat;
+                    });
+
+                    // Handle single material case
+                    if (!Array.isArray(node.material)) {
+                        node.material = node.material[0];
+                    }
+                }
+            });
+            */
+            object.scale.set(500, 500, 500);
+            object.position.set(-150, 25.1, 50);
+            object.castShadow = true;
             scene.add(object);
         },
-        // called while loading is progressing
         (xhr) => {
             console.log(
                 `${xhr.loaded} sur ${xhr.total} octets chargés (${
                     (xhr.loaded / xhr.total * 100).toFixed(2)
                 }%)`,
             );
-        },
-        // called when loading has errors
-        function (error) {
-            console.log('An error happened');
-            console.log(error);
+        }, // Progress callback (optional)
+        (error) => {
+            console.error('Error loading GLB:', error);
         },
     );
 }
@@ -123,11 +163,13 @@ function animate(time) {
     lastTime = time;
 
     if (isPlaying && user && cars[user]) {
+        //console.log("controlling car");
+
         // Apply control to local player car
         cars[user].control(keysPressed, deltaTime);
 
         // Step physics world
-        physicsWorld.step(deltaTime);
+        physicsWorld.step(deltaTime * 2);
 
         // Update local car position
         cars[user].update();
@@ -136,8 +178,6 @@ function animate(time) {
         updateCameraPosition(deltaTime);
 
         // Use prediction system to update all remote cars
-        //predictionSystem.update(cars, deltaTime);
-
         predictionSystem.extrapolateRemoteCars(cars, deltaTime);
     }
 
@@ -348,7 +388,6 @@ function startGame(roomId, ws) {
                 lastServerTimestamp = now;
 
                 // Process position updates for all cars
-                // In your onmessage handler:
                 for (const id in data.user) {
                     const carData = data.user[id];
                     const serverPos = carData.position;
@@ -367,6 +406,13 @@ function startGame(roomId, ws) {
                             serverAngularVelocity,
                             serverWheels,
                         );
+                        // Ensure physics and mesh are robustly synced and clamped
+                        if (
+                            cars[id] &&
+                            typeof cars[id].syncFromServer === 'function'
+                        ) {
+                            cars[id].syncFromServer(carData);
+                        }
                     } else {
                         predictionSystem.handleRemoteCarUpdate(
                             id,
@@ -378,6 +424,10 @@ function startGame(roomId, ws) {
                             serverWheels,
                             now,
                         );
+                        // Optionally, if you want to keep remote car physics in sync (if physics bodies exist)
+                        // if (cars[id] && typeof cars[id].syncFromServer === 'function') {
+                        //     cars[id].syncFromServer(carData);
+                        // }
                     }
                 }
                 break;
