@@ -165,7 +165,7 @@ authRouter.post('/api/auth/refresh', async (ctx) => {
         ctx.cookies.set('accessToken', jwt);
         ctx.response.status = 200;
         ctx.response.body = {
-            token: jwt
+            token: jwt,
         };
     } catch (err) {
         ctx.response.status = 500;
