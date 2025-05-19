@@ -445,8 +445,7 @@ export class Car {
                     this.wheelMeshes[i].quaternion.copy(transform.quaternion);
                 }
             }
-        }
-        // For non-physics cars (remote players)
+        } // For non-physics cars (remote players)
         else if (this.carMesh) {
             // Position and rotation are set by prediction system
             // Just ensure wheels are updated if available
@@ -463,36 +462,36 @@ export class Car {
             this.carBody.position.set(
                 serverState.position.x,
                 serverState.position.y,
-                serverState.position.z
+                serverState.position.z,
             );
             this.carBody.quaternion.set(
                 serverState.quaternion.x,
                 serverState.quaternion.y,
                 serverState.quaternion.z,
-                serverState.quaternion.w
+                serverState.quaternion.w,
             );
             this.carBody.velocity.set(
                 serverState.velocity.x,
                 serverState.velocity.y,
-                serverState.velocity.z
+                serverState.velocity.z,
             );
             this.carBody.angularVelocity.set(
                 serverState.angularVelocity.x,
                 serverState.angularVelocity.y,
-                serverState.angularVelocity.z
+                serverState.angularVelocity.z,
             );
         } else {
             // For non-physics cars (remote players)
             this.carMesh.position.set(
                 serverState.position.x,
                 serverState.position.y - this.yOffset,
-                serverState.position.z
+                serverState.position.z,
             );
             this.carMesh.quaternion.set(
                 serverState.quaternion.x,
                 serverState.quaternion.y,
                 serverState.quaternion.z,
-                serverState.quaternion.w
+                serverState.quaternion.w,
             );
         }
 
@@ -502,7 +501,6 @@ export class Car {
             this.setWheelStatesFromServer(this.wheelStates);
         }
     }
-
 
     checkWrongPosition() {
         if (this.carBody && this.carBody.position.y < -10) {
