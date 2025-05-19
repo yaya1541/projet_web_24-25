@@ -14,8 +14,8 @@ export class CarPredictionSystem {
             lastServerVelocity: null,
             lastServerAngularVelocity: null,
             lastServerWheels: [],
-            lastUpdateTime: Date.now(),
-            quaternionHistory: [],
+            lastUpdateTime: 0,
+            quaternionHistory: [], // Initialize empty array
         });
     }
 
@@ -34,6 +34,7 @@ export class CarPredictionSystem {
             serverPos.y - car.carBody.position.y,
             serverPos.z - car.carBody.position.z,
         );
+
         const posErrorMagnitude = posError.length();
 
         const serverQuatObj = new CANNON.Quaternion(
@@ -68,8 +69,23 @@ export class CarPredictionSystem {
         }
 
         // Visual smoothing
-        car.carMesh.position.lerp(car.carBody.position, 0.3);
-        car.carMesh.quaternion.slerp(car.carBody.quaternion, 0.3);
+        car.carMesh.position.lerp(
+            new THREE.Vector3(
+                car.carBody.position.x,
+                car.carBody.position.y - (car.yOffset || 0),
+                car.carBody.position.z,
+            ),
+            0.3,
+        );
+        car.carMesh.quaternion.slerp(
+            new THREE.Quaternion(
+                car.carBody.quaternion.x,
+                car.carBody.quaternion.y,
+                car.carBody.quaternion.z,
+                car.carBody.quaternion.w,
+            ),
+            0.3,
+        );
 
         if (serverWheels && car.setWheelStatesFromServer) {
             car.setWheelStatesFromServer(serverWheels);
@@ -119,18 +135,36 @@ export class CarPredictionSystem {
         state.lastServerWheels = serverWheels || [];
         state.lastUpdateTime = now;
 
-        // Quaternion history for smoothing
+        // Initialize quaternionHistory if it doesn't exist
+        if (!state.quaternionHistory) {
+            state.quaternionHistory = [];
+        }
+
+        // Add to quaternion history
         state.quaternionHistory.push({
             time: now,
             quat: state.lastServerQuaternion.clone(),
         });
-        if (state.quaternionHistory.length > 5) state.quaternionHistory.shift();
+
+        // Keep history size manageable
+        if (state.quaternionHistory.length > 5) {
+            state.quaternionHistory.shift();
+        }
 
         const timeSinceUpdate = (Date.now() - state.lastUpdateTime) / 1000;
         const adaptiveFactor = Math.min(1, timeSinceUpdate * 4);
 
-        car.carMesh.position.lerp(state.lastServerPosition, adaptiveFactor);
+        // Position update
+        car.carMesh.position.lerp(
+            new THREE.Vector3(
+                state.lastServerPosition.x,
+                state.lastServerPosition.y - (car.yOffset || 0),
+                state.lastServerPosition.z,
+            ),
+            adaptiveFactor,
+        );
 
+        // Rotation update with history smoothing
         if (state.quaternionHistory.length >= 2) {
             const [q1, q2] = state.quaternionHistory.slice(-2);
             const t = (now - q1.time) / (q2.time - q1.time);
@@ -151,7 +185,7 @@ export class CarPredictionSystem {
     extrapolateRemoteCars(cars, deltaTime) {
         const now = Date.now();
         for (const [carId, car] of Object.entries(cars)) {
-            if (car.world) continue;
+            if (car.world) continue; // Skip local player car
             const state = this.carStates.get(carId);
             if (
                 !state || !state.lastServerPosition || !state.lastServerVelocity
@@ -165,7 +199,15 @@ export class CarPredictionSystem {
                 ),
             );
             const adaptiveFactor = Math.min(1, timeSinceUpdate * 4);
-            car.carMesh.position.lerp(predictedPos, adaptiveFactor);
+
+            car.carMesh.position.lerp(
+                new THREE.Vector3(
+                    predictedPos.x,
+                    predictedPos.y - (car.yOffset || 0),
+                    predictedPos.z,
+                ),
+                adaptiveFactor,
+            );
 
             if (state.lastServerAngularVelocity && state.lastServerQuaternion) {
                 const angVel = state.lastServerAngularVelocity;
