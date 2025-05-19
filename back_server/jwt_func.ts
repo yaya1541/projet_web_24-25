@@ -1,4 +1,4 @@
-import { JWTPayload, jwtVerify, SignJWT } from 'npm:jose@5.9.6';
+import { decodeJwt, JWTPayload, jwtVerify, SignJWT } from 'npm:jose@5.9.6';
 import * as jwt from 'https://deno.land/x/djwt@v2.8/mod.ts';
 
 import process from 'node:process';
@@ -30,3 +30,4 @@ async function verifyJWT(token: string): Promise<JWTPayload | null> {
 
 export { createJWT };
 export { verifyJWT };
+export { decodeJwt };

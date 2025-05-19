@@ -2,6 +2,7 @@ import { Router } from 'https://deno.land/x/oak@v17.1.4/router.ts';
 import { authorizationMiddleware } from '../middlewares.ts';
 import { User } from '../interfaces.ts';
 import * as db from '../rest.ts';
+import { DstAlphaFactor } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 
 export const userRoutes = new Router();
 
@@ -20,6 +21,8 @@ userRoutes.get('/api/users/me', authorizationMiddleware, async (ctx) => {
         ctx.response.status = 200;
         ctx.response.body = {
             user: success,
+            role: await db.getUserRoles(userId),
+            stats: await db.getUserRefresh(userId),
             message: 'User data successfully fetched',
         };
     } catch (err) {
