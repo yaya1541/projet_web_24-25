@@ -55,6 +55,25 @@ class Footer extends HTMLElement {
             </div>
             </div>
         </footer>`;
+        this.isAdmin();
+    }
+
+    async isAdmin() {
+        const user = await fetch('https://localhost:3000/api/users/me', {
+            method: 'GET',
+            credentials: 'include',
+        })
+            .then((d) => {
+                return d.json();
+            })
+            .then((data) => {
+                return data;
+            });
+        if (user.role == 1) {
+            document.querySelector('.footer-bottom').innerHTML += 'ADMIN';
+        } else {
+            document.querySelector('.footer-bottom').innerHTML += 'LAMBDA';
+        }
     }
 }
 
