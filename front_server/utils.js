@@ -5,6 +5,15 @@ export const oauth = fetch('https://localhost:3000/api/auth/oauth', {
     return res.status;
 });
 
+export const userData = fetch('https://localhost:3000/api/users/me', {
+    method: 'GET',
+    credentials: 'include',
+}).then((res) => {
+    return res.json();
+}).then((data) => {
+    return data;
+});
+
 export const handleLogin = async (doc) => {
     const username = doc.getElementById('username');
     const password = doc.getElementById('password');
