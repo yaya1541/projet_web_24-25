@@ -118,6 +118,8 @@ export class Car {
                     velocity: new CANNON.Vec3(0, 0, 0),
                     angularVelocity: new CANNON.Vec3(0, 0, 0),
                 };
+                this.carBody.allowSleep = false;
+                this.carBody.sleepSpeedLimit = 0.01;
             }
 
             this.createBody();
@@ -154,7 +156,7 @@ export class Car {
                 object.position.z -= center.z;
 
                 // Raise the model slightly to ensure it's above ground
-                object.position.y += 1.0;
+                object.position.y -= 1.0;
 
                 object.scale.set(scale, scale, scale);
                 this.scene.add(object);
@@ -179,7 +181,7 @@ export class Car {
         const carBodyShape = new CANNON.Box(new CANNON.Vec3(3, 1, 5));
         this.carBody = new CANNON.Body({ mass: 500 });
         this.carBody.addShape(carBodyShape);
-        this.carBody.position.set(0, 1, 0);
+        this.carBody.position.set(0, 2, 0);
         this.carBody.angularDamping = 0.3;
         this.carBody.ccdSpeedThreshold = 1; // Set this lower than your car's top speed
 
@@ -258,19 +260,19 @@ export class Car {
         };
 
         // Front left wheel
-        wheelOptions.chassisConnectionPointLocal.set(-1.5, -0.8, 1.7);
+        wheelOptions.chassisConnectionPointLocal.set(-1.5, -0.7, 1.7);
         this.vehicle.addWheel(frontWheelOptions);
 
         // Front right wheel
-        wheelOptions.chassisConnectionPointLocal.set(1.5, -0.8, 1.7);
+        wheelOptions.chassisConnectionPointLocal.set(1.5, -0.7, 1.7);
         this.vehicle.addWheel(frontWheelOptions);
 
         // Rear left wheel
-        wheelOptions.chassisConnectionPointLocal.set(-1.5, -0.8, -1.7);
+        wheelOptions.chassisConnectionPointLocal.set(-1.5, -0.7, -1.7);
         this.vehicle.addWheel(backWheelOptions);
 
         // Rear right wheel
-        wheelOptions.chassisConnectionPointLocal.set(1.5, -0.8, -1.7);
+        wheelOptions.chassisConnectionPointLocal.set(1.5, -0.7, -1.7);
         this.vehicle.addWheel(backWheelOptions);
 
         this.vehicle.addToWorld(this.world);
@@ -423,32 +425,84 @@ export class Car {
         }
     }
 
+    // Modified update method
     update() {
         if (!this.carMesh) return;
 
-        if (this.world) {
-            // Update car body position
-            this.carMesh.position.set(
-                this.carBody.position.x,
-                this.carBody.position.y - this.options.yOffset,
-                this.carBody.position.z,
-            );
+        // For physics-enabled cars (local player)
+        if (this.world && this.carBody) {
+            this.carMesh.position.copy(this.carBody.position);
+            this.carMesh.position.y -= this.yOffset;
             this.carMesh.quaternion.copy(this.carBody.quaternion);
 
-            this.checkWrongPosition();
-
-            // Update wheel meshes with corrected position
+            // Update wheel meshes
             for (let i = 0; i < Math.min(4, this.wheelMeshes.length); i++) {
                 if (this.vehicle) {
                     this.vehicle.updateWheelTransform(i);
                     const transform = this.vehicle.wheelInfos[i].worldTransform;
                     this.wheelMeshes[i].position.copy(transform.position);
-                    this.wheelMeshes[i].position.y -= this.options.yOffset;
+                    this.wheelMeshes[i].position.y -= this.yOffset;
                     this.wheelMeshes[i].quaternion.copy(transform.quaternion);
                 }
             }
         }
+        // For non-physics cars (remote players)
+        else if (this.carMesh) {
+            // Position and rotation are set by prediction system
+            // Just ensure wheels are updated if available
+            if (this.wheelMeshes && this.wheelStates) {
+                this.setWheelStatesFromServer(this.wheelStates);
+            }
+        }
     }
+
+    // Enhanced sync from server
+    syncFromServer(serverState) {
+        if (this.carBody) {
+            // For physics body (local player)
+            this.carBody.position.set(
+                serverState.position.x,
+                serverState.position.y,
+                serverState.position.z
+            );
+            this.carBody.quaternion.set(
+                serverState.quaternion.x,
+                serverState.quaternion.y,
+                serverState.quaternion.z,
+                serverState.quaternion.w
+            );
+            this.carBody.velocity.set(
+                serverState.velocity.x,
+                serverState.velocity.y,
+                serverState.velocity.z
+            );
+            this.carBody.angularVelocity.set(
+                serverState.angularVelocity.x,
+                serverState.angularVelocity.y,
+                serverState.angularVelocity.z
+            );
+        } else {
+            // For non-physics cars (remote players)
+            this.carMesh.position.set(
+                serverState.position.x,
+                serverState.position.y - this.yOffset,
+                serverState.position.z
+            );
+            this.carMesh.quaternion.set(
+                serverState.quaternion.x,
+                serverState.quaternion.y,
+                serverState.quaternion.z,
+                serverState.quaternion.w
+            );
+        }
+
+        // Store wheel states for later use
+        if (serverState.wheels) {
+            this.wheelStates = serverState.wheels;
+            this.setWheelStatesFromServer(this.wheelStates);
+        }
+    }
+
 
     checkWrongPosition() {
         if (this.carBody && this.carBody.position.y < -10) {
