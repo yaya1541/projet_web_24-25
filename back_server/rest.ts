@@ -218,6 +218,18 @@ export const hasRole = async (
     return result.rows![0].count > 0;
 };
 
+export const getUserRefresh = async (
+    userId: number,
+): Promise<string | null> => {
+    const result = await dbClient.execute(
+        `SELECT token FROM RefreshToken WHERE userId = ?`,
+        [userId],
+    );
+
+    if (result.rows?.length === 0) return null;
+    return result.rows![0].token;
+};
+
 // Gestion des tokens
 export const createRefreshToken = async (userId: number): Promise<string> => {
     const token = await createJWT('14d', { userId: userId });

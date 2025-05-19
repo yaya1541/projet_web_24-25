@@ -1,12 +1,14 @@
-// Modified server code with optimized update rate
+// server.js - Modified server code with optimized update rate
 import CANNON from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
 import { connections, notifyAllUsers } from './back.ts';
 import { Circuit } from './lib/circuit.js';
 import { Car } from './lib/car.js';
+import { activeGames } from './partyUtils';
 
-export const world = new CANNON.World();
+export const Worlds = new Map();
 
-try {
+export function createWorld() {
+    const world = new CANNON.World();
     // Set up physics world
     world.gravity.set(0, -9.82, 0);
     world.broadphase = new CANNON.NaiveBroadphase();
@@ -31,16 +33,8 @@ try {
     // Add to world
     world.addContactMaterial(carRoadContactMaterial);
     console.log('Initiated server world');
-} catch (e) {
-    console.log(e);
+    return world;
 }
-
-// Initialize circuit
-export const circuit = new Circuit(null, world, {
-    turnNumber: 25,
-    turnAmplitude: 95,
-    roadWidth: 30,
-});
 
 // Game state tracking
 export const bodies = {}; // Store the Cannon.js bodies
@@ -49,9 +43,9 @@ export const stateL = {};
 export const inputs = {};
 
 // CHANGE: Increase the physics update rate and decrease correction intensity
-const PHYSICS_STEP = 1 / 180; // CHANGED: Increased from 1/120 for smoother simulation
-const SERVER_UPDATE_INTERVAL = 50; // CHANGED: Increased from 100ms to 50ms for more frequent updates
-const EPSILON = 0.1; // CHANGED: Increased threshold to reduce unnecessary updates
+const PHYSICS_STEP = 1 / 360; // Higher frequency for smoother simulation
+const SERVER_UPDATE_INTERVAL = 100; // Less frequent updates to reduce bandwidth
+const EPSILON = 0.1; // Threshold for sending updates
 
 // Server authority state
 const serverState = {
@@ -62,23 +56,21 @@ const serverState = {
 /**
  * Update the physics simulation
  */
-function updatePhysics() {
+function updatePhysics(world) {
     // Step the physics world
-    world.step(PHYSICS_STEP);
+    if (world) {
+        world.step(PHYSICS_STEP);
 
-    // Apply control inputs for all players
-    for (const id in bodies) {
-        if (inputs[id]) {
-            bodies[id].control(inputs[id], PHYSICS_STEP);
+        // Apply control inputs for all players
+        for (const id in bodies) {
+            if (inputs[id]) {
+                bodies[id].control(inputs[id], PHYSICS_STEP);
+            }
+            bodies[id].update();
         }
-        bodies[id].update();
     }
 }
 
-/**
- * Process and send state updates to clients
- * FIXED: Add debug logging for position updates
- */
 function sendStateUpdates() {
     // Reset state for this update
     serverState.user = {};
@@ -86,7 +78,8 @@ function sendStateUpdates() {
 
     // Check each body for significant movement
     for (const id in bodies) {
-        const body = bodies[id].carBody;
+        const carObj = bodies[id];
+        const body = carObj.carBody;
 
         // Get current position and rotation
         const newPosition = {
@@ -102,10 +95,6 @@ function sendStateUpdates() {
             w: body.quaternion.w,
         };
 
-        // Debug logging for body position
-        //console.log(`Server: Body ${id} position: ${newPosition.x.toFixed(2)}, ${newPosition.y.toFixed(2)}, ${newPosition.z.toFixed(2)}`);
-        //console.log(inputs["yanis"]);
-
         // Initialize stateL[id] if it doesn't exist
         if (!stateL[id]) {
             stateL[id] = {
@@ -114,13 +103,11 @@ function sendStateUpdates() {
             };
         }
 
-        // Always send updates in development to debug synchronization issues
-        // FIXED: In production, you can revert to only sending updates when needed
         const hasMovedEnough = hasChangedMoreThanEpsilon(
             stateL[id],
             newPosition,
             newQuaternion,
-        ); // Force updates for debugging
+        );
 
         // Add to update packet if significant changes detected
         if (hasMovedEnough) {
@@ -131,11 +118,34 @@ function sendStateUpdates() {
                 z: body.velocity.z,
             };
 
+            // Include angular velocity for rotation prediction
+            const angularVelocity = {
+                x: body.angularVelocity.x,
+                y: body.angularVelocity.y,
+                z: body.angularVelocity.z,
+            };
+
+            // --- NEW: Add wheel state if available ---
+            let wheels = [];
+            if (carObj.vehicle && carObj.vehicle.wheelInfos) {
+                wheels = carObj.vehicle.wheelInfos.map((wheel) => ({
+                    steering: wheel.steering, // radians
+                    rotation: wheel.rotation, // total rotation, radians
+                    deltaRotation: wheel.deltaRotation, // radians per step
+                    engineForce: wheel.engineForce,
+                    brake: wheel.brake,
+                    slip: wheel.slipInfo,
+                    suspensionLength: wheel.suspensionLength,
+                }));
+            }
+
             serverState.user[id] = {
                 position: newPosition,
                 quaternion: newQuaternion,
-                velocity: velocity, // Add velocity for client prediction
-                timestamp: Date.now(), // Add timestamp for synchronization
+                velocity: velocity,
+                angularVelocity: angularVelocity,
+                wheels: wheels, // <-- Add wheels array to packet
+                timestamp: Date.now(),
             };
 
             hasChanges = true;
@@ -146,11 +156,8 @@ function sendStateUpdates() {
         }
     }
 
-    // FIXED: Always send updates during debugging
+    // Only send updates when changes exceed threshold
     if (hasChanges) {
-        // Send to all clients
-        //console.log("sending");
-
         connections.forEach((client) => {
             client.send(JSON.stringify(serverState));
         });
@@ -178,82 +185,67 @@ function hasChangedMoreThanEpsilon(oldState, newPosition, newQuaternion) {
     return positionChanged || quaternionChanged;
 }
 
-// Router handler for WebSocket connections
-export function setupGameRouter(router, authorizationMiddleware) {
-    router.get('/game/kartfever', authorizationMiddleware, (ctx) => {
-        console.log('Request received');
-        try {
-            const ws = ctx.upgrade();
-            connections.push(ws);
-            ws.onopen = async (_event) => {
-                console.log(`New connection opened (${connections.length})`);
-                const user = await ctx.cookies.get('user');
-                console.log('user : ', user);
-                if (connectedUsers.indexOf(user) == -1) {
-                    connectedUsers.push(user);
-                }
-                ws.send(JSON.stringify({
-                    type: 0, // Type 0 initialization
-                    CircuitNodes: circuit.pathNodes,
-                    CircuitPoints: circuit.pathPoints,
-                    CircuitWitdh: circuit.options.roadWidth,
-                }));
-                // FIXED: Add debug output for player initialization
-                if (!bodies[user]) {
-                    console.log(`Initializing new player: ${user}`);
-                    bodies[user] = new Car(world, null, user);
-                    bodies[user].carBody.position.set(0, 3, 0); // FIXED: Raised initial position
-                    inputs[user] = {};
-                    console.log(
-                        `Player initialized: ${user} at position y=${
-                            bodies[user].carBody.position.y
-                        }`,
-                    );
-                    notifyAllUsers({ type: 4, users: Object.keys(bodies) });
-                }
-            };
-            ws.onclose = (_event) => {
-                console.log('Connection closed');
-                function removeValue(
-                    value,
-                    index,
-                    arr,
-                ) {
-                    // If the value at the current array index matches the specified value
-                    if (value === ws) {
-                        // Removes the value from the original array
-                        arr.splice(index, 1);
-                        return true;
-                    }
-                    return false;
-                }
-                // Remove this connection from the connections array
-                connections.filter(removeValue);
-            };
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                //console.log('Message received', data);
-                switch (data.type) {
-                    case 2:
-                        inputs[data.user][data.value] = true;
-                        break;
-                    case 3:
-                        inputs[data.user][data.value] = false;
-                        break;
-                    default:
-                        break;
-                }
-            };
-        } catch (error) {
-            console.error('WebSocket error:', error);
-            ctx.response.status = 501;
-            ctx.response.body = { message: 'Unable to establish WebSocket' };
-        }
-    });
-}
-
 // Run physics simulation at high frequency for accuracy
-setInterval(updatePhysics, 1000 * PHYSICS_STEP);
+setInterval(() => {
+    Worlds.forEach((v, k) => {
+        updatePhysics(v);
+    });
+}, PHYSICS_STEP);
 
 // Send updates to clients at a lower frequency to reduce network traffic
 setInterval(sendStateUpdates, SERVER_UPDATE_INTERVAL);
+
+// Handler for client input messages
+export function handleClientInput(message, userId) {
+    // Parse input message
+    try {
+        const inputData = JSON.parse(message);
+        if (inputData.type === 'input') {
+            // Store inputs for this user
+            inputs[userId] = inputData.keys;
+        }
+    } catch (e) {
+        console.error('Error processing client input:', e);
+    }
+}
+
+// Handle new client connection
+export function handleClientConnection(userId, worldId) {
+    // Create car for new user if not exists
+    if (!bodies[userId] && Worlds.has(worldId)) {
+        const world = Worlds.get(worldId);
+        const startPosition = new CANNON.Vec3(0, 3, 0); // Starting position
+
+        // Create car for this user
+        bodies[userId] = new Car(world, null, userId, {
+            position: startPosition,
+            color: 0x00ff00, // Green color
+        });
+
+        connectedUsers.push(userId);
+
+        // Send initial state to all clients
+        sendStateUpdates();
+    }
+}
+
+// Handle client disconnection
+export function handleClientDisconnection(userId) {
+    // Remove car and inputs for this user
+    if (bodies[userId]) {
+        const index = connectedUsers.indexOf(userId);
+        if (index !== -1) {
+            connectedUsers.splice(index, 1);
+        }
+
+        delete bodies[userId];
+        delete inputs[userId];
+        delete stateL[userId];
+
+        // Notify other clients about disconnection
+        notifyAllUsers({
+            type: 'user_disconnected',
+            userId: userId,
+        });
+    }
+}

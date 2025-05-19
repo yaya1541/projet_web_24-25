@@ -1,5 +1,5 @@
 import { Context, Status } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
-import { createJWT, verifyJWT } from './jwt_func.ts';
+import { createJWT, decodeJwt, verifyJWT } from './jwt_func.ts';
 import { Token } from './interfaces.ts';
 import * as db from './rest.ts';
 
@@ -11,7 +11,6 @@ async function authorizationMiddleware(
     try {
         // Get access token and refresh token from cookies
         const token = await ctx.cookies.get('accessToken');
-        const refreshToken = await ctx.cookies.get('refreshToken');
 
         if (!token) {
             ctx.response.status = Status.Unauthorized;
@@ -20,18 +19,24 @@ async function authorizationMiddleware(
         }
 
         // Verify access token
-        const payload = await verifyJWT(token);
+        let payload = await verifyJWT(token);
         const currentTime = Math.floor(Date.now() / 1000);
 
         // Check if token is valid and not expired
         if (payload && (!payload.exp || payload.exp >= currentTime)) {
-            ctx.state.user = { username: payload.username };
+            //ctx.state.user = { username: payload.username };
             ctx.state.userId = payload.userId;
             await next();
             return;
+        } else {
+            payload = await decodeJwt(token);
         }
 
         // At this point, token is either invalid or expired
+        let refreshToken = null;
+        if (payload) {
+            refreshToken = await db.getUserRefresh(payload.userId as number);
+        }
         // Try to use refresh token
         if (!refreshToken) {
             ctx.response.status = Status.Unauthorized;
@@ -67,7 +72,7 @@ async function authorizationMiddleware(
         });
 
         // Set user data
-        console.log('last payload :', refreshPayload);
+        console.log('       last payload :', refreshPayload);
 
         ctx.state.user = { username: refreshPayload.username };
         ctx.state.userId = refreshPayload.userId;
