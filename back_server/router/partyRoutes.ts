@@ -126,7 +126,7 @@ partyRouter.post('/kartfever/game', authorizationMiddleware, (ctx) => {
     const circuit = new Circuit(null, world, {
         turnNumber: 25,
         turnAmplitude: 95,
-        roadWidth: 30,
+        roadWidth: 50,
     });
     activeGames.set(roomId, {
         circuit: {
