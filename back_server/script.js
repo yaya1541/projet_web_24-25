@@ -43,7 +43,7 @@ export const stateL = {};
 export const inputs = {};
 
 // CHANGE: Increase the physics update rate and decrease correction intensity
-const PHYSICS_STEP = 1 / 180; // Higher frequency for smoother simulation
+const PHYSICS_STEP = 1 / 360; // Higher frequency for smoother simulation
 const SERVER_UPDATE_INTERVAL = 100; // Less frequent updates to reduce bandwidth
 const EPSILON = 0.1; // Threshold for sending updates
 
@@ -190,7 +190,7 @@ setInterval(() => {
     Worlds.forEach((v, k) => {
         updatePhysics(v);
     });
-}, 1000 * PHYSICS_STEP);
+}, PHYSICS_STEP);
 
 // Send updates to clients at a lower frequency to reduce network traffic
 setInterval(sendStateUpdates, SERVER_UPDATE_INTERVAL);
