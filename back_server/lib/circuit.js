@@ -233,7 +233,8 @@ export class Circuit {
             const end = points[i + 1];
             const segmentVec = new THREE.Vector3().subVectors(end, start);
             const length = segmentVec.length();
-            const midpoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+            const midpoint = new THREE.Vector3().addVectors(start, end)
+                .multiplyScalar(0.5);
 
             const roadShape = new CANNON.Box(
                 new CANNON.Vec3(
@@ -256,7 +257,8 @@ export class Circuit {
             });
 
             if (i > 0) {
-                const direction = new THREE.Vector3().subVectors(end, start).normalize();
+                const direction = new THREE.Vector3().subVectors(end, start)
+                    .normalize();
                 const defaultDirection = new THREE.Vector3(0, 0, 1);
                 const quaternion = new THREE.Quaternion().setFromUnitVectors(
                     defaultDirection,
@@ -312,7 +314,7 @@ export class Circuit {
                 this.scene.remove(this.roadMesh);
                 this.roadMesh = null;
             }
-            this.pathNodes.forEach(node => this.scene.remove(node));
+            this.pathNodes.forEach((node) => this.scene.remove(node));
             this.pathNodes = [];
         }
     }
