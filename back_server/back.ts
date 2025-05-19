@@ -4,8 +4,6 @@ import { createJWT, verifyJWT } from './jwt_func.ts';
 import { authorizationMiddleware } from './middlewares.ts';
 
 //import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
-import { circuit, connectedUsers } from './script.js';
-import { create, verify } from 'https://deno.land/x/djwt@v2.8/mod.ts';
 import * as db from './rest.ts'; // Importez les fonctions de la base de données
 import { Token } from './interfaces.ts';
 import { authRouter } from './router/authRoutes.ts';
@@ -112,12 +110,6 @@ export function notifyAllUsers(from: WebSocket, json: object) {
     console.log('sent Message !');
 }
 
-router.get('/game/kartfever/reload', (ctx) => {
-    circuit.remove();
-    circuit.reload();
-    ctx.response.status = 200;
-});
-
 //
 // API
 //
@@ -128,13 +120,10 @@ router.get("/api/stats/:user",(ctx)=>{})
 */
 
 router.get('/api/users/getdata', authorizationMiddleware, async (ctx) => {
-    const token = await ctx.cookies.get('accessToken') as string;
-    const payload = await verifyJWT(token) as Token;
-    console.log(payload);
     ctx.response.status = 200;
     ctx.response.body = {
         id: ctx.state.userId,
-        user: payload.username,
+        user: await db.getUserById(ctx.state.userId),
     };
 });
 
