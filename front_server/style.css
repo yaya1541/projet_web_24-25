@@ -13,7 +13,7 @@
 
     .title {
         padding: 10% 10%;
-        background-image: url('https://localhost:3000/src/kart-home.png');
+        background-image: url('https://localhost:8080/api/src/kart-home.png');
         background-repeat: repeat;
         background-size: 100%;
     }

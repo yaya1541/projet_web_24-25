@@ -59,7 +59,7 @@ class Footer extends HTMLElement {
     }
 
     async isAdmin() {
-        const user = await fetch('https://localhost:3000/api/users/me', {
+        const user = await fetch('https://localhost:8080/api/users/me', {
             method: 'GET',
             credentials: 'include',
         })
@@ -166,7 +166,7 @@ class Header extends HTMLElement {
             <div class="account-menu-wrapper">
                 <button id="avatar-btn" class="avatar-btn">
                 <img 
-                    src="https://localhost:3000/src/user.svg" 
+                    src="https://localhost:8080/src/user.svg" 
                     alt="User avatar" 
                     class="avatar-img"
                     onerror="console.error('Failed to load SVG:', this.src)"
@@ -194,7 +194,7 @@ class Header extends HTMLElement {
     }
 
     async logout() {
-        const response = await fetch(`https://localhost:3000/api/auth/logout`, {
+        const response = await fetch(`https://localhost:8080/api/auth/logout`, {
             method: 'POST',
             credentials: 'include',
         });
@@ -903,7 +903,7 @@ class ChatComponent extends HTMLElement {
         // In a real app, you would fetch chats from the server
         // This is just a mock implementation
         const data = await fetch(
-            'https://localhost:3000/api/messages/conversation/global',
+            'https://localhost:8080/api/messages/conversation/global',
             {
                 method: 'GET',
                 credentials: 'include',
@@ -967,7 +967,7 @@ class ChatComponent extends HTMLElement {
 
     initWebsocket() {
         this.activeUsers = [];
-        this.ws = new WebSocket('wss://localhost:3000/chat');
+        this.ws = new WebSocket('wss://localhost:8080/chat');
         this.activeUsers.push(this.ws);
         this.ws.onopen = (ev) => {
             console.log('chat connected');
@@ -986,7 +986,7 @@ class ChatComponent extends HTMLElement {
     }
 
     async initUserData() {
-        this.userData = await fetch('https://localhost:3000/api/users/me', {
+        this.userData = await fetch('https://localhost:8080/api/users/me', {
             method: 'GET',
             credentials: 'include',
         }).then(

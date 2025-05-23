@@ -34,7 +34,7 @@ export const connections = new Map<number, WebSocket>();
 //
 // MODULES
 //
-router.get('/lib/:module', authorizationMiddleware, async (ctx) => {
+router.get('/api/lib/:module', authorizationMiddleware, async (ctx) => {
     console.log('Trying to retrieve module');
 
     const { module } = ctx.params;
@@ -55,7 +55,7 @@ router.get('/lib/:module', authorizationMiddleware, async (ctx) => {
 });
 
 // resource loader
-router.get('/src/:module', async (ctx) => {
+router.get('/api/src/:module', async (ctx) => {
     console.log('Trying to retrieve Resource');
     const { module } = ctx.params;
     console.log(`Sending: ${module}`);
@@ -135,8 +135,8 @@ router.use(userRoutes.routes());
 router.use(partyRouter.routes());
 router.use(settingRouter.routes());
 
-const certPath = '../certs/server.crt'; // Update to your certificate path
-const keyPath = '../certs/server.key'; // Update to your private key path
+const certPath = '../certs/cert.pem'; // Update to your certificate path
+const keyPath = '../certs/key.pem'; // Update to your private key path
 
 const options = {
     port: 3000,

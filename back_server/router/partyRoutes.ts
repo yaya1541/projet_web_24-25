@@ -30,7 +30,7 @@ export function sendParty(
     console.log('End sending to party');
 }
 
-partyRouter.get('/kartfever/game', authorizationMiddleware, (ctx) => {
+partyRouter.get('/api/kartfever/game', authorizationMiddleware, (ctx) => {
     console.log('   Party Request received');
     const user = ctx.state.userId;
     const roomId = <string> ctx.request.url.searchParams.get('roomId');
@@ -112,9 +112,9 @@ partyRouter.get('/kartfever/game', authorizationMiddleware, (ctx) => {
 
 /*
 // TODO : Add rest create party.
-// TODO : complete game api request.
+// TODO : complete game /api request.
 */
-partyRouter.post('/kartfever/game', authorizationMiddleware, (ctx) => {
+partyRouter.post('/api/kartfever/game', authorizationMiddleware, (ctx) => {
     ctx.response.status = 200;
     const roomId = generateGameCode(6);
     console.log(roomId);

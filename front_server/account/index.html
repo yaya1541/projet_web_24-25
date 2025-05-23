@@ -30,7 +30,7 @@
         <li class="admin">Players</li>
         <li class="admin">Parties</li>
       </ul>
-      <button id="delete" class="delete-account-btn" onclick="if(confirm('Are you sure you want to delete your account? This action cannot be undone.')) { fetch('https://localhost:3000/api/users/me', { method: 'DELETE', credentials: 'include' }) }">Delete Account</button>
+      <button id="delete" class="delete-account-btn" onclick="if(confirm('Are you sure you want to delete your account? This action cannot be undone.')) { fetch('https://localhost:8080/api/users/me', { method: 'DELETE', credentials: 'include' }) }">Delete Account</button>
     </div>
     <style>
         iframe{

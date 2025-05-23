@@ -197,7 +197,7 @@ msgRoutes.delete('/api/messages/:id', authorizationMiddleware, async (ctx) => {
     }
 });
 
-msgRoutes.get('/chat', authorizationMiddleware, (ctx) => {
+msgRoutes.get('/api/chat', authorizationMiddleware, (ctx) => {
     const ws = ctx.upgrade();
     connections.set(ctx.state.userId, ws);
     ws.onopen = (ev) => {

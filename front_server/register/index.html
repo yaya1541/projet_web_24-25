@@ -67,7 +67,7 @@
             </div>
         </div>
         <script>
-            //fetch("https://localhost:3000/api/startsession",{method : 'POST',credentials :"include"})
+            //fetch("https://localhost:8080/api/startsession",{method : 'POST',credentials :"include"})
             const email = document.getElementById(
                 'email',
             );
@@ -83,7 +83,7 @@
 
             const handleregister = async () => {
                 await fetch(
-                    `https://localhost:3000/api/auth/register`,
+                    `https://localhost:8080/api/auth/register`,
                     {
                         method: 'POST',
                         credentials: 'include',
