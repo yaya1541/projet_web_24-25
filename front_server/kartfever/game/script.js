@@ -71,9 +71,8 @@ physicsWorld.addContactMaterial(carRoadContactMaterial);
 
 const predictionSystem = new CarPredictionSystem();
 export const cars = {};
-let lastServerStates = {}; // Store last server state for each car
-let lastServerState = null; // Keep for backward compatibility
-
+const lastServerStates = {}; // Store last server state for each car
+const lastServerState = null; // Keep for backward compatibility
 
 let clientCircuit = null;
 let isPlaying = false;
@@ -85,15 +84,15 @@ const serverUpdateRate = 50; // Expected server update rate in ms
 let lastTime;
 
 const gameData = {
-    speed : 0,
+    speed: 0,
     currentLap: 0,
-    totalLaps : 4,
-    playerRankings : [], 
-}
+    totalLaps: 4,
+    playerRankings: [],
+};
 
-let checkpointStates = {}; // { [carId]: { lastCheckpoint: idx, timestamp: ms } }
-let checkpointCount = 0;   // Number of checkpoints (nodes)
-let checkpointRadius = 10; // Distance threshold for checkpoint pass
+const checkpointStates = {}; // { [carId]: { lastCheckpoint: idx, timestamp: ms } }
+let checkpointCount = 0; // Number of checkpoints (nodes)
+const checkpointRadius = 10; // Distance threshold for checkpoint pass
 
 function loadModel() {
     const loader = new GLTFLoader();
@@ -137,12 +136,15 @@ function detectCheckpointPass(carId) {
     // Get car position (assume getPosition returns THREE.Vector3)
     const pos = car.getPosition();
     // Find next checkpoint for this car
-    const state = checkpointStates[carId] || { lastCheckpoint: -1, timestamp: 0 };
+    const state = checkpointStates[carId] ||
+        { lastCheckpoint: -1, timestamp: 0 };
     const nextCheckpoint = (state.lastCheckpoint + 1) % checkpointCount;
     const checkpoint = clientCircuit.pathNodes[nextCheckpoint];
 
     // Check if car is within radius of checkpoint
-    if (distance2D(pos, { x: checkpoint.x, z: checkpoint.y }) < checkpointRadius) {
+    if (
+        distance2D(pos, { x: checkpoint.x, z: checkpoint.y }) < checkpointRadius
+    ) {
         // Passed checkpoint!
         const now = Date.now();
         checkpointStates[carId] = {
@@ -151,8 +153,8 @@ function detectCheckpointPass(carId) {
         };
 
         // If it's the local player, send update to server
-        if (carId === user && window.ws) {
-            window.ws.send(JSON.stringify({
+        if (carId === user && globalThis.ws) {
+            globalThis.ws.send(JSON.stringify({
                 type: 5,
                 user: user,
                 checkpoint: nextCheckpoint,
@@ -168,7 +170,7 @@ function animate(time) {
 
     if (isPlaying && user) {
         // Step physics for all cars (local and remote)
-        Object.values(cars).forEach(car => {
+        Object.values(cars).forEach((car) => {
             // Control only local player car
             if (car.id === user) {
                 car.control(keysPressed, deltaTime);
@@ -179,7 +181,7 @@ function animate(time) {
         physicsWorld.step(deltaTime);
 
         // Update all cars (mesh positions, etc.)
-        Object.values(cars).forEach(car => {
+        Object.values(cars).forEach((car) => {
             car.update();
         });
 
@@ -187,7 +189,7 @@ function animate(time) {
         Object.entries(cars).forEach(([carId, car]) => {
             // Get last server state for this car
             const serverState = lastServerStates[carId];
-            
+
             if (serverState) {
                 predictionSystem.handlePlayerCarUpdate(
                     car,
@@ -195,7 +197,7 @@ function animate(time) {
                     serverState.quaternion,
                     serverState.velocity,
                     serverState.angularVelocity,
-                    serverState.wheels
+                    serverState.wheels,
                 );
             }
         });
@@ -246,7 +248,6 @@ function updateCameraPosition(deltaTime) {
 
     camera.lookAt(lookAtPos);
     camera.quaternion.slerp(camera.quaternion, 0.1); // 0.1 is the interpolation factor
-
 }
 
 // Handle window resize
@@ -378,7 +379,7 @@ function checkGameRoom() {
         const room = new WebSocket(
             `wss://localhost:3000/kartfever/game?roomId=${roomId}`,
         );
-        window.ws = room; // Save for checkpoint sends
+        globalThis.ws = room; // Save for checkpoint sends
         if (room) {
             setupWSEventLitener(room);
             startGame(roomId, room);
@@ -407,7 +408,7 @@ function startGame(roomId, ws) {
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         //console.log(data);
-        
+
         switch (data.type) {
             case 1: { // Car position updates from server
                 // Calculate time since last server update
@@ -423,7 +424,7 @@ function startGame(roomId, ws) {
                     const serverVelocity = carData.velocity;
                     const serverAngularVelocity = carData.angularVelocity;
                     const serverWheels = carData.wheels;
-                    
+
                     // Store the latest server state for alzl cars
                     lastServerStates[id] = {
                         position: serverPos,
@@ -432,20 +433,23 @@ function startGame(roomId, ws) {
                         angularVelocity: serverAngularVelocity,
                         wheels: serverWheels,
                     };
-                    
+
                     // For backward compatibility
                     if (id == user) {
                         lastServerState = lastServerStates[id];
                     }
-                    
+
                     // Create car if it doesn't exist yet
                     if (!cars[id]) {
                         cars[id] = new Car(physicsWorld, scene, id);
                         predictionSystem.initializeCarState(id);
                     }
-                    
+
                     // Ensure physics and mesh are robustly synced for all cars
-                    if (cars[id] && typeof cars[id].syncFromServer === 'function') {
+                    if (
+                        cars[id] &&
+                        typeof cars[id].syncFromServer === 'function'
+                    ) {
                         cars[id].syncFromServer(carData);
                     }
                 }
@@ -460,7 +464,7 @@ function startGame(roomId, ws) {
                             physicsWorld,
                             scene,
                             id,
-                            {position:new CANNON.Vector3(1,1,id)}
+                            { position: new CANNON.Vector3(1, 1, id) },
                         );
                         predictionSystem.initializeCarState(id);
                         gameData.playerRankings.add(id);
@@ -471,7 +475,10 @@ function startGame(roomId, ws) {
             case 5: { // Checkpoint update from another player
                 // Update checkpointStates for that player
                 const { user: carId, checkpoint, timestamp } = data;
-                checkpointStates[carId] = { lastCheckpoint: checkpoint, timestamp };
+                checkpointStates[carId] = {
+                    lastCheckpoint: checkpoint,
+                    timestamp,
+                };
                 break;
             }
             case 6: { // Leaderboard update from server
@@ -564,7 +571,9 @@ globalThis.updateGameUI = function (gameData) {
             li.innerHTML = `
                 <span class="player-position">${index + 1}</span>
                 <span class="player-name">${player.name}</span>
-                <span class="player-checkpoint">Checkpoint: ${player.checkpoint + 1}/${checkpointCount}</span>
+                <span class="player-checkpoint">Checkpoint: ${
+                player.checkpoint + 1
+            }/${checkpointCount}</span>
                 <span class="player-time">${player.time || ''}</span>
             `;
             playerList.appendChild(li);

@@ -84,7 +84,7 @@ export class Car {
             resetHeight: 2, // Height above road to reset
             ...options,
         };
-        
+
         // Store road level and reset height for position checks
         this.roadLevel = this.options.roadLevel;
         this.resetHeight = this.options.resetHeight;
@@ -138,11 +138,12 @@ export class Car {
                     this.scene.remove(this.carMesh);
                 }
                 const object = obj.scene;
-                
+
                 this.wheelMeshes = [];
                 this.frontWheelIndices = []; // Track front wheel indices
                 this.carMesh = object;
-                const kart = object.children[0].children[0].children[0].children;
+                const kart =
+                    object.children[0].children[0].children[0].children;
                 console.log(kart);
 
                 const box = new THREE.Box3().setFromObject(object);
@@ -154,10 +155,10 @@ export class Car {
                 // Only adjust X and Z, preserve Y to maintain height
                 object.position.x -= center.x;
                 object.position.z -= center.z;
-                
+
                 replaceAllMaterials(object);
                 console.log(this.wheelMeshes);
-                console.log("Front wheel indices:", this.frontWheelIndices);
+                console.log('Front wheel indices:', this.frontWheelIndices);
 
                 object.scale.set(scale, scale, scale);
                 this.scene.add(object);
@@ -264,28 +265,44 @@ export class Car {
         this.vehicle.addWheel({
             ...baseWheelOptions,
             isFrontWheel: true,
-            chassisConnectionPointLocal: new CANNON.Vec3(-halfWidth, wheelYOffset, halfLength),
+            chassisConnectionPointLocal: new CANNON.Vec3(
+                -halfWidth,
+                wheelYOffset,
+                halfLength,
+            ),
         });
 
         // Front right wheel
         this.vehicle.addWheel({
             ...baseWheelOptions,
             isFrontWheel: true,
-            chassisConnectionPointLocal: new CANNON.Vec3(halfWidth, wheelYOffset, halfLength),
+            chassisConnectionPointLocal: new CANNON.Vec3(
+                halfWidth,
+                wheelYOffset,
+                halfLength,
+            ),
         });
 
         // Rear left wheel
         this.vehicle.addWheel({
             ...baseWheelOptions,
             isFrontWheel: false,
-            chassisConnectionPointLocal: new CANNON.Vec3(-halfWidth, wheelYOffset, -halfLength),
+            chassisConnectionPointLocal: new CANNON.Vec3(
+                -halfWidth,
+                wheelYOffset,
+                -halfLength,
+            ),
         });
 
         // Rear right wheel
         this.vehicle.addWheel({
             ...baseWheelOptions,
             isFrontWheel: false,
-            chassisConnectionPointLocal: new CANNON.Vec3(halfWidth, wheelYOffset, -halfLength),
+            chassisConnectionPointLocal: new CANNON.Vec3(
+                halfWidth,
+                wheelYOffset,
+                -halfLength,
+            ),
         });
 
         this.vehicle.addToWorld(this.world);
@@ -447,7 +464,7 @@ export class Car {
             // Apply anti-clipping before updating visual position
             this.preventClipping();
             this.checkWrongPosition();
-            
+
             this.carMesh.position.copy(this.carBody.position);
             this.carMesh.position.y -= this.yOffset;
             this.carMesh.quaternion.copy(this.carBody.quaternion);
@@ -462,7 +479,7 @@ export class Car {
                     this.wheelMeshes[i].quaternion.copy(transform.quaternion);
                 }
             }
-            
+
             // Apply visual steering rotation to front wheels
             if (this.frontWheelIndices && this.frontWheelIndices.length > 0) {
                 // Get the current steering value from the vehicle
@@ -473,7 +490,7 @@ export class Car {
                 } else {
                     steeringValue = this.currentSteering;
                 }
-                
+
                 // Apply rotation to each front wheel
                 for (const idx of this.frontWheelIndices) {
                     if (this.wheelMeshes[idx]) {
@@ -547,7 +564,7 @@ export class Car {
             this.resetCarPosition();
         }
     }
-    
+
     // Reset car to a safe position above the road
     resetCarPosition() {
         // Place car at starting position or above the road
@@ -565,7 +582,7 @@ export class Car {
             this.carMesh.quaternion.set(0, 0, 0, 1);
         }
     }
-    
+
     // Prevent car from clipping through the road during normal operation
     preventClipping() {
         // Prevent car from sinking below the road

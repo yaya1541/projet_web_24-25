@@ -1,4 +1,3 @@
-
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 import * as defaults from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
 const CANNON = defaults.default;
@@ -61,7 +60,9 @@ export class CarPredictionSystem {
             if (serverAngularVelocity) {
                 car.carBody.angularVelocity.copy(serverAngularVelocity);
             }
-        } else if (posErrorMagnitude > softSnapThreshold || angle > softSnapAngle) {
+        } else if (
+            posErrorMagnitude > softSnapThreshold || angle > softSnapAngle
+        ) {
             car.carBody.position.x += posError.x * correctionFactor;
             car.carBody.position.y += posError.y * correctionFactor;
             car.carBody.position.z += posError.z * correctionFactor;
@@ -69,15 +70,18 @@ export class CarPredictionSystem {
             const interpolatedQuat = slerpCannonQuaternion(
                 car.carBody.quaternion,
                 serverQuatObj,
-                correctionFactor
+                correctionFactor,
             );
             car.carBody.quaternion.copy(interpolatedQuat);
             if (serverVelocity) {
-                car.carBody.velocity.x = car.carBody.velocity.x * (1 - correctionFactor) +
+                car.carBody.velocity.x =
+                    car.carBody.velocity.x * (1 - correctionFactor) +
                     serverVelocity.x * correctionFactor;
-                car.carBody.velocity.y = car.carBody.velocity.y * (1 - correctionFactor) +
+                car.carBody.velocity.y =
+                    car.carBody.velocity.y * (1 - correctionFactor) +
                     serverVelocity.y * correctionFactor;
-                car.carBody.velocity.z = car.carBody.velocity.z * (1 - correctionFactor) +
+                car.carBody.velocity.z =
+                    car.carBody.velocity.z * (1 - correctionFactor) +
                     serverVelocity.z * correctionFactor;
             }
         }
@@ -271,7 +275,7 @@ function slerpCannonQuaternion(q1, q2, t) {
             0.5 * (q1.x + q2.x),
             0.5 * (q1.y + q2.y),
             0.5 * (q1.z + q2.z),
-            0.5 * (q1.w + q2.w)
+            0.5 * (q1.w + q2.w),
         );
     }
 
@@ -282,6 +286,6 @@ function slerpCannonQuaternion(q1, q2, t) {
         q1.x * ratioA + q2.x * ratioB,
         q1.y * ratioA + q2.y * ratioB,
         q1.z * ratioA + q2.z * ratioB,
-        q1.w * ratioA + q2.w * ratioB
+        q1.w * ratioA + q2.w * ratioB,
     );
 }
