@@ -3,7 +3,13 @@ import { authorizationMiddleware } from '../middlewares.ts';
 import * as db from '../rest.ts';
 import { connections, notifyAllUsers } from '../back.ts';
 import { activeGames, generateGameCode } from '../partyUtils';
-import { bodies, createWorld, inputs, Worlds } from '../script.js';
+import {
+    bodies,
+    createWorld,
+    handleClientConnection,
+    inputs,
+    Worlds,
+} from '../script.js';
 import { Bodies, Inputs } from '../interfaces.ts';
 import { Circuit } from '../lib/circuit.js';
 import { Car } from '../lib/car.js';
@@ -93,6 +99,11 @@ partyRouter.get('/api/kartfever/game', authorizationMiddleware, (ctx) => {
             }
         };
 
+        ws.onclose = (ev) => {
+            console.log('User deconnected');
+
+            handleClientConnection(user, roomId);
+        };
         return;
     }
     if (activeGames.has(roomId)) {
