@@ -46,25 +46,43 @@ export class CarPredictionSystem {
         const quatDiff = serverQuatObj.mult(car.carBody.quaternion.inverse());
         const angle = 2 * Math.acos(Math.abs(quatDiff.w));
 
-        if (posErrorMagnitude > 10.0 || angle > Math.PI / 2) {
+        // Correction factors
+        const hardSnapThreshold = 10.0;
+        const hardSnapAngle = Math.PI / 2;
+        const softSnapThreshold = 0.2;
+        const softSnapAngle = Math.PI / 32;
+        const correctionFactor = 0.18;
+
+        if (posErrorMagnitude > hardSnapThreshold || angle > hardSnapAngle) {
             car.carBody.position.copy(serverPos);
             car.carBody.quaternion.copy(serverQuatObj);
             if (serverVelocity) car.carBody.velocity.copy(serverVelocity);
             if (serverAngularVelocity) {
                 car.carBody.angularVelocity.copy(serverAngularVelocity);
             }
-        } else if (posErrorMagnitude > 0.2 || angle > Math.PI / 32) {
-            car.carBody.position.x += posError.x * 0.05;
-            car.carBody.position.y += posError.y * 0.05;
-            car.carBody.position.z += posError.z * 0.05;
-            car.carBody.quaternion.slerp(serverQuatObj, 0.05);
+        } else if (
+            posErrorMagnitude > softSnapThreshold || angle > softSnapAngle
+        ) {
+            car.carBody.position.x += posError.x * correctionFactor;
+            car.carBody.position.y += posError.y * correctionFactor;
+            car.carBody.position.z += posError.z * correctionFactor;
+            // Use custom slerpCannonQuaternion for Cannon.js quaternion interpolation
+            const interpolatedQuat = slerpCannonQuaternion(
+                car.carBody.quaternion,
+                serverQuatObj,
+                correctionFactor,
+            );
+            car.carBody.quaternion.copy(interpolatedQuat);
             if (serverVelocity) {
-                car.carBody.velocity.x = car.carBody.velocity.x * 0.95 +
-                    serverVelocity.x * 0.05;
-                car.carBody.velocity.y = car.carBody.velocity.y * 0.95 +
-                    serverVelocity.y * 0.05;
-                car.carBody.velocity.z = car.carBody.velocity.z * 0.95 +
-                    serverVelocity.z * 0.05;
+                car.carBody.velocity.x =
+                    car.carBody.velocity.x * (1 - correctionFactor) +
+                    serverVelocity.x * correctionFactor;
+                car.carBody.velocity.y =
+                    car.carBody.velocity.y * (1 - correctionFactor) +
+                    serverVelocity.y * correctionFactor;
+                car.carBody.velocity.z =
+                    car.carBody.velocity.z * (1 - correctionFactor) +
+                    serverVelocity.z * correctionFactor;
             }
         }
 
@@ -229,4 +247,45 @@ export class CarPredictionSystem {
             }
         }
     }
+}
+
+// Custom SLERP for Cannon.js quaternions
+function slerpCannonQuaternion(q1, q2, t) {
+    // Compute the cosine of the angle between the two vectors.
+    let cosHalfTheta = q1.w * q2.w + q1.x * q2.x + q1.y * q2.y + q1.z * q2.z;
+
+    // If q1 and q2 are the same, return q1
+    if (Math.abs(cosHalfTheta) >= 1.0) {
+        return new CANNON.Quaternion(q1.x, q1.y, q1.z, q1.w);
+    }
+
+    // If the dot product is negative, slerp won't take
+    // the shorter path. So we'll invert one quaternion
+    if (cosHalfTheta < 0.0) {
+        q2 = new CANNON.Quaternion(-q2.x, -q2.y, -q2.z, -q2.w);
+        cosHalfTheta = -cosHalfTheta;
+    }
+
+    const halfTheta = Math.acos(cosHalfTheta);
+    const sinHalfTheta = Math.sqrt(1.0 - cosHalfTheta * cosHalfTheta);
+
+    // If theta = 180 degrees, result is not fully defined
+    if (Math.abs(sinHalfTheta) < 0.001) {
+        return new CANNON.Quaternion(
+            0.5 * (q1.x + q2.x),
+            0.5 * (q1.y + q2.y),
+            0.5 * (q1.z + q2.z),
+            0.5 * (q1.w + q2.w),
+        );
+    }
+
+    const ratioA = Math.sin((1 - t) * halfTheta) / sinHalfTheta;
+    const ratioB = Math.sin(t * halfTheta) / sinHalfTheta;
+
+    return new CANNON.Quaternion(
+        q1.x * ratioA + q2.x * ratioB,
+        q1.y * ratioA + q2.y * ratioB,
+        q1.z * ratioA + q2.z * ratioB,
+        q1.w * ratioA + q2.w * ratioB,
+    );
 }
