@@ -1,14 +1,20 @@
-export const oauth = fetch('https://localhost:8080/api/auth/oauth', {
-    method: 'GET',
-    credentials: 'include',
-}).then((res) => {
+export const oauth = fetch(
+    'https://yanisrasp.duckdns.org:3000/api/auth/oauth',
+    {
+        method: 'GET',
+        credentials: 'include',
+    },
+).then((res) => {
     return res.status;
 });
 
-export const userData = fetch('https://localhost:8080/api/users/me', {
-    method: 'GET',
-    credentials: 'include',
-}).then((res) => {
+export const userData = fetch(
+    'https://yanisrasp.duckdns.org:3000/api/users/me',
+    {
+        method: 'GET',
+        credentials: 'include',
+    },
+).then((res) => {
     return res.json();
 }).then((data) => {
     return data;
@@ -18,7 +24,7 @@ export const handleLogin = async (doc) => {
     const username = doc.getElementById('username');
     const password = doc.getElementById('password');
     //const loginBtn = doc.getElementById("login-btn");
-    await fetch('https://localhost:8080/api/auth/login', {
+    await fetch('https://yanisrasp.duckdns.org:3000/api/auth/login', {
         method: 'POST',
         credentials: 'include',
         body: JSON.stringify({
@@ -34,13 +40,61 @@ export const handleLogin = async (doc) => {
                 setInterval(
                     () =>
                         document.location.replace(
-                            'https://localhost:8080/home',
+                            'https://yanisrasp.duckdns.org/home',
                         ),
                     500,
                 );
                 break;
             default:
                 showError('Identifiants incorrects. Veuillez réessayer.', doc);
+                break;
+        }
+    });
+};
+
+export const handleregister = async (doc) => {
+    const username = doc.getElementById('username');
+    const password = doc.getElementById('password');
+    const email = doc.getElementById(
+        'email',
+    );
+    console.log({
+        email: email.value,
+        userName: username.value,
+        userPassword: password.value,
+    });
+
+    await fetch(
+        `https://yanisrasp.duckdns.org:3000/api/auth/register`,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                email: email.value,
+                userName: username.value,
+                userPassword: password.value,
+            }),
+        },
+    ).then((res) => {
+        switch (res.status) {
+            case 201:
+                showError(
+                    'Registered successfully !',
+                );
+                document.location.pathname = '/home';
+                break;
+            case 200:
+                showError(
+                    'Username already in use please change.',
+                );
+                break;
+            case 500:
+                showError('Error with server !', doc);
+                break;
+            default:
                 break;
         }
     });

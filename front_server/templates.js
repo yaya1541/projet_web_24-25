@@ -1,4 +1,4 @@
-import { handleLogin, oauth, userData } from './utils.js';
+import { handleLogin, handleregister, oauth, userData } from './utils.js';
 
 class Footer extends HTMLElement {
     constructor() {
@@ -59,10 +59,13 @@ class Footer extends HTMLElement {
     }
 
     async isAdmin() {
-        const user = await fetch('https://localhost:8080/api/users/me', {
-            method: 'GET',
-            credentials: 'include',
-        })
+        const user = await fetch(
+            'https://yanisrasp.duckdns.org:3000/api/users/me',
+            {
+                method: 'GET',
+                credentials: 'include',
+            },
+        )
             .then((d) => {
                 return d.json();
             })
@@ -133,7 +136,7 @@ class Header extends HTMLElement {
         login.classList.add('auth-btn');
 
         login.addEventListener('click', (ev) => {
-            this.bindIFrame(this.fr, ev);
+            this.bindIFrame(this.fr, ev, handleLogin);
         });
 
         register.id = 'register';
@@ -141,7 +144,7 @@ class Header extends HTMLElement {
         register.classList.add('auth-btn');
 
         register.addEventListener('click', (ev) => {
-            this.bindIFrame(this.fr, ev);
+            this.bindIFrame(this.fr, ev, handleregister);
         });
 
         logout.id = 'logout';
@@ -166,7 +169,7 @@ class Header extends HTMLElement {
             <div class="account-menu-wrapper">
                 <button id="avatar-btn" class="avatar-btn">
                 <img 
-                    src="https://localhost:8080/src/user.svg" 
+                    src="https://yanisrasp.duckdns.org:3000/api/src/user.svg" 
                     alt="User avatar" 
                     class="avatar-img"
                     onerror="console.error('Failed to load SVG:', this.src)"
@@ -194,43 +197,46 @@ class Header extends HTMLElement {
     }
 
     async logout() {
-        const response = await fetch(`https://localhost:8080/api/auth/logout`, {
-            method: 'POST',
-            credentials: 'include',
-        });
+        const response = await fetch(
+            `https://yanisrasp.duckdns.org:3000/api/auth/logout`,
+            {
+                method: 'POST',
+                credentials: 'include',
+            },
+        );
         if (response.status == 200) {
             document.location.reload();
         }
     }
 
-    bindIFrame(frame, ev) {
+    bindIFrame(frame, ev, handle) {
         frame.src = `./${ev.target.id}`;
         ev.target.after(this.fr);
         try {
-            // Attendre que l'iframe soit complètement chargée
             frame.addEventListener('load', function () {
-                // Accéder au document de l'iframe
                 const cw = frame.contentWindow.document;
                 console.log('Document iframe chargé:', cw);
 
-                // Maintenant que l'iframe est chargée, on peut chercher les éléments
+                // Use the correct IDs that exist in the register page
                 const password = cw.getElementById('password');
-                const loginBtn = cw.getElementById('login-btn');
+                const Btn = cw.getElementById('submit-btn');
 
-                // Vérifier que les éléments existent
-                if (password && loginBtn) {
-                    // Ajouter les écouteurs d'événements
+                if (password && Btn) {
                     password.addEventListener('keyup', function (event) {
                         if (event.key === 'Enter') {
-                            handleLogin(cw);
+                            // You'll need to update handleLogin to handleRegister or use the existing handleregister
+                            handle(cw);
                         }
                     });
 
-                    loginBtn.addEventListener('click', function () {
-                        handleLogin(cw);
+                    Btn.addEventListener('click', function () {
+                        handle(cw);
                     });
                 } else {
-                    console.error("Éléments non trouvés dans l'iframe");
+                    console.error("Éléments non trouvés dans l'iframe", {
+                        password: !!password,
+                        Btn: !!Btn,
+                    });
                 }
             });
         } catch (e) {
@@ -851,7 +857,13 @@ class ChatComponent extends HTMLElement {
 
         // In a real app, you would send the message to the server here
         //this.mockServerResponse();
-        this.ws.send(JSON.stringify({ message: message }));
+        // Helper method to safely send messages
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify(message));
+        } else {
+            console.warn('Cannot send message - WebSocket not open');
+            // Optionally implement reconnection logic here
+        }
     }
 
     addMessageToUI(message) {
@@ -903,7 +915,7 @@ class ChatComponent extends HTMLElement {
         // In a real app, you would fetch chats from the server
         // This is just a mock implementation
         const data = await fetch(
-            'https://localhost:8080/api/messages/conversation/global',
+            'https://yanisrasp.duckdns.org:3000/api/messages/conversation/global',
             {
                 method: 'GET',
                 credentials: 'include',
@@ -914,7 +926,7 @@ class ChatComponent extends HTMLElement {
             },
         ).then(
             (data) => {
-                //console.log(data);
+                console.log(data);
                 data.messages.forEach((elt) => {
                     //console.log(elt.sender == this.userData.id);
 
@@ -967,29 +979,50 @@ class ChatComponent extends HTMLElement {
 
     initWebsocket() {
         this.activeUsers = [];
-        this.ws = new WebSocket('wss://localhost:8080/chat');
-        this.activeUsers.push(this.ws);
+        this.ws = new WebSocket(
+            `wss://${globalThis.location.host}:3000/api/chat`,
+        );
+
         this.ws.onopen = (ev) => {
-            console.log('chat connected');
+            console.log('Chat connected');
+            this.connectionActive = true;
         };
+
         this.ws.onmessage = (ev) => {
-            console.log('received message');
-            let data = JSON.parse(ev.data);
-            console.log(data);
-            data = data.message;
-            data.isOutgoing = false;
-            data.timestamp = new Date(data.timestamp);
-            if (data.sender != this.userData.id) {
-                this.addMessageToUI(data);
+            try {
+                console.log('Received message');
+                const data = JSON.parse(ev.data);
+                console.log(data);
+                data.isOutgoing = false;
+                data.timestamp = new Date(data.timestamp);
+                if (data.sender != this.userData.userName) {
+                    this.addMessageToUI(data);
+                }
+            } catch (error) {
+                console.error('Message processing error:', error);
             }
+        };
+
+        this.ws.onclose = () => {
+            console.log('Chat disconnected');
+            this.connectionActive = false;
+            this.activeUsers = this.activeUsers.filter((ws) => ws !== this.ws);
+        };
+
+        this.ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            this.connectionActive = false;
         };
     }
 
     async initUserData() {
-        this.userData = await fetch('https://localhost:8080/api/users/me', {
-            method: 'GET',
-            credentials: 'include',
-        }).then(
+        this.userData = await fetch(
+            'https://yanisrasp.duckdns.org:3000/api/users/me',
+            {
+                method: 'GET',
+                credentials: 'include',
+            },
+        ).then(
             async (ev) => {
                 return await ev.json();
             },
