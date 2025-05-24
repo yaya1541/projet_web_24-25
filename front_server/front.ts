@@ -2,8 +2,8 @@
 import { Application } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
 
 // Define paths for SSL certificate and private key
-const certPath = '../certs/cert.pem'; // Update to your certificate path
-const keyPath = '../certs/key.pem'; // Update to your private key path
+const certPath = '../certs/fullcert.pem'; // Update to your certificate path
+const keyPath = '../certs/private.key'; // Update to your private key path
 
 // Create an Oak application
 const app = new Application();
@@ -46,7 +46,7 @@ app.use(async (ctx) => {
 
 // Define the options for TLS (SSL certificates)
 const options = {
-    port: 8080,
+    port: 443,
     cert: await Deno.readTextFile(certPath),
     key: await Deno.readTextFile(keyPath),
 };

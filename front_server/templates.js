@@ -1,4 +1,4 @@
-import { handleLogin, oauth } from './utils.js';
+import { handleLogin, oauth, userData } from './utils.js';
 
 class Footer extends HTMLElement {
     constructor() {

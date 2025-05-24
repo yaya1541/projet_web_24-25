@@ -135,8 +135,8 @@ router.use(userRoutes.routes());
 router.use(partyRouter.routes());
 router.use(settingRouter.routes());
 
-const certPath = '../certs/cert.pem'; // Update to your certificate path
-const keyPath = '../certs/key.pem'; // Update to your private key path
+const certPath = '../certs/fullcert.pem'; // Update to your certificate path
+const keyPath = '../certs/private.key'; // Update to your private key path
 
 const options = {
     port: 3000,
