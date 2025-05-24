@@ -4,6 +4,7 @@ import { connections, notifyAllUsers } from './back.ts';
 import { Circuit } from './lib/circuit.js';
 import { Car } from './lib/car.js';
 import { activeGames } from './partyUtils';
+import * as db from './rest.ts';
 
 export const Worlds = new Map();
 
@@ -43,8 +44,8 @@ export const stateL = {};
 export const inputs = {};
 
 // CHANGE: Increase the physics update rate and decrease correction intensity
-const PHYSICS_STEP = 1 / 360; // Higher frequency for smoother simulation
-const SERVER_UPDATE_INTERVAL = 100; // Less frequent updates to reduce bandwidth
+const PHYSICS_STEP = 1 / 240; // Higher frequency for smoother simulation
+const SERVER_UPDATE_INTERVAL = 40; // Less frequent updates to reduce bandwidth
 const EPSILON = 0.1; // Threshold for sending updates
 
 // Server authority state
@@ -71,7 +72,7 @@ function updatePhysics(world) {
     }
 }
 
-function sendStateUpdates() {
+async function sendStateUpdates() {
     // Reset state for this update
     serverState.user = {};
     let hasChanges = false;
@@ -79,6 +80,8 @@ function sendStateUpdates() {
     // Check each body for significant movement
     for (const id in bodies) {
         const carObj = bodies[id];
+        //console.log(carObj.speed());
+        
         const body = carObj.carBody;
 
         // Get current position and rotation
@@ -190,7 +193,7 @@ setInterval(() => {
     Worlds.forEach((v, k) => {
         updatePhysics(v);
     });
-}, PHYSICS_STEP);
+}, PHYSICS_STEP*500);
 
 // Send updates to clients at a lower frequency to reduce network traffic
 setInterval(sendStateUpdates, SERVER_UPDATE_INTERVAL);
