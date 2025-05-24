@@ -1,6 +1,7 @@
 // Simplified Car class without prediction logic
 import CANNON from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
+import { CSS2DRenderer,CSS2DObject } from './CSS2DRenderer.js';
 import { GLTFLoader } from './GLTFLoader.js';
 
 // Simple function to replace ALL materials in your model
@@ -82,6 +83,7 @@ export class Car {
             yOffset: 2,
             roadLevel: 0, // Default road Y level
             resetHeight: 2, // Height above road to reset
+            name: options.name || `Car ${id}`, // Add name option
             ...options,
         };
 
@@ -124,6 +126,36 @@ export class Car {
             this.createBody();
             //this.createWheels();
             this.loadModel();
+            this.createNameLabel(this.options.name);
+        }
+    }
+
+    createNameLabel(name) {
+        // Create a div element for the label
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'car-label';
+        labelDiv.textContent = name;
+        // Style the label (customize as needed)
+        labelDiv.style.padding = '2px 8px';
+        labelDiv.style.background = 'rgba(0,0,0,0.6)';
+        labelDiv.style.color = '#fff';
+        labelDiv.style.borderRadius = '6px';
+        labelDiv.style.fontSize = '14px';
+        labelDiv.style.whiteSpace = 'nowrap';
+        labelDiv.style.pointerEvents = 'none';
+        labelDiv.style.transform = 'translate(-50%, -100%)';
+
+        // Create the CSS2DObject
+        this.nameLabel = new CSS2DObject(labelDiv);
+
+        // Position the label above the car (y offset)
+        this.nameLabel.position.set(0, this.options.dimensions.height/2 + 0.8, 0);
+
+        // Attach to car mesh if available, else to scene (will reattach after model loads)
+        if (this.carMesh) {
+            this.carMesh.add(this.nameLabel);
+        } else if (this.scene) {
+            this.scene.add(this.nameLabel);
         }
     }
 
@@ -162,6 +194,13 @@ export class Car {
 
                 object.scale.set(scale, scale, scale);
                 this.scene.add(object);
+
+                // --- Attach label to car mesh after model loads ---
+                if (this.nameLabel) {
+                    object.add(this.nameLabel);
+                    // Adjust label position if needed
+                    this.nameLabel.position.set(0, size.y * scale + 0.8, 0);
+                }
             },
             // called while loading is progressing
             (xhr) => {
@@ -382,6 +421,12 @@ export class Car {
             mesh.rotation.y = wheel.steering || 0; // steering (front wheels)
             mesh.rotation.x = wheel.rotation || 0; // rolling
             // mesh.rotation.z = 0; // (optional: forcibly zero out Z)
+        }
+    }
+
+    setName(newName) {
+        if (this.nameLabel && this.nameLabel.element) {
+            this.nameLabel.element.textContent = newName;
         }
     }
 
