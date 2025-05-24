@@ -2,6 +2,7 @@ import { Router } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
 import { authorizationMiddleware } from '../middlewares.ts';
 import * as db from '../rest.ts';
 import { connections, notifyAllUsers } from '../back.ts';
+import { User } from '../interfaces.ts';
 
 export const msgRoutes = new Router();
 
@@ -200,13 +201,32 @@ msgRoutes.delete('/api/messages/:id', authorizationMiddleware, async (ctx) => {
 msgRoutes.get('/api/chat', authorizationMiddleware, (ctx) => {
     const ws = ctx.upgrade();
     connections.set(ctx.state.userId, ws);
-    ws.onopen = (ev) => {
-        console.log('chat connection opened');
+
+    ws.onopen = () => {
+        console.log(`Chat connection opened for user ${ctx.state.userId}`);
     };
+
     ws.onmessage = async (ev) => {
-        const data = JSON.parse(ev.data);
-        console.log(data);
-        const messageId = await db.sendMessage(data.message);
-        notifyAllUsers(data.user, data);
+        try {
+            const data = JSON.parse(ev.data);
+            console.log('Received message:', data);
+            const id = data.sender;
+            const messageId = await db.sendMessage(data);
+            const user = (await db.getUserById(id) as User).userName;
+            data.sender = user;
+            notifyAllUsers(id, data);
+        } catch (error) {
+            console.error('Message handling error:', error);
+        }
+    };
+
+    ws.onclose = () => {
+        console.log(`Connection closed for user ${ctx.state.userId}`);
+        connections.delete(ctx.state.userId);
+    };
+
+    ws.onerror = (error) => {
+        console.error(`WebSocket error for user ${ctx.state.userId}:`, error);
+        connections.delete(ctx.state.userId);
     };
 });
