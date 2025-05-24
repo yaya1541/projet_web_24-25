@@ -1,9 +1,12 @@
 // Fixed client code integrating CarPredictionSystem
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 import * as defaults from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
-import { Circuit } from 'https://localhost:8080/lib/circuit.js';
-import { Car, replaceAllMaterials } from 'https://localhost:8080/lib/car.js';
-import { GLTFLoader } from 'https://localhost:8080/lib/GLTFLoader.js';
+import { Circuit } from 'https://yanisrasp.duckdns.org:3000/api/lib/circuit.js';
+import {
+    Car,
+    replaceAllMaterials,
+} from 'https://yanisrasp.duckdns.org:3000/api/lib/car.js';
+import { GLTFLoader } from 'https://yanisrasp.duckdns.org:3000/api/lib/GLTFLoader.js';
 import { CarPredictionSystem } from './predictionsys.js';
 
 const CANNON = defaults.default;
@@ -52,7 +55,7 @@ function loadModel() {
     const loader = new GLTFLoader();
 
     loader.load(
-        `https://localhost:8080/src/city3.glb`,
+        `https://yanisrasp.duckdns.org:3000/api/src/city3.glb`,
         (gltf) => {
             const object = gltf.scene;
             console.log(object);
@@ -230,7 +233,7 @@ globalThis.addEventListener('resize', () => {
  */
 async function initializeUser(roomId) {
     const response = await fetch(
-        `https://localhost:8080/kartfever/game?roomId=${roomId}`,
+        `https://yanisrasp.duckdns.org:3000/api/kartfever/game?roomId=${roomId}`,
         {
             method: 'GET',
             credentials: 'include',
@@ -345,7 +348,7 @@ function checkGameRoom() {
     if (roomId) {
         console.log('trying ws creation');
         const room = new WebSocket(
-            `wss://localhost:8080/kartfever/game?roomId=${roomId}`,
+            `wss://yanisrasp.duckdns.org:3000/api/kartfever/game?roomId=${roomId}`,
         );
         console.log(room);
         console.log('ws passed ');
@@ -465,7 +468,7 @@ joinGameBtn.addEventListener('click', () => {
     if (gameCode) {
         // Redirect to game URL with room ID
         globalThis.location.href =
-            `https://localhost:8080/kartfever/game?roomId=${gameCode}`;
+            `https://yanisrasp.duckdns.org/kartfever/game?roomId=${gameCode}`;
     } else {
         alert('Please enter a valid game code');
     }
@@ -475,17 +478,20 @@ joinGameBtn.addEventListener('click', () => {
 createGameBtn.addEventListener('click', async () => {
     // In a real app, would make API call to create game
     // For now, just generate a random code
-    const newRoomId = await fetch('https://localhost:8080/kartfever/game', {
-        method: 'POST',
-        credentials: 'include',
-    }).then((r) => {
+    const newRoomId = await fetch(
+        'https://yanisrasp.duckdns.org:3000/api/kartfever/game',
+        {
+            method: 'POST',
+            credentials: 'include',
+        },
+    ).then((r) => {
         return r.json();
     });
     console.log('newroomid', newRoomId);
 
     if (newRoomId) {
         globalThis.location.href =
-            `https://localhost:8080/kartfever/game?roomId=${newRoomId.id}`;
+            `https://yanisrasp.duckdns.org/kartfever/game?roomId=${newRoomId.id}`;
     } else {
         showError();
     }
