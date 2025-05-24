@@ -133,7 +133,7 @@ export class Car {
         // Configure request handler
         loader.withCredentials = true;
         loader.load(
-            `https://localhost:3000/src/racing_kart.glb`,
+            `https://yanisrasp.duckdns.org:3000/api/src/racing_kart.glb`,
             (obj) => {
                 if (this.carMesh) {
                     this.scene.remove(this.carMesh);
