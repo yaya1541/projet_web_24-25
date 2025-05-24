@@ -8,7 +8,12 @@ export const authRouter = new Router();
 // Routes d'authentification
 authRouter.post('/api/auth/register', async (ctx) => {
     try {
+        console.log('Try registering');
+        console.log(ctx.request.body);
+
         const body = await ctx.request.body.json();
+
+        console.log(body);
 
         if (!body.userName || !body.userPassword) {
             ctx.response.status = 400;
@@ -62,7 +67,10 @@ authRouter.post('/api/auth/register', async (ctx) => {
         });
 
         ctx.response.status = 201;
-        ctx.response.body = { message: 'User created successfully', userId };
+        ctx.response.body = JSON.stringify({
+            message: 'User created successfully',
+            userId,
+        });
     } catch (err) {
         ctx.response.status = 500;
         ctx.response.body = { message: 'Server error: ' + err };
@@ -71,6 +79,8 @@ authRouter.post('/api/auth/register', async (ctx) => {
 
 authRouter.post('/api/auth/login', async (ctx) => {
     try {
+        console.log('Login try');
+
         const body = await ctx.request.body.json();
 
         if (!body.userName || !body.userPassword) {
