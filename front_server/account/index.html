@@ -48,6 +48,7 @@
   
   <footer-component></footer-component>
   <script type="module">
+    const admin = document.getElementsByClassName("admin");
     import { userData } from '../utils.js';
     const user = await userData;
     if (user.role == 1){
@@ -62,6 +63,12 @@
         frame.setAttribute('src',`/account/${txt}`);
       })
     });
+    if (user.role != 1){
+      for (let i = 0; i < admin.length; i++) {
+        const element = admin[i];
+        element.style.display = 'none';
+      }
+    }
   </script>
 </body>
 </html>

@@ -72,7 +72,7 @@ function updatePhysics(world) {
     }
 }
 
-async function sendStateUpdates() {
+function sendStateUpdates() {
     // Reset state for this update
     serverState.user = {};
     let hasChanges = false;
@@ -81,7 +81,7 @@ async function sendStateUpdates() {
     for (const id in bodies) {
         const carObj = bodies[id];
         //console.log(carObj.speed());
-        
+
         const body = carObj.carBody;
 
         // Get current position and rotation
@@ -193,7 +193,7 @@ setInterval(() => {
     Worlds.forEach((v, k) => {
         updatePhysics(v);
     });
-}, PHYSICS_STEP*500);
+}, PHYSICS_STEP * 500);
 
 // Send updates to clients at a lower frequency to reduce network traffic
 setInterval(sendStateUpdates, SERVER_UPDATE_INTERVAL);
