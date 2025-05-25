@@ -1,0 +1,18 @@
+export const activeGames = new Map();
+
+// Générer un code unique pour une partie
+export function generateGameCode(length = 6) {
+  const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Sans caractères ambigus
+  let result = '';
+  
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  
+  // Vérifier que le code n'existe pas déjà
+  if (activeGames.has(result)) {
+    return generateGameCode(length);
+  }
+  
+  return result;
+}

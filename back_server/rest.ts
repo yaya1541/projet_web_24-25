@@ -1,16 +1,14 @@
 import { Client } from 'https://deno.land/x/mysql@v2.12.1/mod.ts';
 import * as bcrypt from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
-import { v4 as uuid } from 'https://deno.land/std@0.138.0/uuid/mod.ts';
 import { createJWT } from './jwt_func.ts';
 import { ImageStore, Message, Settings, User } from './interfaces.ts';
 
 // Connexion à la base de données
 export const dbClient = await new Client().connect({
-    hostname: '127.0.0.1',
-    username: 'netUser',
-    db: 'projetWeb2425',
+    hostname: `${Deno.env.get('NET_DATABASE_HOST')}`,
+    username: `${Deno.env.get('NET_DATABASE_USER')}`,
+    db: `${Deno.env.get('NET_DATABASE_BASE')}`,
     password: `${Deno.env.get('NET_DATABASE_PASS')}`,
-    port: 3306,
 });
 
 // Fonctions d'authentification et utilisateurs
@@ -218,6 +216,18 @@ export const hasRole = async (
     return result.rows![0].count > 0;
 };
 
+export const getUserRefresh = async (
+    userId: number,
+): Promise<string | null> => {
+    const result = await dbClient.execute(
+        `SELECT token FROM RefreshToken WHERE userId = ?`,
+        [userId],
+    );
+
+    if (result.rows?.length === 0) return null;
+    return result.rows![0].token;
+};
+
 // Gestion des tokens
 export const createRefreshToken = async (userId: number): Promise<string> => {
     const token = await createJWT('14d', { userId: userId });
@@ -261,6 +271,8 @@ export const deleteAllUserRefreshTokens = async (
 // Gestion des messages
 export const sendMessage = async (message: Message): Promise<number> => {
     const now = new Date();
+    console.log('REST : ', message);
+
     const result = await dbClient.execute(
         `INSERT INTO Message (sender, receiver, content, sentAt) VALUES (?, ?, ?, ?)`,
         [message.sender, message.receiver, message.content, now],

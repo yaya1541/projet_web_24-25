@@ -5,15 +5,18 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Document</title>
         <link rel="stylesheet" type="text/css" href="login/style.css">
+        <link rel="stylesheet" type="text/css" href="../style.css">
+        <link rel="stylesheet" type="text/css" href="../root.css">
         <link rel="stylesheet" type="text/css" href="chat_context.css">
+        <link rel="stylesheet" href="home/style.css">
+        <script type="module" src="templates.js"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link
             href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap"
             rel="stylesheet"
         >
-        <link rel="stylesheet" href="style.css">
-        <script type="module" src="templates.js"></script>
+        
     </head>
     <body>
         <header-component></header-component>
@@ -22,17 +25,40 @@
                 <h1>KART <span>FEVER</span></h1>
                 <h2>High-Speed Chaos in Glorious 3D!</h2>
             </div>
+            <div class="section" id="play">
+                <h3>Rejoignez la course !</h3>
+                <p>
+                    Défiez vos amis ou des joueurs du monde entier dans des courses palpitantes. 
+                    Personnalisez votre kart, améliorez vos compétences et grimpez dans le classement !
+                </p>
+                <a href="/kartfever/game" class="cta-btn">Jouer maintenant</a>
+            </div>
             <div class="section">
-                <ul class="item-list">
-                    <li class="item">Fast-paced 3D kart racing</li>
-                    <li class="item">Unique characters or karts</li>
-                    <li class="item">Power-ups and weapons</li>
-                    <li class="item">Customization options</li>
+                <h3>Classement en temps réel</h3>
+                <p>
+                    Consultez le classement des meilleurs pilotes et tentez de décrocher la première place. 
+                    Les parties sont rapides, fun et accessibles à tous !
+                </p>
+            </div>
+            
+            <div class="section">
+                <h3>Fonctionnalités à venir</h3>
+                <ul>
+                    <li>Tournois hebdomadaires</li>
+                    <li>Nouveaux circuits et karts exclusifs</li>
+                    <li>Mode spectateur</li>
+                    <li>Chat vocal intégré</li>
                 </ul>
             </div>
-            <div class="section"></div>
         </div>
         <chat-component></chat-component>
         <footer-component id="footer"></footer-component>
     </body>
+    <script type="module">
+        import oauth from "../utils.js";
+        if (await oauth != 200) {
+            const play_section = document.getElementById('play');
+            play_section.querySelector('a').remove()
+        }
+    </script>
 </html>

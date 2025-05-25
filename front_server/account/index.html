@@ -5,11 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your Account | GamerCraft</title>
   <link rel="stylesheet" type="text/css" href="login/style.css">
+  <link rel="stylesheet" href="account/style.css">
+  <link rel="stylesheet" type="text/css" href="../root.css">
+  <link rel="stylesheet" href="style.css">
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="account/style.css">
+
+  
   <script type="module" src="templates.js"></script>
 </head>
 <body>
@@ -27,10 +31,10 @@
       <ul class="settings-wrapper">
         <li class="active">Profile</li>
         <li>Settings</li>
-        <li>Security</li>
-        <li>Notifications</li>
+        <li class="admin">Players</li>
+        <li class="admin">Parties</li>
       </ul>
-      <button class="delete-account-btn" onclick="if(confirm('Are you sure you want to delete your account? This action cannot be undone.')) { fetch('https://localhost:3000/api/users/me', { method: 'DELETE', credentials: 'include' }) }">Delete Account</button>
+      <button id="delete" class="delete-account-btn" onclick="if(confirm('Are you sure you want to delete your account? This action cannot be undone.')) { fetch('https://localhost:8080/api/users/me', { method: 'DELETE', credentials: 'include' }) }">Delete Account</button>
     </div>
     <style>
         iframe{
@@ -42,10 +46,34 @@
         }
     </style>
     <div class="content-area">
-      <iframe src="/account/profile" style="border:0px #ffffff none;" name="myiFrame" frameborder="0" marginheight="0px" marginwidth="0px" allowfullscreen></iframe>
+      <iframe id="settings-frame" src="/account/profile" style="border:0px #ffffff none;" name="myiFrame" frameborder="0" marginheight="0px" marginwidth="0px" allowfullscreen></iframe>
     </div>
   </div>
   
   <footer-component></footer-component>
+  <chat-component></chat-component>
+  <script type="module">
+    const admin = document.getElementsByClassName("admin");
+    import { userData } from '../utils.js';
+    const user = await userData;
+    if (user.role == 1){
+      document.getElementById("delete").style.display = 'none';
+    }
+    const elt = Array.from(document.querySelector(".settings-wrapper").children);
+    onclick="document.querySelector('.settings-frame').setAttribute('src','/account/Settings')"
+    const frame = document.querySelector('#settings-frame');
+    elt.forEach(element => {
+      const txt = element.innerText.toLowerCase();
+      element.addEventListener("click",()=>{
+        frame.setAttribute('src',`/account/${txt}`);
+      })
+    });
+    if (user.role != 1){
+      for (let i = 0; i < admin.length; i++) {
+        const element = admin[i];
+        element.style.display = 'none';
+      }
+    }
+  </script>
 </body>
 </html>

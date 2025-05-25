@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Document</title>
         <link rel="stylesheet" href="login/style.css">
+        <link rel="stylesheet" type="text/css" href="../style.css">
+        <link rel="stylesheet" type="text/css" href="../root.css">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,97 +63,10 @@
                     >
                 </div>
 
-                <button id="register-btn" class="primary-btn">
+                <button id="submit-btn" class="primary-btn">
                     S'enregister
                 </button>
             </div>
         </div>
-        <script>
-            //fetch("https://localhost:3000/api/startsession",{method : 'POST',credentials :"include"})
-            const email = document.getElementById(
-                'email',
-            );
-            const username = document.getElementById(
-                'username',
-            );
-            const password = document.getElementById(
-                'password',
-            );
-            const registerBtn = document.getElementById(
-                'register-btn',
-            );
-
-            const handleregister = async () => {
-                await fetch(
-                    `https://localhost:3000/api/auth/register`,
-                    {
-                        method: 'POST',
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            email : email.value,
-                            userName: username.value,
-                            userPassword: password.value,
-                        }),
-                    },
-                ).then((res) => {
-                    switch (res.status) {
-                        case 201:
-                            showError(
-                                'Registered successfully !',
-                            );
-                            document.location.pathname =
-                                '/home';
-                            break;
-                        case 200:
-                            showError(
-                                'Username already in use please change.',
-                            );
-                            break;
-                        case 500:
-                            showError('Error with server !');
-                        default:
-                            break;
-                    }
-                });
-            };
-            function showError(message) {
-                const errorElement = document.createElement(
-                    'div',
-                );
-                errorElement.className = 'error-message';
-                errorElement.textContent = message;
-
-                const existingError = document.querySelector(
-                    '.error-message',
-                );
-                if (existingError) existingError.remove();
-
-                document.querySelector('.input-container')
-                    .appendChild(
-                        errorElement,
-                    );
-                setTimeout(() => {
-                    errorElement.classList.add('fade-out');
-                    setTimeout(
-                        () => errorElement.remove(),
-                        500,
-                    );
-                }, 3000);
-            }
-
-            password.addEventListener(
-                'keyup',
-                async (event) => {
-                    if (event.key == 'Enter') {
-                        handleregister();
-                    }
-                },
-            );
-
-            registerBtn.addEventListener(
-                'click',
-                handleregister,
-            );
-        </script>
     </body>
 </html>

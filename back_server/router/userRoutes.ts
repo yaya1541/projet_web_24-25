@@ -20,6 +20,8 @@ userRoutes.get('/api/users/me', authorizationMiddleware, async (ctx) => {
         ctx.response.status = 200;
         ctx.response.body = {
             user: success,
+            role: await db.getUserRoles(userId),
+            stats: await db.getUserRefresh(userId),
             message: 'User data successfully fetched',
         };
     } catch (err) {

@@ -1,13 +1,9 @@
 import { Application, Router } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
 import { oakCors } from 'https://deno.land/x/cors@v1.2.2/mod.ts';
-import { createJWT, verifyJWT } from './jwt_func.ts';
 import { authorizationMiddleware } from './middlewares.ts';
 
 //import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
-import { circuit, connectedUsers } from './script.js';
-import { create, verify } from 'https://deno.land/x/djwt@v2.8/mod.ts';
 import * as db from './rest.ts'; // Importez les fonctions de la base de données
-import { Token } from './interfaces.ts';
 import { authRouter } from './router/authRoutes.ts';
 import { adminRoutes } from './router/adminRoutes.ts';
 import { imgRoutes } from './router/imgRoutes.ts';
@@ -36,7 +32,7 @@ export const connections = new Map<number, WebSocket>();
 //
 // MODULES
 //
-router.get('/lib/:module', authorizationMiddleware, async (ctx) => {
+router.get('/api/lib/:module', authorizationMiddleware, async (ctx) => {
     console.log('Trying to retrieve module');
 
     const { module } = ctx.params;
@@ -57,7 +53,7 @@ router.get('/lib/:module', authorizationMiddleware, async (ctx) => {
 });
 
 // resource loader
-router.get('/src/:module', async (ctx) => {
+router.get('/api/src/:module', async (ctx) => {
     console.log('Trying to retrieve Resource');
     const { module } = ctx.params;
     console.log(`Sending: ${module}`);
@@ -112,12 +108,6 @@ export function notifyAllUsers(from: WebSocket, json: object) {
     console.log('sent Message !');
 }
 
-router.get('/game/kartfever/reload', (ctx) => {
-    circuit.remove();
-    circuit.reload();
-    ctx.response.status = 200;
-});
-
 //
 // API
 //
@@ -128,13 +118,10 @@ router.get("/api/stats/:user",(ctx)=>{})
 */
 
 router.get('/api/users/getdata', authorizationMiddleware, async (ctx) => {
-    const token = await ctx.cookies.get('accessToken') as string;
-    const payload = await verifyJWT(token) as Token;
-    console.log(payload);
     ctx.response.status = 200;
     ctx.response.body = {
         id: ctx.state.userId,
-        user: payload.username,
+        user: await db.getUserById(ctx.state.userId),
     };
 });
 
@@ -146,8 +133,8 @@ router.use(userRoutes.routes());
 router.use(partyRouter.routes());
 router.use(settingRouter.routes());
 
-const certPath = '../certs/server.crt'; // Update to your certificate path
-const keyPath = '../certs/server.key'; // Update to your private key path
+const certPath = '../certs/fullcert.pem'; // Update to your certificate path
+const keyPath = '../certs/private.key'; // Update to your private key path
 
 const options = {
     port: 3000,

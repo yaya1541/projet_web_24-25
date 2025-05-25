@@ -1,0 +1,78 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings</title>
+    <link rel="stylesheet" type="text/css" href="/login/style.css">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+    <link rel="stylesheet" type="text/css" href="../root.css">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/account/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+</head>
+<body>
+    <style>
+        body{
+            margin: 2%;
+            background-color: transparent;
+        }
+    </style>
+    <div class="container">
+        <div class="profile-info">
+            <h class="section-title">Account Settings</h>
+        </div>
+        <div id="settings-info">
+            <form id="settings-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="theme">Dark Theme</label>
+                        <input type="checkbox" id="theme" name="theme">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email_notification">Email Notifications</label>
+                        <input type="checkbox" id="email_notification" name="email_notification">
+                    </div>
+                </div>
+                <button type="submit" class="save-changes-btn">Save Changes</button>
+            </form>
+        </div>
+    </div>
+    <script type="module" async>
+        import { userData, getUserSettings, updateUserSettings } from '../utils.js';
+
+        const user = await userData;
+        const settingsForm = document.getElementById('settings-form');
+        const themeCheckbox = document.getElementById('theme');
+        const emailNotifCheckbox = document.getElementById('email_notification');
+
+        // Fetch and display current settings
+        const settings = await getUserSettings(user.user.id);
+        if (settings) {
+            themeCheckbox.checked = !!settings.theme;
+            emailNotifCheckbox.checked = !!settings.email_notification;
+        }
+
+        // Handle form submission
+        settingsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const updatedSettings = {
+                theme: themeCheckbox.checked,
+                email_notification: emailNotifCheckbox.checked
+            };
+            const success = await updateUserSettings(user.user.id, updatedSettings);
+            if (success) {
+                alert('Settings updated successfully!');
+            } else {
+                alert('Failed to update settings.');
+            }
+        });
+    </script>
+</body>
+</html>

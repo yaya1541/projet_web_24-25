@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Account | GamerCraft</title>
     <link rel="stylesheet" type="text/css" href="/login/style.css">
+    <link rel="stylesheet" href="/account/style.css">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+    <link rel="stylesheet" type="text/css" href="../root.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
-    <link rel="stylesheet" href="/account/style.css">
-    <script type="module" src="/templates.js"></script>
+    
 </head>
 <body>
     <style>
@@ -26,49 +28,49 @@
       
       <div class="user-profile">
         <div class="user-avatar">
-          <img src="https://localhost:3000/src/user.svg" alt="User Avatar">
+          <img src="https://yanisrasp.duckdns.org:3000/api/src/user.svg" alt="User Avatar">
         </div>
         <div class="profile-info">
           <h3>GameMaster42</h3>
-          <div class="user-status">Pro Gamer</div>
           <div class="profile-stats">
             <div class="stat">Games: <span>24</span></div>
             <div class="stat">Friends: <span>186</span></div>
-            <div class="stat">Achievements: <span>42</span></div>
           </div>
         </div>
       </div>
-      
-      <h3 class="section-title">Personal Information</h3>
-      <form>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" value="GameMaster42">
+      <div id="personal-info">
+        <h3 class="section-title">Personal Information</h3>
+        <form>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input type="text" id="username" value="GameMaster42">
+            </div>
           </div>
-          <div class="form-group">
-            <label for="display-name">Display Name</label>
-            <input type="text" id="display-name" value="The Game Master">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" value="player@example.com">
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" placeholder="Optional">
+            </div>
           </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" value="player@example.com">
-          </div>
-          <div class="form-group">
-            <label for="phone">Phone Number</label>
-            <input type="tel" id="phone" placeholder="Optional">
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="bio">Bio</label>
-          <input type="text" id="bio" value="Passionate gamer since 2010. I love strategy and RPG games!">
-        </div>
-        
-        <button type="submit" class="save-changes-btn">Save Changes</button>
-      </form>
+          
+          <button type="submit" class="save-changes-btn">Save Changes</button>
+        </form>
+      </div>
+      <script type="module" async>
+        import { userData } from '../utils.js';
+        const user = await userData;
+        const profileinfo = document.querySelector(".profile-info");
+        const personalinfo = document.getElementById("personal-info");
+        profileinfo.querySelector("h3").innerText = user.user.userName;
+        if (user.role == 1){
+          personalinfo.style.display = "none";
+        }
+      </script>
 </body>
 </html>

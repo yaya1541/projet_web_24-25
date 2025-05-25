@@ -1,12 +1,24 @@
-// Modified server code with optimized update rate
+// server.js - Modified server code with optimized update rate
 import CANNON from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
 import { connections, notifyAllUsers } from './back.ts';
 import { Circuit } from './lib/circuit.js';
 import { Car } from './lib/car.js';
+import { activeGames } from './partyUtils';
+import * as db from './rest.ts';
+import { broadcastToRoom, kartRooms } from './router/partyRoutes.ts';
 
-export const world = new CANNON.World();
+// Game state tracking
+export const bodies = {}; // Store the Cannon.js bodies
+export const connectedUsers = [];
+export const stateL = {};
+export const inputs = {};
+export const Worlds = new Map();
+export const checkpointStates = {}; // Map<roomId, { [userId]: checkpointState }>
+export const leaderboard = {}; // Map<roomId, leaderboardArray>
 
-try {
+export function createWorld(roomId) {
+    console.log(`[DEBUG] Creating world for room: ${roomId}`);
+    const world = new CANNON.World();
     // Set up physics world
     world.gravity.set(0, -9.82, 0);
     world.broadphase = new CANNON.NaiveBroadphase();
@@ -30,130 +42,209 @@ try {
 
     // Add to world
     world.addContactMaterial(carRoadContactMaterial);
-    console.log('Initiated server world');
-} catch (e) {
-    console.log(e);
+    console.log('[DEBUG] Initiated server world');
+
+    Worlds.set(roomId, world);
+    bodies[roomId] = {};
+    connectedUsers[roomId] = [];
+    stateL[roomId] = {};
+    inputs[roomId] = {};
+    checkpointStates[roomId] = {};
+    leaderboard[roomId] = [];
+    console.log(
+        `[DEBUG] World created and state initialized for room: ${roomId}`,
+    );
+    return world;
 }
 
-// Initialize circuit
-export const circuit = new Circuit(null, world, {
-    turnNumber: 25,
-    turnAmplitude: 95,
-    roadWidth: 30,
-});
-
-// Game state tracking
-export const bodies = {}; // Store the Cannon.js bodies
-export const connectedUsers = [];
-export const stateL = {};
-export const inputs = {};
+// Remove a world and all state for a room
+export function removeWorld(roomId) {
+    console.log(`[DEBUG] Removing world for room: ${roomId}`);
+    Worlds.delete(roomId);
+    delete bodies[roomId];
+    delete connectedUsers[roomId];
+    delete stateL[roomId];
+    delete inputs[roomId];
+    delete checkpointStates[roomId];
+    delete leaderboard[roomId];
+    console.log(`[DEBUG] World and state removed for room: ${roomId}`);
+}
 
 // CHANGE: Increase the physics update rate and decrease correction intensity
-const PHYSICS_STEP = 1 / 180; // CHANGED: Increased from 1/120 for smoother simulation
-const SERVER_UPDATE_INTERVAL = 50; // CHANGED: Increased from 100ms to 50ms for more frequent updates
-const EPSILON = 0.1; // CHANGED: Increased threshold to reduce unnecessary updates
+const PHYSICS_STEP = 1 / 60; // Higher frequency for smoother simulation
+const SERVER_UPDATE_INTERVAL = 100; // Less frequent updates to reduce bandwidth
+const EPSILON = 0.1; // Threshold for sending updates
 
-// Server authority state
-const serverState = {
-    type: 1,
-    user: {},
-};
+// Handle client connection for a specific room
+export function handleClientConnection(userId, roomId) {
+    console.log(
+        `[DEBUG] handleClientConnection called for user: ${userId}, room: ${roomId}`,
+    );
+    if (!bodies[roomId][userId] && Worlds.has(roomId)) {
+        const world = Worlds.get(roomId);
+        const startPosition = new CANNON.Vec3(0, 3, 0);
 
-/**
- * Update the physics simulation
- */
-function updatePhysics() {
-    // Step the physics world
-    world.step(PHYSICS_STEP);
+        bodies[roomId][userId] = new Car(world, null, userId, {
+            position: startPosition,
+        });
 
-    // Apply control inputs for all players
-    for (const id in bodies) {
-        if (inputs[id]) {
-            bodies[id].control(inputs[id], PHYSICS_STEP);
-        }
-        bodies[id].update();
+        connectedUsers[roomId].push(userId);
+
+        checkpointStates[roomId][userId] = {
+            currentCheckpoint: 0,
+            totalCheckpoints: 0,
+            lastCheckpointTime: Date.now(),
+            totalTime: 0,
+            lapCount: 0,
+            name: `Player ${userId}`,
+        };
+
+        updateLeaderboard(roomId, userId);
+        //sendInitialState(roomId);
+        sendStateUpdates(roomId);
+        console.log(`[DEBUG] User ${userId} added to room ${roomId}`);
+    } else {
+        console.log(
+            `[DEBUG] User ${userId} already exists in room ${roomId} or world missing`,
+        );
+    }
+}
+
+// Handle client disconnection for a specific room
+export function handleClientDisconnection(userId, roomId) {
+    console.log(
+        `[DEBUG] handleClientDisconnection called for user: ${userId}, room: ${roomId}`,
+    );
+    if (bodies[roomId][userId]) {
+        const idx = connectedUsers[roomId].indexOf(userId);
+        if (idx !== -1) connectedUsers[roomId].splice(idx, 1);
+
+        delete bodies[roomId][userId];
+        delete inputs[roomId][userId];
+        delete stateL[roomId][userId];
+        delete checkpointStates[roomId][userId];
+
+        notifyAllUsers({
+            type: 'user_disconnected',
+            userId: userId,
+            roomId: roomId,
+        });
+        console.log(`[DEBUG] User ${userId} removed from room ${roomId}`);
+    } else {
+        console.log(
+            `[DEBUG] Tried to remove user ${userId} from room ${roomId}, but user not found`,
+        );
     }
 }
 
 /**
- * Process and send state updates to clients
- * FIXED: Add debug logging for position updates
+ * Update the physics simulation
  */
-function sendStateUpdates() {
-    // Reset state for this update
-    serverState.user = {};
+function updatePhysics(world, roomId) {
+    if (world) {
+        world.step(PHYSICS_STEP);
+        for (const id in bodies[roomId]) {
+            // Use inputs[roomId][id] instead of inputs[id]
+            if (inputs[roomId] && inputs[roomId][id]) {
+                console.log(
+                    `[DEBUG] Applying input for user ${id} in room ${roomId}:`,
+                    inputs[roomId][id],
+                );
+                bodies[roomId][id].control(inputs[roomId][id], PHYSICS_STEP);
+            }
+            bodies[roomId][id].update();
+        }
+        console.log(`[DEBUG] Physics updated for room ${roomId}`);
+    }
+}
+
+// Send state updates for a room
+function sendStateUpdates(roomId) {
+    const serverState = { type: 1, user: {} };
     let hasChanges = false;
-
-    // Check each body for significant movement
-    for (const id in bodies) {
-        const body = bodies[id].carBody;
-
-        // Get current position and rotation
+    for (const id in bodies[roomId]) {
+        const carObj = bodies[roomId][id];
+        const body = carObj.carBody;
         const newPosition = {
             x: body.position.x,
             y: body.position.y,
             z: body.position.z,
         };
-
         const newQuaternion = {
             x: body.quaternion.x,
             y: body.quaternion.y,
             z: body.quaternion.z,
             w: body.quaternion.w,
         };
-
-        // Debug logging for body position
-        //console.log(`Server: Body ${id} position: ${newPosition.x.toFixed(2)}, ${newPosition.y.toFixed(2)}, ${newPosition.z.toFixed(2)}`);
-        //console.log(inputs["yanis"]);
-
-        // Initialize stateL[id] if it doesn't exist
-        if (!stateL[id]) {
-            stateL[id] = {
+        if (!stateL[roomId][id]) {
+            stateL[roomId][id] = {
                 position: { x: 0, y: 0, z: 0 },
                 quaternion: { x: 0, y: 0, z: 0, w: 1 },
             };
         }
-
-        // Always send updates in development to debug synchronization issues
-        // FIXED: In production, you can revert to only sending updates when needed
         const hasMovedEnough = hasChangedMoreThanEpsilon(
-            stateL[id],
+            stateL[roomId][id],
             newPosition,
             newQuaternion,
-        ); // Force updates for debugging
-
-        // Add to update packet if significant changes detected
+        );
         if (hasMovedEnough) {
-            // Include velocity data for better client prediction
             const velocity = {
                 x: body.velocity.x,
                 y: body.velocity.y,
                 z: body.velocity.z,
             };
-
+            const angularVelocity = {
+                x: body.angularVelocity.x,
+                y: body.angularVelocity.y,
+                z: body.angularVelocity.z,
+            };
+            let wheels = [];
+            if (carObj.vehicle && carObj.vehicle.wheelInfos) {
+                wheels = carObj.vehicle.wheelInfos.map((wheel) => ({
+                    steering: wheel.steering,
+                    rotation: wheel.rotation,
+                    deltaRotation: wheel.deltaRotation,
+                    engineForce: wheel.engineForce,
+                    brake: wheel.brake,
+                    slip: wheel.slipInfo,
+                    suspensionLength: wheel.suspensionLength,
+                }));
+            }
             serverState.user[id] = {
                 position: newPosition,
                 quaternion: newQuaternion,
-                velocity: velocity, // Add velocity for client prediction
-                timestamp: Date.now(), // Add timestamp for synchronization
+                velocity: velocity,
+                angularVelocity: angularVelocity,
+                wheels: wheels,
+                timestamp: Date.now(),
             };
-
             hasChanges = true;
-
-            // Update the last known state for this body
-            stateL[id].position = { ...newPosition };
-            stateL[id].quaternion = { ...newQuaternion };
+            stateL[roomId][id].position = { ...newPosition };
+            stateL[roomId][id].quaternion = { ...newQuaternion };
+            console.log(
+                `[DEBUG] State updated for user ${id} in room ${roomId}:`,
+                serverState.user[id],
+            );
         }
     }
+    console.log(
+        `[DEBUG] Connected users in room ${roomId}:`,
+        connectedUsers[roomId],
+    );
 
-    // FIXED: Always send updates during debugging
     if (hasChanges) {
-        // Send to all clients
-        //console.log("sending");
-
-        connections.forEach((client) => {
-            client.send(JSON.stringify(serverState));
-        });
+        console.log(
+            `[DEBUG] Broadcasting state to room ${roomId}:`,
+            serverState,
+        );
+        broadcastToRoom(
+            roomId,
+            JSON.stringify(serverState),
+        );
+    } else {
+        console.log(
+            `[DEBUG] No significant state changes for room ${roomId}, nothing broadcasted.`,
+        );
     }
 }
 
@@ -178,82 +269,101 @@ function hasChangedMoreThanEpsilon(oldState, newPosition, newQuaternion) {
     return positionChanged || quaternionChanged;
 }
 
-// Router handler for WebSocket connections
-export function setupGameRouter(router, authorizationMiddleware) {
-    router.get('/game/kartfever', authorizationMiddleware, (ctx) => {
-        console.log('Request received');
-        try {
-            const ws = ctx.upgrade();
-            connections.push(ws);
-            ws.onopen = async (_event) => {
-                console.log(`New connection opened (${connections.length})`);
-                const user = await ctx.cookies.get('user');
-                console.log('user : ', user);
-                if (connectedUsers.indexOf(user) == -1) {
-                    connectedUsers.push(user);
-                }
-                ws.send(JSON.stringify({
-                    type: 0, // Type 0 initialization
-                    CircuitNodes: circuit.pathNodes,
-                    CircuitPoints: circuit.pathPoints,
-                    CircuitWitdh: circuit.options.roadWidth,
-                }));
-                // FIXED: Add debug output for player initialization
-                if (!bodies[user]) {
-                    console.log(`Initializing new player: ${user}`);
-                    bodies[user] = new Car(world, null, user);
-                    bodies[user].carBody.position.set(0, 3, 0); // FIXED: Raised initial position
-                    inputs[user] = {};
-                    console.log(
-                        `Player initialized: ${user} at position y=${
-                            bodies[user].carBody.position.y
-                        }`,
-                    );
-                    notifyAllUsers({ type: 4, users: Object.keys(bodies) });
-                }
-            };
-            ws.onclose = (_event) => {
-                console.log('Connection closed');
-                function removeValue(
-                    value,
-                    index,
-                    arr,
-                ) {
-                    // If the value at the current array index matches the specified value
-                    if (value === ws) {
-                        // Removes the value from the original array
-                        arr.splice(index, 1);
-                        return true;
-                    }
-                    return false;
-                }
-                // Remove this connection from the connections array
-                connections.filter(removeValue);
-            };
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                //console.log('Message received', data);
-                switch (data.type) {
-                    case 2:
-                        inputs[data.user][data.value] = true;
-                        break;
-                    case 3:
-                        inputs[data.user][data.value] = false;
-                        break;
-                    default:
-                        break;
-                }
-            };
-        } catch (error) {
-            console.error('WebSocket error:', error);
-            ctx.response.status = 501;
-            ctx.response.body = { message: 'Unable to establish WebSocket' };
-        }
-    });
+// Send initial state for a room
+function sendInitialState(roomId) {
+    const initialState = {
+        type: 'initial_state',
+        circuit: {
+            CircuitWitdh: 20,
+            CircuitNodes: kartRooms.get(roomId)?.gameState.circuit.CircuitNodes,
+            CircuitPoints: kartRooms.get(roomId)?.gameState.circuit
+                .CircuitPoints,
+        },
+        cars: Object.keys(bodies[roomId]).map((id) => ({
+            id: id,
+            position: bodies[roomId][id].carBody.position,
+            quaternion: bodies[roomId][id].carBody.quaternion,
+            velocity: bodies[roomId][id].carBody.velocity,
+            angularVelocity: bodies[roomId][id].carBody.angularVelocity,
+            name: checkpointStates[roomId][id]?.name || `Player ${id}`,
+        })),
+    };
+    console.log(
+        `[DEBUG] Sending initial state to room ${roomId}:`,
+        initialState,
+    );
+    broadcastToRoom(roomId, JSON.stringify(initialState));
 }
 
-// Run physics simulation at high frequency for accuracy
-setInterval(updatePhysics, 1000 * PHYSICS_STEP);
+// Physics update for all worlds
+setInterval(() => {
+    Worlds.forEach((world, roomId) => {
+        console.log(`[DEBUG] Running physics step for room ${roomId}`);
+        updatePhysics(world, roomId);
+    });
+}, PHYSICS_STEP * 500);
 
-// Send updates to clients at a lower frequency to reduce network traffic
-setInterval(sendStateUpdates, SERVER_UPDATE_INTERVAL);
+// Send state updates for all rooms
+setInterval(() => {
+    Worlds.forEach((_, roomId) => {
+        console.log(`[DEBUG] Sending state updates for room ${roomId}`);
+        sendStateUpdates(roomId);
+    });
+}, SERVER_UPDATE_INTERVAL);
+
+// Update leaderboard for a room
+function updateLeaderboard(roomId, newUserId = null) {
+    console.log(`[DEBUG] Updating leaderboard for room ${roomId}`);
+    const leaderboardData = Object.keys(checkpointStates[roomId]).map(
+        (userId) => ({
+            userId: userId,
+            name: checkpointStates[roomId][userId].name,
+            checkpoint: checkpointStates[roomId][userId].currentCheckpoint,
+            lapCount: checkpointStates[roomId][userId].lapCount,
+            timestamp: checkpointStates[roomId][userId].lastCheckpointTime,
+            totalTime: Date.now() - checkpointStates[roomId][userId].totalTime,
+        }),
+    );
+    leaderboardData.sort((a, b) => {
+        if (a.lapCount !== b.lapCount) return b.lapCount - a.lapCount;
+        if (a.checkpoint !== b.checkpoint) return b.checkpoint - a.checkpoint;
+        return a.totalTime - b.totalTime;
+    });
+    leaderboard[roomId] = leaderboardData;
+    const leaderboardMessage = {
+        type: 6,
+        leaderboard: leaderboardData.map((player, index) => ({
+            rank: index + 1,
+            name: player.name,
+            checkpoint: player.checkpoint,
+            lapCount: player.lapCount,
+            timestamp: player.timestamp,
+            isCurrentPlayer: false,
+        })),
+    };
+    console.log(
+        `[DEBUG] Broadcasting leaderboard for room ${roomId}:`,
+        leaderboardMessage,
+    );
+    broadcastToRoom(roomId, JSON.stringify(leaderboardMessage));
+}
+
+// Handler for client input messages (per room)
+export function handleClientInput(message, userId, roomId) {
+    console.log(
+        `[DEBUG] Received input from user ${userId} in room ${roomId}:`,
+        message,
+    );
+    try {
+        const inputData = JSON.parse(message);
+        if (inputData.type === 'input') {
+            inputs[roomId][userId] = inputData.keys;
+            console.log(
+                `[DEBUG] Updated inputs for user ${userId} in room ${roomId}:`,
+                inputs[roomId][userId],
+            );
+        }
+    } catch (e) {
+        console.error('[DEBUG] Error processing client input:', e);
+    }
+}

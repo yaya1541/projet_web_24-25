@@ -8,7 +8,12 @@ export const authRouter = new Router();
 // Routes d'authentification
 authRouter.post('/api/auth/register', async (ctx) => {
     try {
+        console.log('Try registering');
+        console.log(ctx.request.body);
+
         const body = await ctx.request.body.json();
+
+        console.log(body);
 
         if (!body.userName || !body.userPassword) {
             ctx.response.status = 400;
@@ -62,7 +67,10 @@ authRouter.post('/api/auth/register', async (ctx) => {
         });
 
         ctx.response.status = 201;
-        ctx.response.body = { message: 'User created successfully', userId };
+        ctx.response.body = JSON.stringify({
+            message: 'User created successfully',
+            userId,
+        });
     } catch (err) {
         ctx.response.status = 500;
         ctx.response.body = { message: 'Server error: ' + err };
@@ -71,6 +79,8 @@ authRouter.post('/api/auth/register', async (ctx) => {
 
 authRouter.post('/api/auth/login', async (ctx) => {
     try {
+        console.log('Login try');
+
         const body = await ctx.request.body.json();
 
         if (!body.userName || !body.userPassword) {
@@ -111,14 +121,13 @@ authRouter.post('/api/auth/login', async (ctx) => {
         const jwt = await createJWT('1h', { userId: user.id! });
 
         // Générer un token de rafraîchissement
-        const refreshToken = await db.createRefreshToken(user.id!);
+        await db.createRefreshToken(user.id!);
 
         ctx.cookies.set('accessToken', jwt);
-        ctx.cookies.set('refreshToken', refreshToken);
+        //ctx.cookies.set('refreshToken', refreshToken);
         ctx.response.status = 200;
         ctx.response.body = {
             token: jwt,
-            refreshToken,
             user: {
                 id: user.id,
                 userName: user.userName,
@@ -163,10 +172,10 @@ authRouter.post('/api/auth/refresh', async (ctx) => {
         // Générer un nouveau token de rafraîchissement
         await db.deleteRefreshToken(body.refreshToken);
         const newRefreshToken = await db.createRefreshToken(user.id!);
+        ctx.cookies.set('accessToken', jwt);
         ctx.response.status = 200;
         ctx.response.body = {
             token: jwt,
-            refreshToken: newRefreshToken,
         };
     } catch (err) {
         ctx.response.status = 500;

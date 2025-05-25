@@ -5,61 +5,92 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Document</title>
         <link rel="stylesheet" type="text/css" href="login/style.css">
+        <link rel="stylesheet" type="text/css" href="../style.css">
+        <link rel="stylesheet" type="text/css" href="../root.css">
+        <link rel="stylesheet" type="text/css" href="chat_context.css">
+        <script type="module" src="templates.js"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link
             href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap"
             rel="stylesheet"
         >
-        <link rel="stylesheet" href="style.css">
-        <script type="module" src="templates.js"></script>
     </head>
     <body>
+        <style>
+            iframe {
+                width: fit-content;
+                height: fit-content;
+                min-width: 90%;
+                min-height: 90%;
+                position: relative;
+                top:0;
+
+            }
+            .sketchfab-embed-wrapper {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                min-height: 90%;
+            }
+        </style>
         <header-component></header-component>
-        <div class="container">
-            <div class="section credits">
-                <div class="sketchfab-embed-wrapper">
-                    <iframe
-                        title="Racing Kart"
-                        frameborder="0"
-                        allowfullscreen
-                        mozallowfullscreen="true"
-                        webkitallowfullscreen="true"
-                        allow="autoplay; fullscreen; xr-spatial-tracking"
-                        xr-spatial-tracking
-                        execution-while-out-of-viewport
-                        execution-while-not-rendered
-                        web-share
-                        src="https://sketchfab.com/models/f48f8e66bba6492eadc000d2585b6a32/embed"
-                    >
-                    </iframe>
-                    <p
-                        style="font-size: 13px; font-weight: normal; margin: 5px; color: #4a4a4a"
-                    >
-                        <a
-                            href="https://sketchfab.com/3d-models/racing-kart-f48f8e66bba6492eadc000d2585b6a32?utm_medium=embed&utm_campaign=share-popup&utm_content=f48f8e66bba6492eadc000d2585b6a32"
-                            target="_blank"
-                            rel="nofollow"
-                            style="font-weight: bold; color: #1caad9"
+        
+        <div class="container inline-container">
+            <h1>Assets used</h1>
+            <div>
+                <div class="" >
+                    <div class="sketchfab-embed-wrapper">
+                        <iframe
+                            title="Racing Kart"
+                            frameborder="0"
+                            allowfullscreen
+                            mozallowfullscreen="true"
+                            webkitallowfullscreen="true"
+                            allow="autoplay; fullscreen; xr-spatial-tracking"
+                            xr-spatial-tracking
+                            execution-while-out-of-viewport
+                            execution-while-not-rendered
+                            web-share
+                            src="https://sketchfab.com/models/f48f8e66bba6492eadc000d2585b6a32/embed"
+                            style="width: 100%; height: 100%; min-width: 90%; min-height: 50%"
                         >
-                            Racing Kart
-                        </a> by <a
-                            href="https://sketchfab.com/scailman?utm_medium=embed&utm_campaign=share-popup&utm_content=f48f8e66bba6492eadc000d2585b6a32"
-                            target="_blank"
-                            rel="nofollow"
-                            style="font-weight: bold; color: #1caad9"
+                        </iframe>
+                        <p
+                            style="font-size: 13px; font-weight: normal; margin: 5px; color: #4a4a4a;"
                         >
-                            scailman
-                        </a> on <a
-                            href="https://sketchfab.com?utm_medium=embed&utm_campaign=share-popup&utm_content=f48f8e66bba6492eadc000d2585b6a32"
-                            target="_blank"
-                            rel="nofollow"
-                            style="font-weight: bold; color: #1caad9"
-                        >Sketchfab</a>
-                    </p>
+                            <a
+                                href="https://sketchfab.com/3d-models/racing-kart-f48f8e66bba6492eadc000d2585b6a32?utm_medium=embed&utm_campaign=share-popup&utm_content=f48f8e66bba6492eadc000d2585b6a32"
+                                target="_blank"
+                                rel="nofollow"
+                                style="font-weight: bold; color: #1caad9"
+                            >
+                                Racing Kart
+                            </a> by <a
+                                href="https://sketchfab.com/scailman?utm_medium=embed&utm_campaign=share-popup&utm_content=f48f8e66bba6492eadc000d2585b6a32"
+                                target="_blank"
+                                rel="nofollow"
+                                style="font-weight: bold; color: #1caad9"
+                            >
+                                scailman
+                            </a> on <a
+                                href="https://sketchfab.com?utm_medium=embed&utm_campaign=share-popup&utm_content=f48f8e66bba6492eadc000d2585b6a32"
+                                target="_blank"
+                                rel="nofollow"
+                                style="font-weight: bold; color: #1caad9"
+                            >Sketchfab</a>
+                        </p>
+                    </div>
                 </div>
             </div>
+            
         </div>
+        <div class="container inline-container">
+            <h3>Carte généré par <span>meshy.ai</span> puis modifié à la main.</h3>
+            <h3><a href="https://github.com/yaya1541/projet_web_24-25" target="_blank" rel="noopener noreferrer">Lien du github</a></h3>
+        </div>
+        <chat-component></chat-component>
         <footer-component></footer-component>
     </body>
 </html>

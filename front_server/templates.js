@@ -1,4 +1,4 @@
-import { handleLogin, oauth } from './utils.js';
+import { handleLogin, handleregister, oauth } from './utils.js';
 
 class Footer extends HTMLElement {
     constructor() {
@@ -7,54 +7,50 @@ class Footer extends HTMLElement {
 
     connectedCallback() {
         this.innerHTML = `
-        <footer class="main-footer">
-            <div class="footer-content">
-            <div class="footer-info">
-                <div class="footer-brand">
-                    <span class="footer-name">Kart Fever</span>
-                </div>
+<footer class="main-footer">
+    <div class="footer-content">
+        <div class="footer-info">
+            <div class="footer-brand">
+                <span class="footer-name">Kart Fever</span>
             </div>
-            
-            <div class="footer-links">
-                <div class="footer-column">
+        </div>
+        <div class="footer-links">
+            <div class="footer-column">
                 <h4>Informations</h4>
                 <ul>
                     <li><a href="#">À propos</a></li>
                     <li><a href="#">Comment jouer</a></li>
                     <li><a href="#">Classement</a></li>
                 </ul>
-                </div>
-                
-                <div class="footer-column">
-                <h4>Support</h4>
-                <ul>
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Contact</a></li>
-                    <li><a href="#">Signaler un bug</a></li>
-                </ul>
-                </div>
-                
-                <div class="footer-column">
-                <h4>Légal</h4>
-                <ul>
-                    <li><a href="#">Conditions</a></li>
-                    <li><a href="#">Confidentialité</a></li>
-                    <li><a href="#">Cookies</a></li>
-                </ul>
-                </div>
             </div>
-            </div>
-            
-            <div class="footer-bottom">
-            <p>&copy; 2025 KartFever. Tous droits réservés.</p>
-            <div class="social-icons">
-                <a href="#" class="social-icon">FB</a>
-                <a href="#" class="social-icon">TW</a>
-                <a href="#" class="social-icon">IG</a>
-                <a href="#" class="social-icon">YT</a>
-            </div>
-            </div>
-        </footer>`;
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2025 KartFever. Tous droits réservés.</p>
+    </div>
+</footer>`;
+        this.isAdmin();
+    }
+
+    async isAdmin() {
+        const user = await fetch(
+            'https://yanisrasp.duckdns.org:3000/api/users/me',
+            {
+                method: 'GET',
+                credentials: 'include',
+            },
+        )
+            .then((d) => {
+                return d.json();
+            })
+            .then((data) => {
+                return data;
+            });
+        if (user.role == 1) {
+            document.querySelector('.footer-bottom').innerHTML += 'ADMIN';
+        } else {
+            document.querySelector('.footer-bottom').innerHTML += 'LAMBDA';
+        }
     }
 }
 
@@ -72,32 +68,26 @@ class Header extends HTMLElement {
 
     async connectedCallback() {
         this.innerHTML = `
-        <header class="main-header">
-            <div class="header-content">
-                <div class="logo-text">KART<span>FEVER</span></div>
-                <div class="header-decoration"></div>
-                <div class="header-auth">
-                    <!--<button id="login" class="auth-btn">Login</button>
-                    <button id="register" class="auth-btn">Register</button>-->
-                </div>
-            </div>
-            <div class="menu-wrapper">
-                <ul class="nav-items">
-                    <li class="nav-item">
-                        <a href="/home" class="nav-link">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/news" class="nav-link">News</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/home" class="nav-link">Discord</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/about" class="nav-link">À propos</a>
-                    </li>
-                </ul>
-            </div>
-        </header>
+<header class="main-header">
+    <div class="header-content">
+        <div class="logo-text">KART<span>FEVER</span></div>
+        <div class="header-decoration"></div>
+        <div class="header-auth"></div>
+    </div>
+    <div class="menu-wrapper">
+        <ul class="nav-items">
+            <li class="nav-item">
+                <a href="/home" class="nav-link">Home</a>
+            </li>
+            <li class="nav-item">
+                <a href="/news" class="nav-link">News</a>
+            </li>
+            <li class="nav-item">
+                <a href="/about" class="nav-link">À propos</a>
+            </li>
+        </ul>
+    </div>
+</header>
         `;
         await this.oauthHandler();
     }
@@ -114,7 +104,7 @@ class Header extends HTMLElement {
         login.classList.add('auth-btn');
 
         login.addEventListener('click', (ev) => {
-            this.bindIFrame(this.fr, ev);
+            this.bindIFrame(this.fr, ev, handleLogin);
         });
 
         register.id = 'register';
@@ -122,7 +112,7 @@ class Header extends HTMLElement {
         register.classList.add('auth-btn');
 
         register.addEventListener('click', (ev) => {
-            this.bindIFrame(this.fr, ev);
+            this.bindIFrame(this.fr, ev, handleregister);
         });
 
         logout.id = 'logout';
@@ -147,7 +137,7 @@ class Header extends HTMLElement {
             <div class="account-menu-wrapper">
                 <button id="avatar-btn" class="avatar-btn">
                 <img 
-                    src="https://localhost:3000/src/user.svg" 
+                    src="https://yanisrasp.duckdns.org:3000/api/src/user.svg" 
                     alt="User avatar" 
                     class="avatar-img"
                     onerror="console.error('Failed to load SVG:', this.src)"
@@ -175,43 +165,46 @@ class Header extends HTMLElement {
     }
 
     async logout() {
-        const response = await fetch(`https://localhost:3000/api/auth/logout`, {
-            method: 'POST',
-            credentials: 'include',
-        });
+        const response = await fetch(
+            `https://yanisrasp.duckdns.org:3000/api/auth/logout`,
+            {
+                method: 'POST',
+                credentials: 'include',
+            },
+        );
         if (response.status == 200) {
             document.location.reload();
         }
     }
 
-    bindIFrame(frame, ev) {
+    bindIFrame(frame, ev, handle) {
         frame.src = `./${ev.target.id}`;
         ev.target.after(this.fr);
         try {
-            // Attendre que l'iframe soit complètement chargée
             frame.addEventListener('load', function () {
-                // Accéder au document de l'iframe
                 const cw = frame.contentWindow.document;
                 console.log('Document iframe chargé:', cw);
 
-                // Maintenant que l'iframe est chargée, on peut chercher les éléments
+                // Use the correct IDs that exist in the register page
                 const password = cw.getElementById('password');
-                const loginBtn = cw.getElementById('login-btn');
+                const Btn = cw.getElementById('submit-btn');
 
-                // Vérifier que les éléments existent
-                if (password && loginBtn) {
-                    // Ajouter les écouteurs d'événements
+                if (password && Btn) {
                     password.addEventListener('keyup', function (event) {
                         if (event.key === 'Enter') {
-                            handleLogin(cw);
+                            // You'll need to update handleLogin to handleRegister or use the existing handleregister
+                            handle(cw);
                         }
                     });
 
-                    loginBtn.addEventListener('click', function () {
-                        handleLogin(cw);
+                    Btn.addEventListener('click', function () {
+                        handle(cw);
                     });
                 } else {
-                    console.error("Éléments non trouvés dans l'iframe");
+                    console.error("Éléments non trouvés dans l'iframe", {
+                        password: !!password,
+                        Btn: !!Btn,
+                    });
                 }
             });
         } catch (e) {
@@ -806,6 +799,7 @@ class ChatComponent extends HTMLElement {
 
         // Create message object
         const message = {
+            type: 0,
             sender: this.userData.id, // In a real app, this would be the user's name
             receiver: this.activeChat == 'general' ? 1 : this.activeChat,
             content: messageText,
@@ -832,7 +826,13 @@ class ChatComponent extends HTMLElement {
 
         // In a real app, you would send the message to the server here
         //this.mockServerResponse();
-        this.ws.send(JSON.stringify({ message: message }));
+        // Helper method to safely send messages
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify(message));
+        } else {
+            console.warn('Cannot send message - WebSocket not open');
+            // Optionally implement reconnection logic here
+        }
     }
 
     addMessageToUI(message) {
@@ -884,7 +884,7 @@ class ChatComponent extends HTMLElement {
         // In a real app, you would fetch chats from the server
         // This is just a mock implementation
         const data = await fetch(
-            'https://localhost:3000/api/messages/conversation/global',
+            'https://yanisrasp.duckdns.org:3000/api/messages/conversation/global',
             {
                 method: 'GET',
                 credentials: 'include',
@@ -895,7 +895,7 @@ class ChatComponent extends HTMLElement {
             },
         ).then(
             (data) => {
-                //console.log(data);
+                console.log(data);
                 data.messages.forEach((elt) => {
                     //console.log(elt.sender == this.userData.id);
 
@@ -948,29 +948,53 @@ class ChatComponent extends HTMLElement {
 
     initWebsocket() {
         this.activeUsers = [];
-        this.ws = new WebSocket('wss://localhost:3000/chat');
-        this.activeUsers.push(this.ws);
+        this.ws = new WebSocket(
+            `wss://${globalThis.location.host}:3000/api/chat`,
+        );
+
         this.ws.onopen = (ev) => {
-            console.log('chat connected');
+            console.log('Chat connected');
+            this.connectionActive = true;
         };
+
         this.ws.onmessage = (ev) => {
-            console.log('received message');
-            let data = JSON.parse(ev.data);
-            console.log(data);
-            data = data.message;
-            data.isOutgoing = false;
-            data.timestamp = new Date(data.timestamp);
-            if (data.sender != this.userData.id) {
-                this.addMessageToUI(data);
+            try {
+                console.log('Received message');
+                const data = JSON.parse(ev.data);
+                console.log(data);
+                if (data.type == 0) {
+                    console.log(data);
+                    data.isOutgoing = false;
+                    data.timestamp = new Date(data.timestamp);
+                    if (data.sender != this.userData.userName) {
+                        this.addMessageToUI(data);
+                    }
+                }
+            } catch (error) {
+                console.error('Message processing error:', error);
             }
+        };
+
+        this.ws.onclose = () => {
+            console.log('Chat disconnected');
+            this.connectionActive = false;
+            this.activeUsers = this.activeUsers.filter((ws) => ws !== this.ws);
+        };
+
+        this.ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            this.connectionActive = false;
         };
     }
 
     async initUserData() {
-        this.userData = await fetch('https://localhost:3000/api/users/me', {
-            method: 'GET',
-            credentials: 'include',
-        }).then(
+        this.userData = await fetch(
+            'https://yanisrasp.duckdns.org:3000/api/users/me',
+            {
+                method: 'GET',
+                credentials: 'include',
+            },
+        ).then(
             async (ev) => {
                 return await ev.json();
             },
