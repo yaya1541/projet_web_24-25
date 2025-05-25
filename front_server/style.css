@@ -14,8 +14,8 @@
     .title {
         padding: 10% 10%;
         background-image: url('https://yanisrasp.duckdns.org:3000/api/src/kart-home.png');
-        background-repeat: repeat;
-        background-size: 100%;
+        background-repeat: no-repeat;
+        background-size: cover;
     }
 
     header-component {

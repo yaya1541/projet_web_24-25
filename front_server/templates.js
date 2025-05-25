@@ -1,4 +1,4 @@
-import { handleLogin, handleregister, oauth, userData } from './utils.js';
+import { handleLogin, handleregister, oauth } from './utils.js';
 
 class Footer extends HTMLElement {
     constructor() {
@@ -7,54 +7,28 @@ class Footer extends HTMLElement {
 
     connectedCallback() {
         this.innerHTML = `
-        <footer class="main-footer">
-            <div class="footer-content">
-            <div class="footer-info">
-                <div class="footer-brand">
-                    <span class="footer-name">Kart Fever</span>
-                </div>
+<footer class="main-footer">
+    <div class="footer-content">
+        <div class="footer-info">
+            <div class="footer-brand">
+                <span class="footer-name">Kart Fever</span>
             </div>
-            
-            <div class="footer-links">
-                <div class="footer-column">
+        </div>
+        <div class="footer-links">
+            <div class="footer-column">
                 <h4>Informations</h4>
                 <ul>
                     <li><a href="#">À propos</a></li>
                     <li><a href="#">Comment jouer</a></li>
                     <li><a href="#">Classement</a></li>
                 </ul>
-                </div>
-                
-                <div class="footer-column">
-                <h4>Support</h4>
-                <ul>
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Contact</a></li>
-                    <li><a href="#">Signaler un bug</a></li>
-                </ul>
-                </div>
-                
-                <div class="footer-column">
-                <h4>Légal</h4>
-                <ul>
-                    <li><a href="#">Conditions</a></li>
-                    <li><a href="#">Confidentialité</a></li>
-                    <li><a href="#">Cookies</a></li>
-                </ul>
-                </div>
             </div>
-            </div>
-            
-            <div class="footer-bottom">
-            <p>&copy; 2025 KartFever. Tous droits réservés.</p>
-            <div class="social-icons">
-                <a href="#" class="social-icon">FB</a>
-                <a href="#" class="social-icon">TW</a>
-                <a href="#" class="social-icon">IG</a>
-                <a href="#" class="social-icon">YT</a>
-            </div>
-            </div>
-        </footer>`;
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2025 KartFever. Tous droits réservés.</p>
+    </div>
+</footer>`;
         this.isAdmin();
     }
 
@@ -94,32 +68,26 @@ class Header extends HTMLElement {
 
     async connectedCallback() {
         this.innerHTML = `
-        <header class="main-header">
-            <div class="header-content">
-                <div class="logo-text">KART<span>FEVER</span></div>
-                <div class="header-decoration"></div>
-                <div class="header-auth">
-                    <!--<button id="login" class="auth-btn">Login</button>
-                    <button id="register" class="auth-btn">Register</button>-->
-                </div>
-            </div>
-            <div class="menu-wrapper">
-                <ul class="nav-items">
-                    <li class="nav-item">
-                        <a href="/home" class="nav-link">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/news" class="nav-link">News</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/home" class="nav-link">Discord</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/about" class="nav-link">À propos</a>
-                    </li>
-                </ul>
-            </div>
-        </header>
+<header class="main-header">
+    <div class="header-content">
+        <div class="logo-text">KART<span>FEVER</span></div>
+        <div class="header-decoration"></div>
+        <div class="header-auth"></div>
+    </div>
+    <div class="menu-wrapper">
+        <ul class="nav-items">
+            <li class="nav-item">
+                <a href="/home" class="nav-link">Home</a>
+            </li>
+            <li class="nav-item">
+                <a href="/news" class="nav-link">News</a>
+            </li>
+            <li class="nav-item">
+                <a href="/about" class="nav-link">À propos</a>
+            </li>
+        </ul>
+    </div>
+</header>
         `;
         await this.oauthHandler();
     }
@@ -831,6 +799,7 @@ class ChatComponent extends HTMLElement {
 
         // Create message object
         const message = {
+            type: 0,
             sender: this.userData.id, // In a real app, this would be the user's name
             receiver: this.activeChat == 'general' ? 1 : this.activeChat,
             content: messageText,
@@ -993,10 +962,13 @@ class ChatComponent extends HTMLElement {
                 console.log('Received message');
                 const data = JSON.parse(ev.data);
                 console.log(data);
-                data.isOutgoing = false;
-                data.timestamp = new Date(data.timestamp);
-                if (data.sender != this.userData.userName) {
-                    this.addMessageToUI(data);
+                if (data.type == 0) {
+                    console.log(data);
+                    data.isOutgoing = false;
+                    data.timestamp = new Date(data.timestamp);
+                    if (data.sender != this.userData.userName) {
+                        this.addMessageToUI(data);
+                    }
                 }
             } catch (error) {
                 console.error('Message processing error:', error);

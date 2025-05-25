@@ -375,6 +375,10 @@
                 left: 20px;
                 min-width: 180px;
             }
+            .car-label {
+                pointer-events: none; 
+                user-select: none; 
+            }
         }
     </style>
     <style>
@@ -417,6 +421,12 @@
         src="https://yanisrasp.duckdns.org:3000/api/lib/GLTFLoader.js"
         crossorigin="use-credentials"
     ></script>
+    <script
+        type="module"
+        src="https://yanisrasp.duckdns.org:3000/api/lib/CSS2DRenderer.js"
+        crossorigin="use-credentials"
+    ></script>
+    <script src="../templates.js" type="module"></script>
 </head>
 <body>
     <!-- Welcome Screen (Join/Create Game) -->
@@ -489,5 +499,6 @@
 
     <!-- Placeholder for the Three.js game script -->
     <script type="module" src="./game/script.js"></script>
+    <chat-component></chat-component>
 </body>
 </html>

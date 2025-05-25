@@ -1,12 +1,27 @@
+/* Variables de couleurs */
 :root {
-    /*
-    Color palette
-    */
-    --blue-1: #202d36;
-    --blue-2: #5c7896;
-    --blue-3: #7598b9;
-    --red-1: #3c0007;
-    --red-2: #800c1f;
-    --gray-1: #929caa;
-    --yellow-1: #fff200;
+    /* Primary colors */
+    --primary-dark: #45474b; /* Dark gray */
+    --primary-medium: #379777; /* Teal green */
+    --primary-light: #f5f7f8; /* Light gray/off-white */
+
+    /* Accent colors */
+    --accent-dark: #cd9c00; /* Darker gold */
+    --accent: #f4ce14; /* Bright yellow/gold */
+    --accent-bright: #ffe04d; /* Brighter yellow variant */
+
+    /* Other colors */
+    --neutral: #8b9196; /* Medium gray */
+    --highlight: #f4ce14; /* Same as accent for highlighting */
+    --dark: #2d2e31; /* Darker than primary-dark */
+    --light: #f5f7f8; /* Same as primary-light */
+
+    /* Functional overlays */
+    --dark-overlay: rgba(69, 71, 75, 0.9); /* Based on dark gray */
+    --light-overlay: rgba(245, 247, 248, 0.1); /* Based on light color */
+    --accent-shadow: rgba(244, 206, 20, 0.4); /* Based on accent */
+
+    /* Additional variations */
+    --primary-medium-light: #53b698; /* Lighter version of teal */
+    --primary-medium-dark: #2a7259; /* Darker version of teal */
 }
