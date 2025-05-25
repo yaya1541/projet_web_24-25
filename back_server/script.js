@@ -5,10 +5,19 @@ import { Circuit } from './lib/circuit.js';
 import { Car } from './lib/car.js';
 import { activeGames } from './partyUtils';
 import * as db from './rest.ts';
+import { broadcastToRoom, kartRooms } from './router/partyRoutes.ts';
 
+// Game state tracking
+export const bodies = {}; // Store the Cannon.js bodies
+export const connectedUsers = [];
+export const stateL = {};
+export const inputs = {};
 export const Worlds = new Map();
+export const checkpointStates = {}; // Map<roomId, { [userId]: checkpointState }>
+export const leaderboard = {}; // Map<roomId, leaderboardArray>
 
-export function createWorld() {
+export function createWorld(roomId) {
+    console.log(`[DEBUG] Creating world for room: ${roomId}`);
     const world = new CANNON.World();
     // Set up physics world
     world.gravity.set(0, -9.82, 0);
@@ -33,137 +42,209 @@ export function createWorld() {
 
     // Add to world
     world.addContactMaterial(carRoadContactMaterial);
-    console.log('Initiated server world');
+    console.log('[DEBUG] Initiated server world');
+
+    Worlds.set(roomId, world);
+    bodies[roomId] = {};
+    connectedUsers[roomId] = [];
+    stateL[roomId] = {};
+    inputs[roomId] = {};
+    checkpointStates[roomId] = {};
+    leaderboard[roomId] = [];
+    console.log(
+        `[DEBUG] World created and state initialized for room: ${roomId}`,
+    );
     return world;
 }
 
-// Game state tracking
-export const bodies = {}; // Store the Cannon.js bodies
-export const connectedUsers = [];
-export const stateL = {};
-export const inputs = {};
+// Remove a world and all state for a room
+export function removeWorld(roomId) {
+    console.log(`[DEBUG] Removing world for room: ${roomId}`);
+    Worlds.delete(roomId);
+    delete bodies[roomId];
+    delete connectedUsers[roomId];
+    delete stateL[roomId];
+    delete inputs[roomId];
+    delete checkpointStates[roomId];
+    delete leaderboard[roomId];
+    console.log(`[DEBUG] World and state removed for room: ${roomId}`);
+}
 
 // CHANGE: Increase the physics update rate and decrease correction intensity
-const PHYSICS_STEP = 1 / 240; // Higher frequency for smoother simulation
-const SERVER_UPDATE_INTERVAL = 40; // Less frequent updates to reduce bandwidth
+const PHYSICS_STEP = 1 / 60; // Higher frequency for smoother simulation
+const SERVER_UPDATE_INTERVAL = 100; // Less frequent updates to reduce bandwidth
 const EPSILON = 0.1; // Threshold for sending updates
 
-// Server authority state
-const serverState = {
-    type: 1,
-    user: {},
-};
+// Handle client connection for a specific room
+export function handleClientConnection(userId, roomId) {
+    console.log(
+        `[DEBUG] handleClientConnection called for user: ${userId}, room: ${roomId}`,
+    );
+    if (!bodies[roomId][userId] && Worlds.has(roomId)) {
+        const world = Worlds.get(roomId);
+        const startPosition = new CANNON.Vec3(0, 3, 0);
+
+        bodies[roomId][userId] = new Car(world, null, userId, {
+            position: startPosition,
+        });
+
+        connectedUsers[roomId].push(userId);
+
+        checkpointStates[roomId][userId] = {
+            currentCheckpoint: 0,
+            totalCheckpoints: 0,
+            lastCheckpointTime: Date.now(),
+            totalTime: 0,
+            lapCount: 0,
+            name: `Player ${userId}`,
+        };
+
+        updateLeaderboard(roomId, userId);
+        //sendInitialState(roomId);
+        sendStateUpdates(roomId);
+        console.log(`[DEBUG] User ${userId} added to room ${roomId}`);
+    } else {
+        console.log(
+            `[DEBUG] User ${userId} already exists in room ${roomId} or world missing`,
+        );
+    }
+}
+
+// Handle client disconnection for a specific room
+export function handleClientDisconnection(userId, roomId) {
+    console.log(
+        `[DEBUG] handleClientDisconnection called for user: ${userId}, room: ${roomId}`,
+    );
+    if (bodies[roomId][userId]) {
+        const idx = connectedUsers[roomId].indexOf(userId);
+        if (idx !== -1) connectedUsers[roomId].splice(idx, 1);
+
+        delete bodies[roomId][userId];
+        delete inputs[roomId][userId];
+        delete stateL[roomId][userId];
+        delete checkpointStates[roomId][userId];
+
+        notifyAllUsers({
+            type: 'user_disconnected',
+            userId: userId,
+            roomId: roomId,
+        });
+        console.log(`[DEBUG] User ${userId} removed from room ${roomId}`);
+    } else {
+        console.log(
+            `[DEBUG] Tried to remove user ${userId} from room ${roomId}, but user not found`,
+        );
+    }
+}
 
 /**
  * Update the physics simulation
  */
-function updatePhysics(world) {
-    // Step the physics world
+function updatePhysics(world, roomId) {
     if (world) {
         world.step(PHYSICS_STEP);
-
-        // Apply control inputs for all players
-        for (const id in bodies) {
-            if (inputs[id]) {
-                bodies[id].control(inputs[id], PHYSICS_STEP);
+        for (const id in bodies[roomId]) {
+            // Use inputs[roomId][id] instead of inputs[id]
+            if (inputs[roomId] && inputs[roomId][id]) {
+                console.log(
+                    `[DEBUG] Applying input for user ${id} in room ${roomId}:`,
+                    inputs[roomId][id],
+                );
+                bodies[roomId][id].control(inputs[roomId][id], PHYSICS_STEP);
             }
-            bodies[id].update();
+            bodies[roomId][id].update();
         }
+        console.log(`[DEBUG] Physics updated for room ${roomId}`);
     }
 }
 
-function sendStateUpdates() {
-    // Reset state for this update
-    serverState.user = {};
+// Send state updates for a room
+function sendStateUpdates(roomId) {
+    const serverState = { type: 1, user: {} };
     let hasChanges = false;
-
-    // Check each body for significant movement
-    for (const id in bodies) {
-        const carObj = bodies[id];
-        //console.log(carObj.speed());
-
+    for (const id in bodies[roomId]) {
+        const carObj = bodies[roomId][id];
         const body = carObj.carBody;
-
-        // Get current position and rotation
         const newPosition = {
             x: body.position.x,
             y: body.position.y,
             z: body.position.z,
         };
-
         const newQuaternion = {
             x: body.quaternion.x,
             y: body.quaternion.y,
             z: body.quaternion.z,
             w: body.quaternion.w,
         };
-
-        // Initialize stateL[id] if it doesn't exist
-        if (!stateL[id]) {
-            stateL[id] = {
+        if (!stateL[roomId][id]) {
+            stateL[roomId][id] = {
                 position: { x: 0, y: 0, z: 0 },
                 quaternion: { x: 0, y: 0, z: 0, w: 1 },
             };
         }
-
         const hasMovedEnough = hasChangedMoreThanEpsilon(
-            stateL[id],
+            stateL[roomId][id],
             newPosition,
             newQuaternion,
         );
-
-        // Add to update packet if significant changes detected
         if (hasMovedEnough) {
-            // Include velocity data for better client prediction
             const velocity = {
                 x: body.velocity.x,
                 y: body.velocity.y,
                 z: body.velocity.z,
             };
-
-            // Include angular velocity for rotation prediction
             const angularVelocity = {
                 x: body.angularVelocity.x,
                 y: body.angularVelocity.y,
                 z: body.angularVelocity.z,
             };
-
-            // --- NEW: Add wheel state if available ---
             let wheels = [];
             if (carObj.vehicle && carObj.vehicle.wheelInfos) {
                 wheels = carObj.vehicle.wheelInfos.map((wheel) => ({
-                    steering: wheel.steering, // radians
-                    rotation: wheel.rotation, // total rotation, radians
-                    deltaRotation: wheel.deltaRotation, // radians per step
+                    steering: wheel.steering,
+                    rotation: wheel.rotation,
+                    deltaRotation: wheel.deltaRotation,
                     engineForce: wheel.engineForce,
                     brake: wheel.brake,
                     slip: wheel.slipInfo,
                     suspensionLength: wheel.suspensionLength,
                 }));
             }
-
             serverState.user[id] = {
                 position: newPosition,
                 quaternion: newQuaternion,
                 velocity: velocity,
                 angularVelocity: angularVelocity,
-                wheels: wheels, // <-- Add wheels array to packet
+                wheels: wheels,
                 timestamp: Date.now(),
             };
-
             hasChanges = true;
-
-            // Update the last known state for this body
-            stateL[id].position = { ...newPosition };
-            stateL[id].quaternion = { ...newQuaternion };
+            stateL[roomId][id].position = { ...newPosition };
+            stateL[roomId][id].quaternion = { ...newQuaternion };
+            console.log(
+                `[DEBUG] State updated for user ${id} in room ${roomId}:`,
+                serverState.user[id],
+            );
         }
     }
+    console.log(
+        `[DEBUG] Connected users in room ${roomId}:`,
+        connectedUsers[roomId],
+    );
 
-    // Only send updates when changes exceed threshold
     if (hasChanges) {
-        connections.forEach((client) => {
-            client.send(JSON.stringify(serverState));
-        });
+        console.log(
+            `[DEBUG] Broadcasting state to room ${roomId}:`,
+            serverState,
+        );
+        broadcastToRoom(
+            roomId,
+            JSON.stringify(serverState),
+        );
+    } else {
+        console.log(
+            `[DEBUG] No significant state changes for room ${roomId}, nothing broadcasted.`,
+        );
     }
 }
 
@@ -188,67 +269,101 @@ function hasChangedMoreThanEpsilon(oldState, newPosition, newQuaternion) {
     return positionChanged || quaternionChanged;
 }
 
-// Run physics simulation at high frequency for accuracy
+// Send initial state for a room
+function sendInitialState(roomId) {
+    const initialState = {
+        type: 'initial_state',
+        circuit: {
+            CircuitWitdh: 20,
+            CircuitNodes: kartRooms.get(roomId)?.gameState.circuit.CircuitNodes,
+            CircuitPoints: kartRooms.get(roomId)?.gameState.circuit
+                .CircuitPoints,
+        },
+        cars: Object.keys(bodies[roomId]).map((id) => ({
+            id: id,
+            position: bodies[roomId][id].carBody.position,
+            quaternion: bodies[roomId][id].carBody.quaternion,
+            velocity: bodies[roomId][id].carBody.velocity,
+            angularVelocity: bodies[roomId][id].carBody.angularVelocity,
+            name: checkpointStates[roomId][id]?.name || `Player ${id}`,
+        })),
+    };
+    console.log(
+        `[DEBUG] Sending initial state to room ${roomId}:`,
+        initialState,
+    );
+    broadcastToRoom(roomId, JSON.stringify(initialState));
+}
+
+// Physics update for all worlds
 setInterval(() => {
-    Worlds.forEach((v, k) => {
-        updatePhysics(v);
+    Worlds.forEach((world, roomId) => {
+        console.log(`[DEBUG] Running physics step for room ${roomId}`);
+        updatePhysics(world, roomId);
     });
 }, PHYSICS_STEP * 500);
 
-// Send updates to clients at a lower frequency to reduce network traffic
-setInterval(sendStateUpdates, SERVER_UPDATE_INTERVAL);
+// Send state updates for all rooms
+setInterval(() => {
+    Worlds.forEach((_, roomId) => {
+        console.log(`[DEBUG] Sending state updates for room ${roomId}`);
+        sendStateUpdates(roomId);
+    });
+}, SERVER_UPDATE_INTERVAL);
 
-// Handler for client input messages
-export function handleClientInput(message, userId) {
-    // Parse input message
+// Update leaderboard for a room
+function updateLeaderboard(roomId, newUserId = null) {
+    console.log(`[DEBUG] Updating leaderboard for room ${roomId}`);
+    const leaderboardData = Object.keys(checkpointStates[roomId]).map(
+        (userId) => ({
+            userId: userId,
+            name: checkpointStates[roomId][userId].name,
+            checkpoint: checkpointStates[roomId][userId].currentCheckpoint,
+            lapCount: checkpointStates[roomId][userId].lapCount,
+            timestamp: checkpointStates[roomId][userId].lastCheckpointTime,
+            totalTime: Date.now() - checkpointStates[roomId][userId].totalTime,
+        }),
+    );
+    leaderboardData.sort((a, b) => {
+        if (a.lapCount !== b.lapCount) return b.lapCount - a.lapCount;
+        if (a.checkpoint !== b.checkpoint) return b.checkpoint - a.checkpoint;
+        return a.totalTime - b.totalTime;
+    });
+    leaderboard[roomId] = leaderboardData;
+    const leaderboardMessage = {
+        type: 6,
+        leaderboard: leaderboardData.map((player, index) => ({
+            rank: index + 1,
+            name: player.name,
+            checkpoint: player.checkpoint,
+            lapCount: player.lapCount,
+            timestamp: player.timestamp,
+            isCurrentPlayer: false,
+        })),
+    };
+    console.log(
+        `[DEBUG] Broadcasting leaderboard for room ${roomId}:`,
+        leaderboardMessage,
+    );
+    broadcastToRoom(roomId, JSON.stringify(leaderboardMessage));
+}
+
+// Handler for client input messages (per room)
+export function handleClientInput(message, userId, roomId) {
+    console.log(
+        `[DEBUG] Received input from user ${userId} in room ${roomId}:`,
+        message,
+    );
     try {
         const inputData = JSON.parse(message);
         if (inputData.type === 'input') {
-            // Store inputs for this user
-            inputs[userId] = inputData.keys;
+            inputs[roomId][userId] = inputData.keys;
+            console.log(
+                `[DEBUG] Updated inputs for user ${userId} in room ${roomId}:`,
+                inputs[roomId][userId],
+            );
         }
     } catch (e) {
-        console.error('Error processing client input:', e);
-    }
-}
-
-// Handle new client connection
-export function handleClientConnection(userId, worldId) {
-    // Create car for new user if not exists
-    if (!bodies[userId] && Worlds.has(worldId)) {
-        const world = Worlds.get(worldId);
-        const startPosition = new CANNON.Vec3(0, 3, 0); // Starting position
-
-        // Create car for this user
-        bodies[userId] = new Car(world, null, userId, {
-            position: startPosition,
-            color: 0x00ff00, // Green color
-        });
-
-        connectedUsers.push(userId);
-
-        // Send initial state to all clients
-        sendStateUpdates();
-    }
-}
-
-// Handle client disconnection
-export function handleClientDisconnection(userId) {
-    // Remove car and inputs for this user
-    if (bodies[userId]) {
-        const index = connectedUsers.indexOf(userId);
-        if (index !== -1) {
-            connectedUsers.splice(index, 1);
-        }
-
-        delete bodies[userId];
-        delete inputs[userId];
-        delete stateL[userId];
-
-        // Notify other clients about disconnection
-        notifyAllUsers({
-            type: 'user_disconnected',
-            userId: userId,
-        });
+        console.error('[DEBUG] Error processing client input:', e);
     }
 }

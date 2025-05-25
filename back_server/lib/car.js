@@ -1,7 +1,7 @@
 // Simplified Car class without prediction logic
 import CANNON from 'https://cdn.jsdelivr.net/npm/cannon@0.6.2/+esm';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
-import { CSS2DRenderer,CSS2DObject } from './CSS2DRenderer.js';
+import { CSS2DObject, CSS2DRenderer } from './CSS2DRenderer.js';
 import { GLTFLoader } from './GLTFLoader.js';
 
 // Simple function to replace ALL materials in your model
@@ -115,7 +115,7 @@ export class Car {
             // If no physics world, create a temporary object to hold position/rotation
             if (!world) {
                 this.carBody = {
-                    position: new CANNON.Vec3(0, 1, 0),
+                    position: new CANNON.Vec3(0, 2, 0),
                     quaternion: new CANNON.Quaternion(0, 0, 0, 1),
                     velocity: new CANNON.Vec3(0, 0, 0),
                     angularVelocity: new CANNON.Vec3(0, 0, 0),
@@ -149,7 +149,11 @@ export class Car {
         this.nameLabel = new CSS2DObject(labelDiv);
 
         // Position the label above the car (y offset)
-        this.nameLabel.position.set(0, this.options.dimensions.height/2 + 0.8, 0);
+        this.nameLabel.position.set(
+            0,
+            this.options.dimensions.height / 2 + 0.8,
+            0,
+        );
 
         // Attach to car mesh if available, else to scene (will reattach after model loads)
         if (this.carMesh) {
@@ -449,6 +453,8 @@ export class Car {
         if (
             (keysPressed['z'] || keysPressed['arrowup']) && this.speed() < 130
         ) {
+            console.log('Accelerating');
+
             this.vehicle.applyEngineForce(-this.maxForce, 2);
             this.vehicle.applyEngineForce(-this.maxForce, 3);
         } else if (keysPressed['s'] || keysPressed['arrowdown']) {
@@ -511,7 +517,6 @@ export class Car {
             this.checkWrongPosition();
 
             this.carMesh.position.copy(this.carBody.position);
-            this.carMesh.position.y -= this.yOffset;
             this.carMesh.quaternion.copy(this.carBody.quaternion);
 
             // Update wheel meshes
@@ -583,7 +588,7 @@ export class Car {
             // For non-physics cars (remote players)
             this.carMesh.position.set(
                 serverState.position.x,
-                serverState.position.y - this.yOffset,
+                serverState.position.y,
                 serverState.position.z,
             );
             this.carMesh.quaternion.set(

@@ -14,7 +14,8 @@ adminRoutes.get(
         try {
             // Récupérer tous les utilisateurs
             const result = await db.dbClient.execute(
-                `SELECT id, userName, userLastConnection, userDateOfCreation, email, image_id FROM User`,
+                `SELECT * 
+                FROM User,Roles,Role WHERE User.id = Role.user_id AND Roles.id = Role.role_id`,
             );
 
             ctx.response.status = 200;

@@ -1,11 +1,9 @@
 import { Application, Router } from 'https://deno.land/x/oak@v17.1.4/mod.ts';
 import { oakCors } from 'https://deno.land/x/cors@v1.2.2/mod.ts';
-import { createJWT, verifyJWT } from './jwt_func.ts';
 import { authorizationMiddleware } from './middlewares.ts';
 
 //import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 import * as db from './rest.ts'; // Importez les fonctions de la base de données
-import { Token } from './interfaces.ts';
 import { authRouter } from './router/authRoutes.ts';
 import { adminRoutes } from './router/adminRoutes.ts';
 import { imgRoutes } from './router/imgRoutes.ts';
