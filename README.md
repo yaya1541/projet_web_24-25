@@ -29,7 +29,8 @@ KartFever est un jeu de course multijoueur où les joueurs s'affrontent en temps
 - **Courses multijoueurs** : Affrontez d'autres joueurs en temps réel avec une physique fluide.
 - **Communication en temps réel** [Obsolete] : Synchronisation des positions et des classements via WebSocket.
 - **Authentification sécurisée** : Connexion/inscription avec JWT et mots de passe hachés (bcrypt).
-- **Base de données** : MySQL avec 6 tables pour gérer utilisateurs, rôles, messages, paramètres, jetons et images.
+- **Base de données** : MySQL avec 7 tables pour gérer utilisateurs, rôles, messages, paramètres, jetons et images.
+![Image collée](https://github.com/user-attachments/assets/c58950e8-9feb-418f-81da-e0469fe9a121)
 - **API REST** : Opérations CRUD pour les données du jeu et des utilisateurs.
 - **Espace admin** : Accès restreint pour les administrateurs, sécurisé par middleware.
 - **Pipeline CI/CD** : Tests automatisés, formatage et linting via GitHub Actions.
@@ -88,12 +89,16 @@ KartFever utilise une architecture **client-serveur** :
 
 ## Captures d'écran et vidéos
 
-- **Écran de connexion** : [Placeholder pour capture]
-- **Lobby du jeu** : [Placeholder pour capture]
-- **Course en cours** : [Placeholder pour capture]
-- **Page des actualités** : [Placeholder pour capture]
+- **Écran de connexion** : ![Capture d’écran du 2025-05-26 02-50-59](https://github.com/user-attachments/assets/75310257-02df-454d-8d40-9f6123da169d)
 
-*Vidéos* : Des démonstrations du gameplay et des fonctionnalités admin seront ajoutées prochainement.
+- **Lobby du jeu** : ![Capture d’écran du 2025-05-26 02-51-26](https://github.com/user-attachments/assets/b7cfcabd-886a-4ca1-818f-58d205d381b0)
+
+- **Page des actualités** : ![Capture d’écran du 2025-05-26 03-18-21](https://github.com/user-attachments/assets/341e0ba5-b659-4e01-a38a-f2f648f3510a)
+
+
+- **Vidéos** : Des démonstrations du gameplay (dernier état fonctionnel).
+
+https://github.com/user-attachments/assets/d3b92bb0-4d27-4820-a429-f592d53b6aef
 
 ---
 
