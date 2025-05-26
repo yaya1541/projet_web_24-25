@@ -596,13 +596,15 @@ function startGame(roomId, ws) {
 joinGameBtn.addEventListener('click', () => {
     const gameCode = gameCodeInput.value.trim().toUpperCase();
     if (gameCode) {
+        alert(`you tried to join party ${gameCode}. We are sorry ! the game is not available at the moment.`);
         globalThis.location.search = `?roomId=${gameCode}`; // Change search to trigger reload and checkGameRoom
     } else {
         alert('Please enter a valid game code');
     }
 });
 
-createGameBtn.addEventListener('click', async () => {
+createGameBtn.addEventListener('click', () => {
+    /*
     try {
         const response = await fetch(
             'https://yanisrasp.duckdns.org:3000/api/kartfever/game',
@@ -624,6 +626,8 @@ createGameBtn.addEventListener('click', async () => {
         console.error('Error creating game:', error);
         alert(`Error creating game: ${error.message}`);
     }
+    */
+    alert("We are sorry ! the game is not available at the moment.");
 });
 
 gameCodeInput.addEventListener('keypress', (e) => {

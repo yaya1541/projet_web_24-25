@@ -23,7 +23,7 @@
     </style>
     <div class="content-header">
         <h2 class="content-title">My Profile</h2>
-        <span class="accent-text">Member since May 2024</span>
+        <!--<span class="accent-text">Member since May 2024</span>-->
       </div>
       
       <div class="user-profile">
@@ -33,8 +33,8 @@
         <div class="profile-info">
           <h3>GameMaster42</h3>
           <div class="profile-stats">
-            <div class="stat">Games: <span>24</span></div>
-            <div class="stat">Friends: <span>186</span></div>
+            <!--<div class="stat">Games: <span>24</span></div>
+            <div class="stat">Friends: <span>186</span></div>-->
           </div>
         </div>
       </div>
@@ -53,24 +53,39 @@
               <label for="email">Email Address</label>
               <input type="email" id="email" value="player@example.com">
             </div>
-            <div class="form-group">
-              <label for="phone">Phone Number</label>
-              <input type="tel" id="phone" placeholder="Optional">
-            </div>
           </div>
           
-          <button type="submit" class="save-changes-btn">Save Changes</button>
+          <button type="submit" class="save-changes-btn" id="submit">Save Changes</button>
         </form>
       </div>
       <script type="module" async>
         import { userData } from '../utils.js';
         const user = await userData;
+        console.log(user);
+        
         const profileinfo = document.querySelector(".profile-info");
         const personalinfo = document.getElementById("personal-info");
         profileinfo.querySelector("h3").innerText = user.user.userName;
         if (user.role == 1){
           personalinfo.style.display = "none";
         }
+
+        const username = personalinfo.querySelector("#username");
+        username.value = user.user.userName;
+        const email = personalinfo.querySelector("#email");
+        email.value = user.user.email ? user.user.email : "No email set";
+
+        personalinfo.addEventListener("submit", async (_ev)=>{
+          const update = await fetch("https://yanisrasp.duckdns.org:3000/api/users/me",{
+            method:"PUT",
+            credentials:'include',
+            body:{
+              userName: username.value,
+              email : email.value,
+            }
+          })
+        })
+
       </script>
 </body>
 </html>

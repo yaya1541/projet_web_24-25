@@ -3,9 +3,8 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Document</title>
+        <title>About the game</title>
         <link rel="stylesheet" type="text/css" href="login/style.css">
-        <link rel="stylesheet" type="text/css" href="../style.css">
         <link rel="stylesheet" type="text/css" href="../root.css">
         <link rel="stylesheet" type="text/css" href="chat_context.css">
         <script type="module" src="templates.js"></script>
@@ -15,80 +14,177 @@
             href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700&display=swap"
             rel="stylesheet"
         >
-    </head>
-    <body>
         <style>
-            iframe {
-                width: fit-content;
-                height: fit-content;
-                min-width: 90%;
-                min-height: 90%;
-                position: relative;
-                top:0;
-
-            }
-            .sketchfab-embed-wrapper {
-                width: 100%;
-                height: 100%;
-                margin: 0;
+            /* Variables de couleurs */
+    
+            .inline-container {
+                display: inline;
                 padding: 0;
-                min-height: 90%;
+            }
+    
+            header-component {
+                z-index: 400;
+                top: 0;
+                position: sticky;
+            }
+    
+            header-component > * {
+                position: inherit;
+            }
+    
+            .section {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                min-height: 70vh;
+                padding: 60px 20px;
+                width: inherit;
+            }
+    
+            .credits {
+                background: var(--dark-overlay);
+                border-radius: 20px;
+                padding: 40px;
+                margin: 20px auto;
+                max-width: 1000px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+                border: 1px solid var(--light-overlay);
+                backdrop-filter: blur(15px);
+            }
+    
+            .sketchfab-embed-wrapper {
+                position: relative;
+                border-radius: 15px;
+                overflow: hidden;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                margin-bottom: 20px;
+            }
+    
+            .sketchfab-embed-wrapper iframe {
+                width: 100%;
+                height: 500px;
+                border: none;
+                border-radius: 15px;
+            }
+    
+            .title {
+                padding: 10% 10%;
+                background-image: url('https://yanisrasp.duckdns.org:3000/api/src/kart-home.png');
+                background-repeat: no-repeat;
+                background-size: cover;
+                background-position: center;
+                border-radius: 15px;
+                margin-bottom: 30px;
+                min-height: 300px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+            }
+    
+            .title::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.4);
+                border-radius: 15px;
+            }
+    
+            .title > * {
+                position: relative;
+                z-index: 2;
+            }
+    
+            /* Model attribution styling */
+            .sketchfab-embed-wrapper p {
+                background: rgba(255, 255, 255, 0.05);
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+                margin: 0;
+                font-size: 13px;
+                color: var(--neutral) !important;
+            }
+    
+            .sketchfab-embed-wrapper a {
+                color: var(--accent) !important;
+                text-decoration: none;
+                font-weight: bold;
+            }
+    
+            .sketchfab-embed-wrapper a:hover {
+                color: var(--accent-bright) !important;
+            }
+    
+            /* Responsive design */
+            @media (max-width: 768px) {
+                .credits {
+                    padding: 30px 20px;
+                    margin: 20px 10px;
+                }
+    
+                .sketchfab-embed-wrapper iframe {
+                    height: 350px;
+                }
+    
+                .title {
+                    padding: 15% 5%;
+                    min-height: 200px;
+                }
+            }
+    
+            @media (max-width: 480px) {
+                .credits {
+                    padding: 20px 15px;
+                }
+    
+                .sketchfab-embed-wrapper iframe {
+                    height: 300px;
+                }
+    
+                .section {
+                    padding: 40px 15px;
+                    width: inherit;
+                }
             }
         </style>
+    </head>
+    <body>
         <header-component></header-component>
-        
-        <div class="container inline-container">
-            <h1>Assets used</h1>
-            <div>
-                <div class="" >
-                    <div class="sketchfab-embed-wrapper">
-                        <iframe
-                            title="Racing Kart"
-                            frameborder="0"
-                            allowfullscreen
-                            mozallowfullscreen="true"
-                            webkitallowfullscreen="true"
-                            allow="autoplay; fullscreen; xr-spatial-tracking"
-                            xr-spatial-tracking
-                            execution-while-out-of-viewport
-                            execution-while-not-rendered
-                            web-share
-                            src="https://sketchfab.com/models/f48f8e66bba6492eadc000d2585b6a32/embed"
-                            style="width: 100%; height: 100%; min-width: 90%; min-height: 50%"
-                        >
-                        </iframe>
-                        <p
-                            style="font-size: 13px; font-weight: normal; margin: 5px; color: #4a4a4a;"
-                        >
-                            <a
-                                href="https://sketchfab.com/3d-models/racing-kart-f48f8e66bba6492eadc000d2585b6a32?utm_medium=embed&utm_campaign=share-popup&utm_content=f48f8e66bba6492eadc000d2585b6a32"
-                                target="_blank"
-                                rel="nofollow"
-                                style="font-weight: bold; color: #1caad9"
-                            >
-                                Racing Kart
-                            </a> by <a
-                                href="https://sketchfab.com/scailman?utm_medium=embed&utm_campaign=share-popup&utm_content=f48f8e66bba6492eadc000d2585b6a32"
-                                target="_blank"
-                                rel="nofollow"
-                                style="font-weight: bold; color: #1caad9"
-                            >
-                                scailman
-                            </a> on <a
-                                href="https://sketchfab.com?utm_medium=embed&utm_campaign=share-popup&utm_content=f48f8e66bba6492eadc000d2585b6a32"
-                                target="_blank"
-                                rel="nofollow"
-                                style="font-weight: bold; color: #1caad9"
-                            >Sketchfab</a>
-                        </p>
-                    </div>
+        <div class="container">
+            <div class="section credits">
+                <div class="sketchfab-embed-wrapper">
+                    <iframe
+                        title="Racing Kart"
+                        frameborder="0"
+                        allowfullscreen
+                        mozallowfullscreen="true"
+                        webkitallowfullscreen="true"
+                        allow="autoplay; fullscreen; xr-spatial-tracking"
+                        xr-spatial-tracking
+                        execution-while-out-of-viewport
+                        execution-while-not-rendered
+                        web-share
+                        src="https://sketchfab.com/models/f48f8e66bba6492eadc000d2585b6a32/embed">
+                    </iframe>
+                    <p style="font-size: 13px; font-weight: normal; margin: 5px; color: #4a4a4a">
+                        <a href="https://sketchfab.com/3d-models/racing-kart-f48f8e66bba6492eadc000d2585b6a32?utm_medium=embed&utm_campaign=share-popup&utm_content=f48f8e66bba6492eadc000d2585b6a32" target="_blank" rel="nofollow" style="font-weight: bold; color: #1caad9">
+                            Racing Kart
+                        </a> by <a href="https://sketchfab.com/scailman?utm_medium=embed&utm_campaign=share-popup&utm_content=f48f8e66bba6492eadc000d2585b6a32" target="_blank" rel="nofollow" style="font-weight: bold; color: #1caad9">
+                            scailman
+                        </a> on <a href="https://sketchfab.com?utm_medium=embed&utm_campaign=share-popup&utm_content=f48f8e66bba6492eadc000d2585b6a32" target="_blank" rel="nofollow" style="font-weight: bold; color: #1caad9">Sketchfab</a>
+                    </p>
                 </div>
             </div>
-            
         </div>
-        <div class="container inline-container">
-            <h3>Carte généré par <span>meshy.ai</span> puis modifié à la main.</h3>
-            <h3><a href="https://github.com/yaya1541/projet_web_24-25" target="_blank" rel="noopener noreferrer">Lien du github</a></h3>
+        <div class="container">
+            <div class="section credits">
+                <h3>Carte généré par <span>meshy.ai</span> puis modifié à la main.</h3>
+                <h3><a href="https://github.com/yaya1541/projet_web_24-25" target="_blank" rel="noopener noreferrer">Lien du github</a></h3>
+            </div>
         </div>
         <chat-component></chat-component>
         <footer-component></footer-component>

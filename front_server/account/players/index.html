@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" type="text/css" href="login/style.css">
+    <link rel="stylesheet" type="text/css" href="../login/style.css">
     <link rel="stylesheet" type="text/css" href="../style.css">
     <link rel="stylesheet" type="text/css" href="../root.css">
-    <link rel="stylesheet" type="text/css" href="account/style.css">
+    <link rel="stylesheet" type="text/css" href="./style.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 <body>
     <h1>Players</h1>
     <App>
         <ul>
-            <li v-for="player in players" :key="player.id">
+            <li v-for="player in players" :key="player.user_id">
                 {{ player.user_id }} - {{ player.userName }} - {{ player.email }}
-                <a href="#" @click.prevent="deleteUser(player)">Delete</a>
+                <a @click="deleteUser(player)">Delete</a>
             </li>
         </ul>
 
@@ -42,6 +42,7 @@
                             throw new Error('Network response was not ok');
                         }
                         const data = await response.json();
+                        console.log('Raw API response:', data);
                         this.players = data.users.filter(user => user.name !== 'ADMIN');
                         console.log(this.players);
                         
@@ -50,15 +51,18 @@
                     }
                 },
                 deleteUser(player) {
+                    console.log(player);
+                    
                     if (confirm(`Are you sure you want to delete ${player.userName}?`)) {
-                    fetch(`https://yanisrasp.duckdns.org:3000/api/admin/users/${player.id}`, {
+                    fetch(`https://yanisrasp.duckdns.org:3000/api/admin/users/${player.user_id}`, {
                         method: 'DELETE',
                         credentials: 'include'
                     })
                     .then(response => {
                         if (response.ok) {
                         // Remove user from local list
-                        this.players = this.players.filter(p => p.id !== player.id);
+                            this.players = this.players.filter(p => p.id !== player.id);
+                            globalThis.location.reload();
                         } else {
                         alert('Failed to delete user.');
                         }

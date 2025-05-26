@@ -338,6 +338,20 @@ input::placeholder {
     opacity: 0;
 }
 
+.success-message {
+    background-color: rgba(128, 12, 31, 0.2);
+    color: #77ff6b;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-size: 0.9rem;
+    transition: opacity 0.5s ease;
+}
+
+.success-message.fade-out {
+    opacity: 0;
+}
+
 /* Footer */
 .main-footer {
     background-color: var(--primary-dark);
