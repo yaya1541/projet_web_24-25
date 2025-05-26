@@ -127,7 +127,6 @@ authRouter.post('/api/auth/login', async (ctx) => {
         //ctx.cookies.set('refreshToken', refreshToken);
         ctx.response.status = 200;
         ctx.response.body = {
-            token: jwt,
             user: {
                 id: user.id,
                 userName: user.userName,
@@ -174,9 +173,6 @@ authRouter.post('/api/auth/refresh', async (ctx) => {
         const newRefreshToken = await db.createRefreshToken(user.id!);
         ctx.cookies.set('accessToken', jwt);
         ctx.response.status = 200;
-        ctx.response.body = {
-            token: jwt,
-        };
     } catch (err) {
         ctx.response.status = 500;
         ctx.response.body = { message: 'Server error: ' + err };

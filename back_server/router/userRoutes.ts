@@ -21,7 +21,6 @@ userRoutes.get('/api/users/me', authorizationMiddleware, async (ctx) => {
         ctx.response.body = {
             user: success,
             role: await db.getUserRoles(userId),
-            stats: await db.getUserRefresh(userId),
             message: 'User data successfully fetched',
         };
     } catch (err) {
@@ -38,7 +37,7 @@ userRoutes.put('/api/users/me', authorizationMiddleware, async (ctx) => {
         const updateData: Partial<User> = {};
 
         if (body.userName) updateData.userName = body.userName;
-        if (body.userPassword) updateData.userPassword = body.userPassword;
+        //if (body.userPassword) updateData.userPassword = body.userPassword;
         if (body.email) {
             if (!db.isValidEmail(body.email)) {
                 ctx.response.status = 400;

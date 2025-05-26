@@ -118,9 +118,10 @@ adminRoutes.delete(
     async (ctx) => {
         try {
             const userId = parseInt(ctx.params.id!);
-
+            console.log('Admin trying to delete user ', userId);
             // Vérifier si l'utilisateur existe
             const user = await db.getUserById(userId);
+
             if (!user) {
                 ctx.response.status = 404;
                 ctx.response.body = { message: 'User not found' };

@@ -596,7 +596,9 @@ function startGame(roomId, ws) {
 joinGameBtn.addEventListener('click', () => {
     const gameCode = gameCodeInput.value.trim().toUpperCase();
     if (gameCode) {
-        alert(`you tried to join party ${gameCode}. We are sorry ! the game is not available at the moment.`);
+        alert(
+            `you tried to join party ${gameCode}. We are sorry ! the game is not available at the moment.`,
+        );
         globalThis.location.search = `?roomId=${gameCode}`; // Change search to trigger reload and checkGameRoom
     } else {
         alert('Please enter a valid game code');
@@ -627,7 +629,7 @@ createGameBtn.addEventListener('click', () => {
         alert(`Error creating game: ${error.message}`);
     }
     */
-    alert("We are sorry ! the game is not available at the moment.");
+    alert('We are sorry ! the game is not available at the moment.');
 });
 
 gameCodeInput.addEventListener('keypress', (e) => {

@@ -1,7 +1,7 @@
 /*
 import { Player,link } from "../../BACK/builds/gameUtils/Player.js";
 import { gameBuilder } from "../../BACK/builds/gameBuilder/game.js";
-import { Enemy } from '../../BACK/builds/gameUtils/Enemy.js';
+import { Enemy } from '../../BACK/builds//Enemy.js';
 
 export const Game = new gameBuilder();
 
@@ -67,6 +67,7 @@ quit.addEventListener('click', function() {
     document.location.href = "/home"
 });
 */
+/*
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 import { CSS2DRenderer } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/renderers/CSS2DRenderer.js';
 
@@ -168,7 +169,7 @@ function handleMouseMove(event, camera) {
     }
 }
 
-const socket = new WebSocket('https://localhost:3000/game');
+const socket = new WebSocket('https://localhost:3000/doom');
 //ws.onerror((ctx)=>console.log("no ws"));
 socket.onopen = () => {
     init();
@@ -220,3 +221,4 @@ resume.addEventListener('click', () => {
     document.body.requestPointerLock();
 });
 console.log(ui.children);
+*/

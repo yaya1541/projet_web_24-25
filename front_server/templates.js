@@ -192,7 +192,6 @@ class Header extends HTMLElement {
                 if (password && Btn) {
                     password.addEventListener('keyup', function (event) {
                         if (event.key === 'Enter') {
-                            // You'll need to update handleLogin to handleRegister or use the existing handleregister
                             handle(cw);
                         }
                     });

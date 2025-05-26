@@ -37,7 +37,7 @@ export const handleLogin = async (doc) => {
             case 200:
                 // TODO : Remove timeout from location change.
                 localStorage.setItem('CurrentUser', username.value);
-                document.location.pathname = '/home';
+                document.location.reload();
                 break;
             default:
                 showError('Identifiants incorrects. Veuillez réessayer.', doc);
@@ -75,18 +75,22 @@ export const handleregister = async (doc) => {
     ).then((res) => {
         switch (res.status) {
             case 201:
-                showError(
+                showSuccess(
                     'Registered successfully !',
+                    doc,
                 );
-                document.location.pathname = '/home';
+                setTimeout(() => globalThis.location.reload(), 700);
                 break;
-            case 200:
+            case 409:
                 showError(
                     'Username already in use please change.',
+                    doc,
                 );
+                setTimeout(() => globalThis.location.reload(), 700);
                 break;
             case 500:
                 showError('Error with server !', doc);
+                setTimeout(() => globalThis.location.reload(), 700);
                 break;
             default:
                 break;
@@ -109,6 +113,24 @@ function showError(message, doc) {
             errorElement.remove();
         }, 500);
         return;
+    }, 3000);
+}
+
+export function showSuccess(message, doc) {
+    const successElement = doc.createElement('div');
+    successElement.className = 'success-message';
+    successElement.textContent = message;
+
+    const existingSuccess = doc.querySelector('.success-message');
+    if (existingSuccess) existingSuccess.remove();
+
+    doc.querySelector('.input-container').appendChild(successElement);
+
+    setTimeout(() => {
+        successElement.classList.add('fade-out');
+        setTimeout(() => {
+            successElement.remove();
+        }, 500);
     }, 3000);
 }
 
