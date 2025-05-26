@@ -37,7 +37,7 @@ KartFever est un jeu de course multijoueur où les joueurs s'affrontent en temps
 - **Interface moderne** : Design responsive avec des polices Google Fonts (Montserrat, Russo One).
 - **Actualités GitHub** : Page affichant les derniers commits du dépôt.
 
----
+--- 
 
 ## Architecture
 
@@ -45,8 +45,8 @@ KartFever utilise une architecture **client-serveur** :
 
 - **Front-end** : Three.js pour le rendu 3D, CANNON.js pour la physique et JavaScript pour la logique. Les pages incluent l'accueil, la connexion, l'inscription, le jeu et les actualités.
 - **Back-end** : Deno avec Oak pour les routes API, MySQL pour les données et WebSocket pour la synchronisation en temps réel. La physique côté serveur garantit un état de jeu fiable.
-- **Sécurité** : HTTPS avec certificats auto-signés, JWT pour l'authentification, et protection contre les failles OWASP (injections, authentification cassée).
-- **Déploiement** : Serveurs séparés pour le front-end et le back-end, avec gestion des CORS.
+- **Sécurité** : HTTPS avec certificats ZeroSSL, JWT pour l'authentification, et protection contre les failles OWASP (injections, authentification cassée).
+- **Déploiement** : Serveurs séparés pour le front-end et le back-end, avec gestion des CORS. Le domaine est géré via **DuckDNS** pour un accès sécurisé et stable.
 
 ---
 
@@ -56,24 +56,30 @@ KartFever utilise une architecture **client-serveur** :
    - Deno (v2.x ou supérieur)
    - Serveur MySQL
    - Git
+   - Compte DuckDNS pour le domaine
+   - Certificats HTTPS générés via ZeroSSL
 
 2. **Cloner le dépôt** :
    Naviguez vers le répertoire du projet et clonez le dépôt depuis GitHub.
 
 3. **Configurer les variables d'environnement** :
-   Créez un fichier `.env` dans `back_server/` avec les informations de connexion MySQL, l'URL du serveur et la clé JWT.
+   Créez un fichier `.env` dans `back_server/` avec les informations de connexion MySQL, l'URL du serveur DuckDNS et la clé JWT.
 
-4. **Initialiser la base de données** :
+4. **Configurer HTTPS** :
+   - Générez des certificats SSL avec [ZeroSSL](https://zerossl.com).
+   - Placez les certificats dans le répertoire sécurisé du back-end et configurez le serveur pour les utiliser.
+
+5. **Initialiser la base de données** :
    Exécutez la fonction d'initialisation dans le back-end pour créer les tables et ajouter des données par défaut.
 
-5. **Lancer le back-end** :
+6. **Lancer le back-end** :
    Exécutez le fichier principal du serveur back-end avec Deno.
 
-6. **Lancer le front-end** :
+7. **Lancer le front-end** :
    Servez les fichiers statiques du front-end avec un serveur web simple (par exemple, Deno ou Node.js).
 
-7. **Accéder au jeu** :
-   Ouvrez l'URL du front-end dans un navigateur (par exemple, `https://yanisrasp.duckdns.org`).
+8. **Accéder au jeu** :
+   Ouvrez l'URL sécurisée du front-end dans un navigateur (par exemple, `https://yanisrasp.duckdns.org`).
 
 ---
 
