@@ -11,3 +11,4 @@ node_modules
 *.puml
 certs/server.crt
 certs/server.key
+*.bat

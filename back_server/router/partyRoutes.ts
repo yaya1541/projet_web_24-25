@@ -496,13 +496,13 @@ partyRouter.post(
 
         const newRoomId = generateGameCode(6);
         createWorld(newRoomId); // Initialize the world for this room
-        const selectedCircuit = new Circuit(null, Worlds.get(newRoomId),{
+        const selectedCircuit = new Circuit(null, Worlds.get(newRoomId), {
             turnNumber: 20,
             turnAmplitude: 95,
             roadWidth: 40,
         }); // Or allow selection
-         activeGames.set(newRoomId, {
-        circuit: {
+        activeGames.set(newRoomId, {
+            circuit: {
                 CircuitNodes: selectedCircuit.pathNodes,
                 CircuitPoints: selectedCircuit.pathPoints,
                 CircuitWitdh: selectedCircuit.options.roadWidth,
