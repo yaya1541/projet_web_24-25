@@ -359,15 +359,15 @@
                     let commitMessage = message;
                     
                     // Déterminer le type de commit
-                    if (message.toLowerCase().startsWith('feat:') || message.toLowerCase().startsWith('feature:')) {
+                    if (message.toLowerCase().startsWith('feat') || message.toLowerCase().startsWith('feature')) {
                         type = 'feat';
                         className = 'feat';
                         commitMessage = message.substring(message.indexOf(':') + 1).trim();
-                    } else if (message.toLowerCase().startsWith('fix:')) {
+                    } else if (message.toLowerCase().startsWith('fix')) {
                         type = 'fix';
                         className = 'fix';
                         commitMessage = message.substring(message.indexOf(':') + 1).trim();
-                    } else if (message.toLowerCase().startsWith('refactor:')) {
+                    } else if (message.toLowerCase().startsWith('refactor')) {
                         type = 'refactor';
                         className = 'refactor';
                         commitMessage = message.substring(message.indexOf(':') + 1).trim();
