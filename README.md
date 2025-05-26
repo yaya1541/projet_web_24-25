@@ -27,7 +27,7 @@ KartFever est un jeu de course multijoueur où les joueurs s'affrontent en temps
 ## Fonctionnalités
 
 - **Courses multijoueurs** : Affrontez d'autres joueurs en temps réel avec une physique fluide.
-- **Communication en temps réel** : Synchronisation des positions et des classements via WebSocket.
+- **Communication en temps réel** [Obsolete] : Synchronisation des positions et des classements via WebSocket.
 - **Authentification sécurisée** : Connexion/inscription avec JWT et mots de passe hachés (bcrypt).
 - **Base de données** : MySQL avec 6 tables pour gérer utilisateurs, rôles, messages, paramètres, jetons et images.
 - **API REST** : Opérations CRUD pour les données du jeu et des utilisateurs.
@@ -122,7 +122,7 @@ Les modèles de karts sont sous licence CC-BY :
 
 ## Crédits
 
-- **Développeur** : [Votre Nom]
+- **Développeur** : Yanis Niaussat
 - **Actifs** : Ben Harrison, Poly by Google (via Poly Pizza)
 - **Technologies** : Deno, Three.js, CANNON.js, MySQL, Oak, GitHub Actions
 - **Polices** : Russo One, Montserrat (Google Fonts)
