@@ -427,10 +427,15 @@
         crossorigin="use-credentials"
     ></script>
     <script src="../templates.js" type="module"></script>
+    
 </head>
 <body>
+    <div class="home-button">
+        <a id="home" class="primary-btn" onclick="document.location.pathname = '/home'" style="z-index: 4000;margin: 2em 2em;position: absolute;">Home</a>
+    </div>
     <!-- Welcome Screen (Join/Create Game) -->
     <div id="welcome-screen">
+        
         <div class="game-box">
             <div class="logo-container">
                 <h1 class="game-title">Kart<span>Fever</span></h1>
